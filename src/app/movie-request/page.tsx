@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/controls.css';
 
+import { apiFetch } from '@/lib/api-client';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
@@ -91,7 +92,7 @@ export default function MovieRequestPage() {
 
     setIsSearching(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/tmdb/search?query=${encodeURIComponent(searchKeyword)}`
       );
       const data = await response.json();
@@ -130,7 +131,7 @@ export default function MovieRequestPage() {
       setShowSeasonDialog(true);
 
       try {
-        const response = await fetch(`/api/tmdb/seasons?tvId=${item.id}`);
+        const response = await apiFetch(`/api/tmdb/seasons?tvId=${item.id}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         if (seasonRequestIdRef.current !== requestId) return;
@@ -193,7 +194,7 @@ export default function MovieRequestPage() {
         }
       }
 
-      const response = await fetch('/api/movie-requests', {
+      const response = await apiFetch('/api/movie-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -257,7 +258,7 @@ export default function MovieRequestPage() {
       setLoadingMyRequests(true);
       setMyRequestsError('');
       try {
-        const response = await fetch('/api/movie-requests?my=true');
+        const response = await apiFetch('/api/movie-requests?my=true');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         if (cancelled) return;
@@ -283,7 +284,7 @@ export default function MovieRequestPage() {
   // 刷新我的求片列表
   const refreshMyRequests = async () => {
     try {
-      const response = await fetch('/api/movie-requests?my=true');
+      const response = await apiFetch('/api/movie-requests?my=true');
       const data = await response.json();
       if (data.requests) {
         setMyRequests(data.requests);

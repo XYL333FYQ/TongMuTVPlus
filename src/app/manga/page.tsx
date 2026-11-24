@@ -4,6 +4,7 @@ import { Compass, Flame, Sparkles } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   deleteMangaShelf,
   getAllMangaReadRecords,
@@ -136,7 +137,7 @@ export default function MangaRecommendPage() {
   }, [router, searchParams]);
 
   useEffect(() => {
-    fetch('/api/manga/sources')
+    apiFetch('/api/manga/sources')
       .then((res) => res.json())
       .then((data) => {
         const nextSources = data.sources || [];
@@ -177,7 +178,7 @@ export default function MangaRecommendPage() {
           type: recommendType,
           page: String(nextPage),
         });
-        const res = await fetch(`/api/manga/recommend?${params.toString()}`);
+        const res = await apiFetch(`/api/manga/recommend?${params.toString()}`);
         const data = (await res.json()) as MangaRecommendResult & {
           error?: string;
         };

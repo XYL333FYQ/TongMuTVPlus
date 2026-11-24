@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   type FeaturePermissionKey,
   type FeaturePolicy,
@@ -51,7 +52,7 @@ export default function FeatureAccessPanel() {
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/feature-access', {
+      const response = await apiFetch('/api/admin/feature-access', {
         cache: 'no-store',
       });
       const data = await response.json();
@@ -72,7 +73,7 @@ export default function FeatureAccessPanel() {
     const seq = ++searchSeq.current;
     const timer = window.setTimeout(async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/users?limit=8&search=${encodeURIComponent(search)}`,
           { cache: 'no-store' }
         );
@@ -91,7 +92,7 @@ export default function FeatureAccessPanel() {
   }, [search]);
 
   const post = async (body: Record<string, unknown>) => {
-    const response = await fetch('/api/admin/feature-access', {
+    const response = await apiFetch('/api/admin/feature-access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

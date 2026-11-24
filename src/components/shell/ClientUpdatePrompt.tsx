@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { CLIENT_PACKAGES } from '@/lib/client-downloads';
 import {
   type UpdatePlatform,
@@ -65,7 +66,7 @@ export default function ClientUpdatePrompt() {
     }
     lastCheck.current = Date.now();
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/client-update?platform=${client.platform}`,
         { cache: 'no-store' }
       );

@@ -6,6 +6,7 @@ import { Bell, Check, Settings, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { isPrivilegedRole } from '@/lib/roles';
 import { Notification } from '@/lib/types';
@@ -33,7 +34,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/notifications');
+      const response = await apiFetch('/api/notifications');
       if (response.ok) {
         const data = await response.json();
         setNotifications(data.notifications || []);
@@ -48,7 +49,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   // 标记为已读
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch('/api/notifications', {
+      const response = await apiFetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -72,7 +73,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   // 删除通知
   const deleteNotification = async (notificationId: string) => {
     try {
-      const response = await fetch('/api/notifications', {
+      const response = await apiFetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   // 清空所有通知
   const clearAll = async () => {
     try {
-      const response = await fetch('/api/notifications', {
+      const response = await apiFetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

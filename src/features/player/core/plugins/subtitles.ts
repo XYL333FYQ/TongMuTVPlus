@@ -4,6 +4,7 @@
  * 高级字幕渲染失败时，有备用地址就降级为普通字幕。
  */
 
+import { apiFetch } from '@/lib/api-client';
 import { readSetting, writeSetting } from '@/lib/settings';
 import { convertSubtitleFileToVttObjectUrl } from '@/lib/subtitle-converter';
 
@@ -286,7 +287,7 @@ export class SubtitleController {
       else if (track.url) {
         if (existing.setTrackByUrl) await existing.setTrackByUrl(track.url);
         else {
-          const response = await fetch(track.url, {
+          const response = await apiFetch(track.url, {
             credentials: 'include',
             cache: 'no-store',
           });

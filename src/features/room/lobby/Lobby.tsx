@@ -9,6 +9,8 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import './Lobby.css';
 
+import { apiFetch } from '@/lib/api-client';
+
 import BusyDots from '@/components/feedback/BusyDots';
 import RetryNotice from '@/components/feedback/RetryNotice';
 import FilmPoster from '@/components/poster/FilmPoster';
@@ -90,7 +92,7 @@ export default function Lobby(props: {
     const id = ++request.current;
     setLoading(true);
     try {
-      const response = await fetch(`/api/rooms?mode=${directory}`, {
+      const response = await apiFetch(`/api/rooms?mode=${directory}`, {
         cache: 'no-store',
       });
       if (!response.ok)

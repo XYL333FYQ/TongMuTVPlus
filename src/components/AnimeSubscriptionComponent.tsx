@@ -29,6 +29,7 @@ import {
   isExcludePresetActive,
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
+import { apiFetch } from '@/lib/api-client';
 import { formatTimeAgo } from '@/lib/time';
 
 import BusyDots from '@/components/feedback/BusyDots';
@@ -231,7 +232,7 @@ export default function AnimeSubscriptionComponent({
   const handleToggleEnabled = async (newEnabled: boolean) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/anime-subscription/toggle', {
+      const response = await apiFetch('/api/admin/anime-subscription/toggle', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: newEnabled, downloadTool }),
@@ -262,7 +263,7 @@ export default function AnimeSubscriptionComponent({
 
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/anime-subscription/toggle', {
+      const response = await apiFetch('/api/admin/anime-subscription/toggle', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled, downloadTool: newDownloadTool }),
@@ -336,7 +337,7 @@ export default function AnimeSubscriptionComponent({
     try {
       setRecognizing(true);
       setRecognizeError('');
-      const res = await fetch('/api/admin/anime-subscription/recognize', {
+      const res = await apiFetch('/api/admin/anime-subscription/recognize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: keyword, source: formData.source }),
@@ -403,7 +404,7 @@ export default function AnimeSubscriptionComponent({
     try {
       setTesting(true);
       setTestError('');
-      const res = await fetch('/api/admin/anime-subscription/test', {
+      const res = await apiFetch('/api/admin/anime-subscription/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -459,7 +460,7 @@ export default function AnimeSubscriptionComponent({
 
       if (editingSubscription) {
         // 更新
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/anime-subscription/${editingSubscription.id}`,
           {
             method: 'PUT',
@@ -474,7 +475,7 @@ export default function AnimeSubscriptionComponent({
         }
       } else {
         // 创建
-        const response = await fetch('/api/admin/anime-subscription', {
+        const response = await apiFetch('/api/admin/anime-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -514,9 +515,12 @@ export default function AnimeSubscriptionComponent({
       onConfirm: async () => {
         try {
           setLoading(true);
-          const response = await fetch(`/api/admin/anime-subscription/${id}`, {
-            method: 'DELETE',
-          });
+          const response = await apiFetch(
+            `/api/admin/anime-subscription/${id}`,
+            {
+              method: 'DELETE',
+            }
+          );
 
           if (!response.ok) {
             throw new Error('删除订阅失败');
@@ -544,7 +548,7 @@ export default function AnimeSubscriptionComponent({
   const handleCheckSubscription = async (id: string) => {
     try {
       setCheckingId(id);
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/admin/anime-subscription/${id}/check`,
         {
           method: 'POST',
@@ -577,11 +581,14 @@ export default function AnimeSubscriptionComponent({
   const handleToggleSubscription = async (sub: AnimeSubscription) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/anime-subscription/${sub.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !sub.enabled }),
-      });
+      const response = await apiFetch(
+        `/api/admin/anime-subscription/${sub.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: !sub.enabled }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('切换状态失败');

@@ -4,6 +4,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { isNetdiskSource } from '@/lib/netdisk/source';
 import {
   getRecommendationCache,
@@ -138,7 +139,7 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
           ? `/api/tmdb-details?cachedId=${encodeURIComponent(cachedId)}`
           : `/api/tmdb-details?title=${encodeURIComponent(videoTitle)}`;
 
-        const response = await fetch(url);
+        const response = await apiFetch(url);
 
         if (!response.ok) {
           setTmdbBackdrop(null);

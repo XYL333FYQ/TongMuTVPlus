@@ -74,6 +74,7 @@ import {
 } from 'react';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BookSource } from '@/lib/book.types';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
@@ -684,7 +685,7 @@ const UserConfig = ({
   ) => {
     return withLoading(`userGroup_${action}_${groupName}`, async () => {
       try {
-        const res = await fetch('/api/admin/user', {
+        const res = await apiFetch('/api/admin/user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -799,7 +800,7 @@ const UserConfig = ({
   ) => {
     return withLoading(`assignUserGroup_${username}`, async () => {
       try {
-        const res = await fetch('/api/admin/user', {
+        const res = await apiFetch('/api/admin/user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -912,9 +913,12 @@ const UserConfig = ({
 
     try {
       const params = new URLSearchParams({ username });
-      const res = await fetch(`/api/admin/user-devices?${params.toString()}`, {
-        cache: 'no-store',
-      });
+      const res = await apiFetch(
+        `/api/admin/user-devices?${params.toString()}`,
+        {
+          cache: 'no-store',
+        }
+      );
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -937,7 +941,7 @@ const UserConfig = ({
 
     setRevokingUserDevice(tokenId);
     try {
-      const res = await fetch('/api/admin/user-devices', {
+      const res = await apiFetch('/api/admin/user-devices', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1043,7 +1047,7 @@ const UserConfig = ({
 
     await withLoading('batchSetUserGroup', async () => {
       try {
-        const res = await fetch('/api/admin/user', {
+        const res = await apiFetch('/api/admin/user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1092,7 +1096,7 @@ const UserConfig = ({
 
     await withLoading(`saveUserApis_${selectedUser.username}`, async () => {
       try {
-        const res = await fetch('/api/admin/user', {
+        const res = await apiFetch('/api/admin/user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1134,7 +1138,7 @@ const UserConfig = ({
     userGroup?: string
   ) => {
     try {
-      const res = await fetch('/api/admin/user', {
+      const res = await apiFetch('/api/admin/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1217,7 +1221,7 @@ const UserConfig = ({
                         hideAlert();
                         await withLoading('migrateUsers', async () => {
                           try {
-                            const response = await fetch(
+                            const response = await apiFetch(
                               '/api/admin/migrate-users',
                               {
                                 method: 'POST',
@@ -3555,7 +3559,7 @@ const OpenListConfigComponent = ({
       const url = `/api/openlist/list?page=1&pageSize=100&includeFailed=true${
         noCache ? '&noCache=true' : ''
       }`;
-      const response = await fetch(url);
+      const response = await apiFetch(url);
       if (response.ok) {
         const data = await response.json();
         setVideos(data.list || []);
@@ -3597,7 +3601,7 @@ const OpenListConfigComponent = ({
           };
         }
 
-        const response = await fetch('/api/admin/openlist', {
+        const response = await apiFetch('/api/admin/openlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3640,7 +3644,7 @@ const OpenListConfigComponent = ({
     setRefreshing(true);
     setScanProgress(null);
     try {
-      const response = await fetch('/api/openlist/refresh', {
+      const response = await apiFetch('/api/openlist/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clearMetaInfo }),
@@ -3661,7 +3665,7 @@ const OpenListConfigComponent = ({
       // 轮询任务进度
       const pollInterval = setInterval(async () => {
         try {
-          const progressResponse = await fetch(
+          const progressResponse = await apiFetch(
             `/api/openlist/scan-progress?taskId=${taskId}`
           );
 
@@ -3712,7 +3716,7 @@ const OpenListConfigComponent = ({
 
   const handleRefreshVideo = async (folder: string) => {
     try {
-      const response = await fetch('/api/openlist/refresh-video', {
+      const response = await apiFetch('/api/openlist/refresh-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folder }),
@@ -3736,7 +3740,7 @@ const OpenListConfigComponent = ({
   const handleCheckConnectivity = async () => {
     await withLoading('checkOpenList', async () => {
       try {
-        const response = await fetch('/api/openlist/check', {
+        const response = await apiFetch('/api/openlist/check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3772,7 +3776,7 @@ const OpenListConfigComponent = ({
       showConfirm: true,
       onConfirm: async () => {
         try {
-          const response = await fetch('/api/openlist/delete', {
+          const response = await apiFetch('/api/openlist/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ key }),
@@ -4721,7 +4725,7 @@ const NetDiskConfigComponent = ({
 
   const handleSave = async () => {
     await withLoading('saveNetDisk', async () => {
-      const response = await fetch('/api/admin/netdisk', {
+      const response = await apiFetch('/api/admin/netdisk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4777,7 +4781,7 @@ const NetDiskConfigComponent = ({
   const handleValidate = async () => {
     await withLoading('validateNetDisk', async () => {
       try {
-        const response = await fetch('/api/admin/netdisk', {
+        const response = await apiFetch('/api/admin/netdisk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4808,7 +4812,7 @@ const NetDiskConfigComponent = ({
   const handleValidateMobile = async () => {
     await withLoading('validateMobileNetDisk', async () => {
       try {
-        const response = await fetch('/api/admin/netdisk', {
+        const response = await apiFetch('/api/admin/netdisk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4839,7 +4843,7 @@ const NetDiskConfigComponent = ({
   const handleValidateBaidu = async () => {
     await withLoading('validateBaiduNetDisk', async () => {
       try {
-        const response = await fetch('/api/admin/netdisk', {
+        const response = await apiFetch('/api/admin/netdisk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4870,7 +4874,7 @@ const NetDiskConfigComponent = ({
   const handleValidateTianyi = async () => {
     await withLoading('validateTianyiNetDisk', async () => {
       try {
-        const response = await fetch('/api/admin/netdisk', {
+        const response = await apiFetch('/api/admin/netdisk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4902,7 +4906,7 @@ const NetDiskConfigComponent = ({
   const handleValidatePan123 = async () => {
     await withLoading('validatePan123NetDisk', async () => {
       try {
-        const response = await fetch('/api/admin/netdisk', {
+        const response = await apiFetch('/api/admin/netdisk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4934,7 +4938,7 @@ const NetDiskConfigComponent = ({
   const handleValidateUC = async () => {
     await withLoading('validateUCNetDisk', async () => {
       try {
-        const response = await fetch('/api/admin/netdisk', {
+        const response = await apiFetch('/api/admin/netdisk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4967,7 +4971,7 @@ const NetDiskConfigComponent = ({
   const handleValidatePan115 = async () => {
     await withLoading('validatePan115NetDisk', async () => {
       try {
-        const response = await fetch('/api/admin/netdisk', {
+        const response = await apiFetch('/api/admin/netdisk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5718,7 +5722,7 @@ const EmbyConfigComponent = ({
         }
 
         // 保存到配置
-        const response = await fetch('/api/admin/config', {
+        const response = await apiFetch('/api/admin/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5760,7 +5764,7 @@ const EmbyConfigComponent = ({
       try {
         const newSources = sources.filter((s) => s.key !== source.key);
 
-        const response = await fetch('/api/admin/config', {
+        const response = await apiFetch('/api/admin/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5794,7 +5798,7 @@ const EmbyConfigComponent = ({
           s.key === source.key ? { ...s, enabled: !s.enabled } : s
         );
 
-        const response = await fetch('/api/admin/config', {
+        const response = await apiFetch('/api/admin/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5824,7 +5828,7 @@ const EmbyConfigComponent = ({
   const handleTest = async (source: any) => {
     await withLoading('testEmbySource', async () => {
       try {
-        const response = await fetch('/api/admin/emby', {
+        const response = await apiFetch('/api/admin/emby', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5857,7 +5861,7 @@ const EmbyConfigComponent = ({
   const handleClearCache = async () => {
     await withLoading('clearEmbyCache', async () => {
       try {
-        const response = await fetch('/api/admin/emby', {
+        const response = await apiFetch('/api/admin/emby', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5885,7 +5889,7 @@ const EmbyConfigComponent = ({
   const handleExport = async () => {
     await withLoading('exportEmby', async () => {
       try {
-        const response = await fetch('/api/admin/emby/export');
+        const response = await apiFetch('/api/admin/emby/export');
         if (!response.ok) {
           const data = await response.json();
           showError(data.error || '导出失败', showAlert);
@@ -5922,7 +5926,7 @@ const EmbyConfigComponent = ({
           const text = await file.text();
           const data = JSON.parse(text);
 
-          const response = await fetch('/api/admin/emby/import', {
+          const response = await apiFetch('/api/admin/emby/import', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data }),
@@ -5955,7 +5959,7 @@ const EmbyConfigComponent = ({
         const newSources = sources.map((s) =>
           selectedSources.has(s.key) ? { ...s, enabled: true } : s
         );
-        const response = await fetch('/api/admin/config', {
+        const response = await apiFetch('/api/admin/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5984,7 +5988,7 @@ const EmbyConfigComponent = ({
         const newSources = sources.map((s) =>
           selectedSources.has(s.key) ? { ...s, enabled: false } : s
         );
-        const response = await fetch('/api/admin/config', {
+        const response = await apiFetch('/api/admin/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -6019,7 +6023,7 @@ const EmbyConfigComponent = ({
             const newSources = sources.filter(
               (s) => !selectedSources.has(s.key)
             );
-            const response = await fetch('/api/admin/config', {
+            const response = await apiFetch('/api/admin/config', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -6727,7 +6731,7 @@ const VideoSourceConfig = ({
   // 通用 API 请求
   const callSourceApi = async (body: Record<string, any>) => {
     try {
-      const resp = await fetch('/api/admin/source', {
+      const resp = await apiFetch('/api/admin/source', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body }),
@@ -6783,7 +6787,7 @@ const VideoSourceConfig = ({
     // 调用API更新
     withLoading(`toggleProxyMode_${key}`, async () => {
       try {
-        const response = await fetch('/api/admin/source', {
+        const response = await apiFetch('/api/admin/source', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -6911,7 +6915,7 @@ const VideoSourceConfig = ({
     // 调用API更新
     withLoading(`updateWeight_${key}`, async () => {
       try {
-        const response = await fetch('/api/admin/source', {
+        const response = await apiFetch('/api/admin/source', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -8607,7 +8611,7 @@ const CategoryConfig = ({
   // 通用 API 请求
   const callCategoryApi = async (body: Record<string, any>) => {
     try {
-      const resp = await fetch('/api/admin/category', {
+      const resp = await apiFetch('/api/admin/category', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body }),
@@ -9019,7 +9023,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
   const loadScripts = async (preferId?: string | null) => {
     setLoadingScripts(true);
     try {
-      const response = await fetch('/api/admin/source-script', {
+      const response = await apiFetch('/api/admin/source-script', {
         cache: 'no-store',
       });
       const data = await response.json().catch(() => ({}));
@@ -9112,7 +9116,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
       const items = Array.isArray(parsed) ? parsed : [parsed];
 
       await withLoading('importSourceScript', async () => {
-        const response = await fetch('/api/admin/source-script', {
+        const response = await apiFetch('/api/admin/source-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -9143,7 +9147,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
     }
 
     await withLoading('saveSourceScript', async () => {
-      const response = await fetch('/api/admin/source-script', {
+      const response = await apiFetch('/api/admin/source-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -9182,7 +9186,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
       onConfirm: async () => {
         hideAlert();
         await withLoading('deleteSourceScript', async () => {
-          const response = await fetch('/api/admin/source-script', {
+          const response = await apiFetch('/api/admin/source-script', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -9208,7 +9212,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
 
   const handleToggleEnabled = async (id: string) => {
     await withLoading(`toggleSourceScript_${id}`, async () => {
-      const response = await fetch('/api/admin/source-script', {
+      const response = await apiFetch('/api/admin/source-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -9236,7 +9240,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
     }
 
     await withLoading('testSourceScript', async () => {
-      const response = await fetch('/api/admin/source-script', {
+      const response = await apiFetch('/api/admin/source-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -9613,7 +9617,7 @@ const ConfigFileComponent = ({
 
     await withLoading('fetchConfig', async () => {
       try {
-        const resp = await fetch('/api/admin/config_subscription/fetch', {
+        const resp = await apiFetch('/api/admin/config_subscription/fetch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: subscriptionUrl }),
@@ -9757,7 +9761,7 @@ const ConfigFileComponent = ({
   const handleSave = async () => {
     await withLoading('saveConfig', async () => {
       try {
-        const resp = await fetch('/api/admin/config_file', {
+        const resp = await apiFetch('/api/admin/config_file', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -10147,7 +10151,7 @@ const ThemeConfigComponent = ({
           }
         }
 
-        const response = await fetch('/api/admin/theme', {
+        const response = await apiFetch('/api/admin/theme', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -11070,7 +11074,7 @@ const SiteConfigComponent = ({
   };
 
   useEffect(() => {
-    fetch('/scripts/bangumi-proxy.worker.js')
+    apiFetch('/scripts/bangumi-proxy.worker.js')
       .then((response) => (response.ok ? response.text() : ''))
       .then(setBangumiProxyScript)
       .catch((error) => {
@@ -11222,7 +11226,7 @@ const SiteConfigComponent = ({
   const handleSave = async () => {
     await withLoading('saveSiteConfig', async () => {
       try {
-        const resp = await fetch('/api/admin/site', {
+        const resp = await apiFetch('/api/admin/site', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...siteSettings }),
@@ -12809,7 +12813,7 @@ const RegistrationConfigComponent = ({
             registrationSettings.RegistrationInviteCode.trim(),
         };
 
-        const resp = await fetch('/api/admin/site', {
+        const resp = await apiFetch('/api/admin/site', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedSiteConfig),
@@ -13146,7 +13150,7 @@ const RegistrationConfigComponent = ({
 
                   await withLoading('oidcDiscover', async () => {
                     try {
-                      const res = await fetch('/api/admin/oidc-discover', {
+                      const res = await apiFetch('/api/admin/oidc-discover', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -13639,7 +13643,7 @@ const CustomAdFilterConfig = ({
           CustomAdFilterVersion: Date.now(), // 使用时间戳作为版本号
         };
 
-        const response = await fetch('/api/admin/site', {
+        const response = await apiFetch('/api/admin/site', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedSiteConfig),
@@ -13841,7 +13845,7 @@ const SuwayomiConfigComponent = ({
       try {
         if (!config) throw new Error('配置未加载');
 
-        const response = await fetch('/api/admin/config', {
+        const response = await apiFetch('/api/admin/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -13870,7 +13874,7 @@ const SuwayomiConfigComponent = ({
   const handleTest = async () => {
     await withLoading('testSuwayomi', async () => {
       try {
-        const response = await fetch('/api/admin/suwayomi', {
+        const response = await apiFetch('/api/admin/suwayomi', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -14291,7 +14295,7 @@ const OPDSConfigComponent = ({
     await withLoading('saveOPDSConfig', async () => {
       try {
         if (!config) throw new Error('配置未加载');
-        const response = await fetch('/api/admin/config', {
+        const response = await apiFetch('/api/admin/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...config, OPDSConfig: buildConfig() }),
@@ -14315,7 +14319,7 @@ const OPDSConfigComponent = ({
       try {
         const source = normalizeSource(sources[index], index);
         if (!source.url) throw new Error('请先填写书源地址');
-        const response = await fetch('/api/admin/opds', {
+        const response = await apiFetch('/api/admin/opds', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -14349,14 +14353,17 @@ const OPDSConfigComponent = ({
   const importLegadoSubscription = async () => {
     await withLoading('importLegadoSubscription', async () => {
       try {
-        const response = await fetch('/api/admin/legado-subscriptions/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: legadoSubscriptionName,
-            url: legadoSubscriptionUrl,
-          }),
-        });
+        const response = await apiFetch(
+          '/api/admin/legado-subscriptions/import',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: legadoSubscriptionName,
+              url: legadoSubscriptionUrl,
+            }),
+          }
+        );
         const data = await response.json();
         if (!response.ok || !data.success)
           throw new Error(data.error || '导入 Legado 订阅失败');
@@ -14380,7 +14387,7 @@ const OPDSConfigComponent = ({
   const refreshLegadoSubscription = async (id: string) => {
     await withLoading(`refreshLegadoSubscription-${id}`, async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/legado-subscriptions/${encodeURIComponent(id)}/refresh`,
           { method: 'POST' }
         );
@@ -14405,7 +14412,7 @@ const OPDSConfigComponent = ({
   const deleteLegadoSubscription = async (id: string) => {
     await withLoading(`deleteLegadoSubscription-${id}`, async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/admin/legado-subscriptions/${encodeURIComponent(id)}`,
           { method: 'DELETE' }
         );
@@ -14898,7 +14905,7 @@ const XiaoyaConfigComponent = ({
   const handleSave = async () => {
     await withLoading('saveXiaoya', async () => {
       try {
-        const response = await fetch('/api/admin/xiaoya', {
+        const response = await apiFetch('/api/admin/xiaoya', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -14932,7 +14939,7 @@ const XiaoyaConfigComponent = ({
   const handleTest = async () => {
     await withLoading('testXiaoya', async () => {
       try {
-        const response = await fetch('/api/admin/xiaoya', {
+        const response = await apiFetch('/api/admin/xiaoya', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -15160,7 +15167,7 @@ const TelegramConfigComponent = ({
   const handleSave = async () => {
     await withLoading('saveTelegram', async () => {
       try {
-        const response = await fetch('/api/admin/telegram', {
+        const response = await apiFetch('/api/admin/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'save', config: buildConfig() }),
@@ -15193,7 +15200,7 @@ const TelegramConfigComponent = ({
           webhookSecret === '******'
             ? ''
             : `${window.location.origin}/api/telegram/webhook/${webhookSecret}`;
-        const response = await fetch('/api/admin/telegram', {
+        const response = await apiFetch('/api/admin/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -15233,7 +15240,7 @@ const TelegramConfigComponent = ({
 
     await withLoading('testTelegram', async () => {
       try {
-        const response = await fetch('/api/admin/telegram', {
+        const response = await apiFetch('/api/admin/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -15545,7 +15552,7 @@ const EmailConfigComponent = ({
               : undefined,
         };
 
-        const response = await fetch('/api/admin/email', {
+        const response = await apiFetch('/api/admin/email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -15602,7 +15609,7 @@ const EmailConfigComponent = ({
               : undefined,
         };
 
-        const response = await fetch('/api/admin/email', {
+        const response = await apiFetch('/api/admin/email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -15931,7 +15938,7 @@ const MovieRequestsComponent = ({
 
   const loadCounts = async (signal?: AbortSignal) => {
     try {
-      const response = await fetch('/api/movie-requests', { signal });
+      const response = await apiFetch('/api/movie-requests', { signal });
       const data = await response.json();
       if (signal?.aborted) return;
       const allRequests = data.requests || [];
@@ -15957,7 +15964,7 @@ const MovieRequestsComponent = ({
   const loadRequests = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/movie-requests?status=${filter}&detail=true`,
         { signal }
       );
@@ -15975,7 +15982,7 @@ const MovieRequestsComponent = ({
   const handleFulfill = async (id: string) => {
     await withLoading(`fulfill_${id}`, async () => {
       try {
-        const response = await fetch(`/api/movie-requests/${id}`, {
+        const response = await apiFetch(`/api/movie-requests/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'fulfilled' }),
@@ -15992,7 +15999,7 @@ const MovieRequestsComponent = ({
   const handleDelete = async (id: string) => {
     await withLoading(`delete_${id}`, async () => {
       try {
-        const response = await fetch(`/api/movie-requests/${id}`, {
+        const response = await apiFetch(`/api/movie-requests/${id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('删除失败');
@@ -16018,7 +16025,7 @@ const MovieRequestsComponent = ({
         },
       };
 
-      const response = await fetch('/api/admin/config', {
+      const response = await apiFetch('/api/admin/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedConfig),
@@ -16320,7 +16327,7 @@ const AIConfigComponent = ({
   const handleSave = async () => {
     await withLoading('saveAIConfig', async () => {
       try {
-        const response = await fetch('/api/admin/ai', {
+        const response = await apiFetch('/api/admin/ai', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -17150,7 +17157,7 @@ const MusicConfigComponent = ({
           throw new Error('启用音乐功能时必须填写 lxserver 地址');
         }
 
-        const response = await fetch('/api/admin/music', {
+        const response = await apiFetch('/api/admin/music', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -17448,7 +17455,7 @@ const LiveSourceConfig = ({
   // 通用 API 请求
   const callLiveSourceApi = async (body: Record<string, any>) => {
     try {
-      const resp = await fetch('/api/admin/live', {
+      const resp = await apiFetch('/api/admin/live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body }),
@@ -17492,7 +17499,7 @@ const LiveSourceConfig = ({
       );
 
       try {
-        const response = await fetch('/api/admin/live', {
+        const response = await apiFetch('/api/admin/live', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -17537,7 +17544,7 @@ const LiveSourceConfig = ({
     withLoading('saveLiveRefreshInterval', async () => {
       if (!config) return;
 
-      const response = await fetch('/api/admin/config', {
+      const response = await apiFetch('/api/admin/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -17569,7 +17576,7 @@ const LiveSourceConfig = ({
     await withLoading('refreshLiveSources', async () => {
       setIsRefreshing(true);
       try {
-        const response = await fetch('/api/admin/live/refresh', {
+        const response = await apiFetch('/api/admin/live/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -18223,7 +18230,7 @@ const WebLiveConfig = ({
 
   const callApi = async (body: Record<string, any>) => {
     try {
-      const resp = await fetch('/api/admin/web-live', {
+      const resp = await apiFetch('/api/admin/web-live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -18771,7 +18778,7 @@ function AdminPageClient() {
         setLoading(true);
       }
 
-      const response = await fetch(`/api/admin/config`);
+      const response = await apiFetch(`/api/admin/config`);
 
       if (!response.ok) {
         const data = (await response.json()) as any;
@@ -18827,7 +18834,9 @@ function AdminPageClient() {
         if (trimmedSearch) {
           params.set('search', trimmedSearch);
         }
-        const response = await fetch(`/api/admin/users?${params.toString()}`);
+        const response = await apiFetch(
+          `/api/admin/users?${params.toString()}`
+        );
         if (response.ok) {
           const data = await response.json();
           setUsersV2(data.users);
@@ -18917,7 +18926,7 @@ function AdminPageClient() {
   const handleConfirmResetConfig = async () => {
     await withLoading('resetConfig', async () => {
       try {
-        const response = await fetch(`/api/admin/reset`, { method: 'POST' });
+        const response = await apiFetch(`/api/admin/reset`, { method: 'POST' });
         if (!response.ok) {
           throw new Error(`重置失败: ${response.status}`);
         }
@@ -18935,7 +18944,9 @@ function AdminPageClient() {
   const handleReloadConfig = async () => {
     await withLoading('reloadConfig', async () => {
       try {
-        const response = await fetch(`/api/admin/reload`, { method: 'POST' });
+        const response = await apiFetch(`/api/admin/reload`, {
+          method: 'POST',
+        });
         if (!response.ok) {
           throw new Error(`重载失败: ${response.status}`);
         }

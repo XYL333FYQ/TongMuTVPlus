@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
+
 // 桌面和手机头像可能同时挂载，每个账号只保留一组请求和定时器。
 const subscriptions = new Map<
   string,
@@ -33,7 +35,7 @@ export function useUnreadNotificationCount(username?: string): number {
         if (controller) return;
         controller = new AbortController();
         try {
-          const response = await fetch('/api/notifications', {
+          const response = await apiFetch('/api/notifications', {
             cache: 'no-store',
             signal: controller.signal,
           });

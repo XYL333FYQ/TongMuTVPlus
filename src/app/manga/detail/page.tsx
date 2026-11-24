@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import {
   deleteMangaShelf,
@@ -141,7 +142,7 @@ export default function MangaDetailPage() {
       status: searchParams.get('status') || '',
     });
 
-    fetch(`/api/manga/detail?${params.toString()}`)
+    apiFetch(`/api/manga/detail?${params.toString()}`)
       .then((res) => res.json())
       .then(setDetail)
       .catch(() => undefined);

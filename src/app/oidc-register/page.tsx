@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import '@/styles/auth.css';
 
+import { apiFetch } from '@/lib/api-client';
 import { fadeUp, useReducedMotionSetting } from '@/lib/motion';
 
 import AuthVersion from '@/components/auth/AuthVersion';
@@ -26,7 +27,7 @@ function OIDCRegisterPageClient() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch('/api/auth/oidc/session-info');
+        const res = await apiFetch('/api/auth/oidc/session-info');
         if (res.ok) {
           const data = await res.json();
           setOidcInfo(data);
@@ -56,7 +57,7 @@ function OIDCRegisterPageClient() {
 
     try {
       setLoading(true);
-      const res = await fetch('/api/auth/oidc/complete-register', {
+      const res = await apiFetch('/api/auth/oidc/complete-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }),

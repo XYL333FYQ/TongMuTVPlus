@@ -4,6 +4,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getTranscoderCookieHeader } from '@/lib/transcoder-cookie.client';
 
 import { notify } from '@/components/feedback/AppDialogs';
@@ -69,7 +70,7 @@ export function makeHandleCreateTranscodeSession(ctx: TranscodeContext) {
 
       let response: Response;
       try {
-        response = await fetch(`${LOCAL_TRANSCODER_BASE_URL}/v1/sessions`, {
+        response = await apiFetch(`${LOCAL_TRANSCODER_BASE_URL}/v1/sessions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

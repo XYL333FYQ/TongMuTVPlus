@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { detectClient } from '@/lib/client-update';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { type ReleaseInfo, parseReleaseInfo } from '@/lib/release-info';
@@ -46,7 +47,7 @@ export default function ReleaseNoticeDialog({
     const controller = new AbortController();
     (async () => {
       try {
-        const response = await fetch('/api/server-config', {
+        const response = await apiFetch('/api/server-config', {
           cache: 'no-store',
           signal: controller.signal,
         });

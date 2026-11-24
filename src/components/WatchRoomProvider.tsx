@@ -10,6 +10,7 @@ import React, {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { readSetting, removeSetting } from '@/lib/settings';
 import { useWatchRoom } from '@/hooks/useWatchRoom';
@@ -164,7 +165,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
     const loadConfig = async () => {
       try {
         // 使用公共 API 获取观影室配置（不需要管理员权限）
-        const response = await fetch('/api/server-config');
+        const response = await apiFetch('/api/server-config');
         if (response.ok) {
           const data = await response.json();
           if (disposed) return;
@@ -188,7 +189,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
               // 用户未登录，不调用认证接口
             } else {
               try {
-                const authResponse = await fetch('/api/watch-room-auth');
+                const authResponse = await apiFetch('/api/watch-room-auth');
                 if (authResponse.ok) {
                   const authData = await authResponse.json();
                   watchRoomConfig.externalServerAuth =

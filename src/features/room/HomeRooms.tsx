@@ -4,6 +4,7 @@ import { ChevronRight, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { clientMemoryScope } from '@/lib/client-memory';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
@@ -36,7 +37,7 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
     const scope = quiet ? clientMemoryScope() : null;
     const current = () => !signal.aborted && request === generation.current;
     try {
-      const response = await fetch('/api/rooms?mode=mine', {
+      const response = await apiFetch('/api/rooms?mode=mine', {
         cache: 'no-store',
         signal,
       });

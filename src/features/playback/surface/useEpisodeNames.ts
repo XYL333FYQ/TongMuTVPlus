@@ -13,6 +13,7 @@ import {
 } from 'react';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
+import { apiFetch } from '@/lib/api-client';
 import { cleanEpisodeDisplayName } from '@/lib/danmaku/format';
 import type { EpisodeTitleCorrection } from '@/lib/episode-title-correction';
 import type { SearchResult } from '@/lib/types';
@@ -77,7 +78,7 @@ export function useEpisodeNames({
         }
         tmdbEpisodesFetchedIdRef.current = fingerprint;
 
-        const resp = await fetch(
+        const resp = await apiFetch(
           `/api/tmdb/episodes?id=${id}&season=${seasonNumber}`
         );
         if (!resp.ok) return;

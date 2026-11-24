@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { FormEvent, useEffect, useId, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { type ReleaseInfo, parseReleaseInfo } from '@/lib/release-info';
 
 const inputClass =
@@ -48,7 +49,7 @@ export default function ReleaseManager() {
     setConflict(false);
     const load = async () => {
       try {
-        const response = await fetch('/api/admin/releases', {
+        const response = await apiFetch('/api/admin/releases', {
           cache: 'no-store',
           signal: controller.signal,
         });
@@ -110,7 +111,7 @@ export default function ReleaseManager() {
     savingRef.current = true;
     setSaving(true);
     try {
-      const response = await fetch('/api/admin/releases', {
+      const response = await apiFetch('/api/admin/releases', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

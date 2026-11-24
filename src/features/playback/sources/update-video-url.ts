@@ -4,6 +4,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
 import { SearchResult } from '@/lib/types';
 
@@ -164,7 +165,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
         const separator = newUrl.includes('?') ? '&' : '?';
         const fetchUrl = `${newUrl}${separator}format=json`;
 
-        const response = await fetch(fetchUrl);
+        const response = await apiFetch(fetchUrl);
         const data = await response.json();
         if (requestSeq !== videoUrlRequestSeqRef.current) {
           return;

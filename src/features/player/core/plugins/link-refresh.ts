@@ -1,3 +1,5 @@
+import { apiFetch } from '@/lib/api-client';
+
 import type { HlsConstructor, VideoWithHls } from '../art-types';
 /*
  * 小雅 / OpenList 播放链接会过期：每 14 分钟静默换新链接，清单 403 时也立即刷新。
@@ -92,7 +94,7 @@ export class LinkRefresher {
     this.host.busy?.(true);
     try {
       const separator = this.lazyUrl.includes('?') ? '&' : '?';
-      const response = await fetch(
+      const response = await apiFetch(
         `${this.lazyUrl}${separator}format=json&t=${Date.now()}`
       );
       const data = await response.json();

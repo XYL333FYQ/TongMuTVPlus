@@ -4,6 +4,7 @@ import { AlertTriangle, Download, Hourglass, Play, Radio } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   attachFlvStream,
   attachHlsStream,
@@ -195,7 +196,7 @@ export default function WebLivePage() {
       setLoading(true);
       setLoadingStage('loading');
       setLoadingMessage('正在加载直播源...');
-      const res = await fetch('/api/web-live/sources');
+      const res = await apiFetch('/api/web-live/sources');
       if (res.ok) {
         setLoadingStage('fetching');
         const data = await res.json();
@@ -386,7 +387,7 @@ export default function WebLivePage() {
     await mediaRequest.run(
       async (signal) => {
         if (signal.aborted) throw Error('选源已取消');
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/web-live/stream?${new URLSearchParams({
             platform: source.platform,
             roomId: source.roomId,

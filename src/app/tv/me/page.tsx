@@ -21,6 +21,7 @@ import {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { clearAuthCookie, getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { readSetting } from '@/lib/settings';
 import { formatDateTime } from '@/lib/time';
@@ -129,7 +130,7 @@ export default function TVMePage() {
     setLoggingOut(true);
     setError('');
     try {
-      await fetch('/api/logout', {
+      await apiFetch('/api/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });

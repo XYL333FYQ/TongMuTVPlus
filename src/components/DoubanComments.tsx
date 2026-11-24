@@ -3,6 +3,7 @@
 import { CircleX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { useEnableComments } from '@/hooks/useEnableComments';
 
 import BusyDots from '@/components/feedback/BusyDots';
@@ -45,7 +46,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/douban-comments?id=${doubanId}&start=${startIndex}&limit=${limit}`
         );
 

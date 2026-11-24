@@ -3,6 +3,8 @@
 import { CircleX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
+
 import BusyDots from '@/components/feedback/BusyDots';
 
 interface AIComment {
@@ -43,7 +45,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
         params.append('info', movieInfo);
       }
 
-      const response = await fetch(`/api/ai-comments?${params.toString()}`, {
+      const response = await apiFetch(`/api/ai-comments?${params.toString()}`, {
         cache: 'no-store', // 禁用缓存
       });
 

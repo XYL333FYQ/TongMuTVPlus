@@ -4,6 +4,7 @@ import { Play } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { playMusicList } from '@/lib/music/actions';
 import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
@@ -27,7 +28,7 @@ export default function MusicRankingDetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(
+    apiFetch(
       `/api/music/v2/discovery/board-songs?source=${source}&boardId=${encodeURIComponent(
         playlistId
       )}`

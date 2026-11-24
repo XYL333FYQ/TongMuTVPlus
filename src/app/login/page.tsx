@@ -9,6 +9,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import '@/styles/auth.css';
 
+import { apiFetch } from '@/lib/api-client';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { getPlatform } from '@/lib/platform';
 import { decodeQueryText, getSafeRedirect } from '@/lib/safe-redirect';
@@ -261,7 +262,7 @@ function LoginPageClient() {
 
     try {
       setLoading(true);
-      const res = await fetch('/api/login', {
+      const res = await apiFetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -332,7 +333,7 @@ function LoginPageClient() {
 
     try {
       setTelegramLoginLoading(true);
-      const createRes = await fetch('/api/telegram/login/create', {
+      const createRes = await apiFetch('/api/telegram/login/create', {
         method: 'POST',
         signal: request.signal,
       });
@@ -392,7 +393,7 @@ function LoginPageClient() {
         telegramStatusRef.current = statusRequest;
         let statusData: { status?: string } = {};
         try {
-          const statusRes = await fetch(
+          const statusRes = await apiFetch(
             `/api/telegram/login/status?token=${encodeURIComponent(
               createData.token
             )}`,

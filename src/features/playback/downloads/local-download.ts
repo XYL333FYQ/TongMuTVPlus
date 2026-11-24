@@ -2,7 +2,7 @@
  * 自己看：这一集有没有离线缓存。
  */
 
-import type { Art } from '@/features/player';
+import { apiFetch } from '@/lib/api-client';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface LocalDownloadContext {
@@ -22,7 +22,7 @@ export function makeCheckLocalDownload(ctx: LocalDownloadContext) {
     }
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/offline-download?action=check&source=${encodeURIComponent(
           source
         )}&videoId=${encodeURIComponent(videoId)}&episodeIndex=${episodeIndex}`

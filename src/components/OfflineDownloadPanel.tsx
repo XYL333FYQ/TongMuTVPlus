@@ -3,6 +3,8 @@
 import { Film, Inbox } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
+
 import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
@@ -50,7 +52,7 @@ export function OfflineDownloadPanel({
   // 获取任务列表
   const fetchTasks = async () => {
     try {
-      const response = await fetch('/api/offline-download');
+      const response = await apiFetch('/api/offline-download');
       if (response.ok) {
         const data = await response.json();
         setTasks(data.tasks || []);
@@ -63,9 +65,12 @@ export function OfflineDownloadPanel({
   // 删除任务
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/offline-download?taskId=${taskId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiFetch(
+        `/api/offline-download?taskId=${taskId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (response.ok) {
         // 从列表中移除
@@ -83,7 +88,7 @@ export function OfflineDownloadPanel({
   // 重试任务
   const handleRetryTask = async (taskId: string) => {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/offline-download?taskId=${taskId}&action=retry`,
         {
           method: 'PUT',

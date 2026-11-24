@@ -5,6 +5,7 @@
  * 3. 片源开了代理模式、或直链域名被设为走代理时，套上代理。
  */
 
+import { apiFetch } from '@/lib/api-client';
 import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
 import { readJson, writeSetting } from '@/lib/settings';
 import type { SearchResult } from '@/lib/types';
@@ -186,7 +187,7 @@ async function serverHasOffline(
   episodeIndex: number
 ) {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/offline-download?action=check&source=${encodeURIComponent(
         source
       )}&videoId=${encodeURIComponent(videoId)}&episodeIndex=${episodeIndex}`
@@ -223,7 +224,9 @@ export async function resolvePlayback(
   if (isLazyPlayUrl(raw)) {
     try {
       const separator = raw.includes('?') ? '&' : '?';
-      const data = await (await fetch(`${raw}${separator}format=json`)).json();
+      const data = await (
+        await apiFetch(`${raw}${separator}format=json`)
+      ).json();
       if (options.stale()) return null;
       if (data.url) {
         result.url = data.url;

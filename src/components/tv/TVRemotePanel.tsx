@@ -21,6 +21,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import './tv-surfaces.css';
 
+import { apiFetch } from '@/lib/api-client';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 import type {
   TVRemoteDevice,
@@ -118,7 +119,7 @@ export default function TVRemotePanel({
   const loadDevices = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/tv-remote/devices', {
+      const response = await apiFetch('/api/tv-remote/devices', {
         cache: 'no-store',
       });
       const data = await response.json().catch(() => ({}));
@@ -164,7 +165,7 @@ export default function TVRemotePanel({
   const sendKey = async (key: TVRemoteKey, repeat = false, digit?: string) => {
     if (!selectedDeviceId || closeRequested.current) return;
     try {
-      const response = await fetch('/api/tv-remote/key', {
+      const response = await apiFetch('/api/tv-remote/key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,7 +188,7 @@ export default function TVRemotePanel({
   const sendText = async (mode: TVRemoteTextMode, value = text) => {
     if (!selectedDeviceId || closeRequested.current) return;
     try {
-      const response = await fetch('/api/tv-remote/text', {
+      const response = await apiFetch('/api/tv-remote/text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

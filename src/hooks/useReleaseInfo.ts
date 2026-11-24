@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { defaultReleaseInfo, parseReleaseInfo } from '@/lib/release-info';
 
 export function useReleaseInfo(enabled = true) {
@@ -15,7 +16,7 @@ export function useReleaseInfo(enabled = true) {
       const current = new AbortController();
       controller = current;
       try {
-        const response = await fetch('/api/server-config', {
+        const response = await apiFetch('/api/server-config', {
           cache: 'no-store',
           signal: current.signal,
         });

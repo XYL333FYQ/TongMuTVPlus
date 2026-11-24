@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
+
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
@@ -215,7 +217,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
         }
       };
 
-      const response = await fetch('/api/admin/data_migration/export', {
+      const response = await apiFetch('/api/admin/data_migration/export', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -326,7 +328,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
       formData.append('file', selectedFile);
       formData.append('password', importPassword);
 
-      const response = await fetch('/api/admin/data_migration/import', {
+      const response = await apiFetch('/api/admin/data_migration/import', {
         method: 'POST',
         body: formData,
       });

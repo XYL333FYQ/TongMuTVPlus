@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { clearAuthCookie, getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { TOKEN_CONFIG } from '@/lib/refresh-token';
 import { isLoginPathname, resolveLoginPath } from '@/lib/tv-mode';
@@ -42,7 +43,7 @@ export function TokenRefreshManager() {
       refreshPromise = (async () => {
         try {
           // 使用原始 fetch 避免递归
-          const response = await window.fetch('/api/auth/refresh', {
+          const response = await apiFetch('/api/auth/refresh', {
             method: 'POST',
             credentials: 'include',
           });
@@ -64,7 +65,7 @@ export function TokenRefreshManager() {
               }
 
               try {
-                await window.fetch('/api/logout', {
+                await apiFetch('/api/logout', {
                   method: 'POST',
                   credentials: 'include',
                 });

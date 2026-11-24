@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { addSearchHistory, getSearchHistory } from '@/lib/db.client';
 import { type SettingKey, writeSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
@@ -108,7 +109,7 @@ export default function TVSearchPage() {
     setError('');
     setResults([]);
     addSearchHistory(q).catch(() => undefined);
-    fetch(`/api/search?q=${encodeURIComponent(q)}`)
+    apiFetch(`/api/search?q=${encodeURIComponent(q)}`)
       .then((response) => {
         if (!response.ok) throw new Error('搜索失败');
         return response.json();

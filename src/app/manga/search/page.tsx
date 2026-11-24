@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import {
   deleteMangaShelf,
@@ -201,7 +202,7 @@ export default function MangaSearchPage() {
   useEffect(() => {
     setUseFluidSearch(readFluidSearchSetting());
 
-    fetch('/api/manga/sources')
+    apiFetch('/api/manga/sources')
       .then((res) => res.json())
       .then((data) => setSources(data.sources || []))
       .catch(() => undefined);
@@ -371,7 +372,7 @@ export default function MangaSearchPage() {
       }
 
       try {
-        const res = await fetch(`/api/manga/search?${params.toString()}`);
+        const res = await apiFetch(`/api/manga/search?${params.toString()}`);
         const data = await res.json();
         if (currentSearchKeyRef.current !== searchKey) return;
         if (!res.ok) throw new Error(data.error || '搜索失败');

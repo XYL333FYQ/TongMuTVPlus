@@ -5,6 +5,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
 import { DEVICE_TIER_EVENT, getDeviceTier } from '@/lib/device-tier';
 import { installTouchControls } from '@/lib/player-touch-controls';
@@ -578,7 +579,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                 nextEpisodeUrl.includes('m3u8')
               ) {
                 // 1. 先fetch m3u8文件
-                const m3u8Response = await fetch(nextEpisodeUrl);
+                const m3u8Response = await apiFetch(nextEpisodeUrl);
                 const m3u8Text = await m3u8Response.text();
 
                 // 2. 解析m3u8，提取ts分片URL
@@ -607,7 +608,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
 
                 for (let i = 0; i < maxFragmentsToPreload; i++) {
                   try {
-                    await fetch(tsUrls[i]);
+                    await apiFetch(tsUrls[i]);
                   } catch (err) {
                     // 静默处理分片加载失败
                   }

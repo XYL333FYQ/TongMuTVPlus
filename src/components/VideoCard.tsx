@@ -24,6 +24,7 @@ import React, {
 import './VideoCard.css';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { getBangumiSubjectUrl } from '@/lib/bangumi.client';
 import {
@@ -641,7 +642,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         if (actualTitle) params.set('title', actualTitle);
         if (actualYear) params.set('year', actualYear);
 
-        const res = await fetch(`/api/tmdb/videos?${params.toString()}`);
+        const res = await apiFetch(`/api/tmdb/videos?${params.toString()}`);
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data?.error || '获取预告片失败');

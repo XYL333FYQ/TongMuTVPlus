@@ -60,6 +60,11 @@ export const DETECTORS = {
     pattern: /\btm-library-feedback(?![-\w])/g,
     label: '自己画加载失败提示',
   },
+  // 网络请求：界面层直接调 fetch（apiFetch、prefetch、obj.fetch 不算，window.fetch 算）
+  fetch: {
+    pattern: /(?<![.\w])fetch\s*\(|\bwindow\.fetch\s*\(/g,
+    label: '直接调 fetch',
+  },
   // 不属于哪个零件：行内跳过代码检查的注释（S8），全部 src 都统计
   eslintDisableInline: {
     pattern: /eslint-disable-(?:next-)?line\b/g,

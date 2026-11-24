@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { BookListItem, BookSearchResult, BookSource } from '@/lib/book.types';
 import {
   buildBookDetailPath,
@@ -359,7 +360,7 @@ export default function BooksSearchPage() {
       }
 
       try {
-        const res = await fetch(`/api/books/search?${params.toString()}`);
+        const res = await apiFetch(`/api/books/search?${params.toString()}`);
         const json = await res.json();
         if (currentSearchKeyRef.current !== searchKey) return;
         if (!res.ok) throw new Error(json.error || '搜索失败');
@@ -399,7 +400,7 @@ export default function BooksSearchPage() {
 
   useEffect(() => {
     setUseFluidSearch(readFluidSearchSetting());
-    fetch('/api/books/sources')
+    apiFetch('/api/books/sources')
       .then((res) => res.json())
       .then((json) => setSources(json.sources || []))
       .catch(() => undefined);

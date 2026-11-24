@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   CategoryNode,
   getChildCategories,
@@ -203,7 +204,7 @@ function DuanjuPageClient() {
       setIsLoadingSources(true);
       setSourcesError('');
       try {
-        const response = await fetch('/api/duanju/sources');
+        const response = await apiFetch('/api/duanju/sources');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         if (cancelled) return;
@@ -260,7 +261,7 @@ function DuanjuPageClient() {
     let cancelled = false;
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/duanju/categories?source=${encodeURIComponent(selectedSource)}`
         );
         const data = await response.json();
@@ -377,7 +378,7 @@ function DuanjuPageClient() {
       setIsLoadingVideos(true);
       setVideosError('');
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/duanju/videos?source=${encodeURIComponent(
             selectedSource
           )}&categoryId=${encodeURIComponent(

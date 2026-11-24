@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { viewportSize } from '@/lib/device-tier';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { formatClock } from '@/lib/time';
@@ -525,7 +526,7 @@ export default function MusicPage() {
       audio.load();
       setLyrics([]);
 
-      fetch('/api/music/v2/lyric', {
+      apiFetch('/api/music/v2/lyric', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

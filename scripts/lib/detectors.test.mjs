@@ -46,6 +46,13 @@ test('counts each ingredient', () => {
   assert.equal(countMatches("getByRole('switch')", 'switch'), 0);
   assert.equal(
     countMatches(
+      "await fetch('/api/x'); window.fetch(u); apiFetch('/api/y'); router.prefetch('/'); cache.fetch(k)",
+      'fetch'
+    ),
+    2
+  );
+  assert.equal(
+    countMatches(
       "<div className='tm-empty'><p className='tm-empty-title'>x</p></div><main className='tm-empty-page' />",
       'emptyState'
     ),

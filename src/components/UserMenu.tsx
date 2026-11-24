@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BRAND_NAME } from '@/lib/brand';
 import {
@@ -471,7 +472,7 @@ export const UserMenu: React.FC = () => {
     setIsLoadingSubscribeUrl(true);
     try {
       // 获取用户的 TVBox token
-      const response = await fetch('/api/user/tvbox-token');
+      const response = await apiFetch('/api/user/tvbox-token');
       if (response.ok) {
         const data = await response.json();
         const token = data.token;
@@ -503,7 +504,7 @@ export const UserMenu: React.FC = () => {
         setIsResettingToken(true);
 
         try {
-          const response = await fetch('/api/user/tvbox-token/reset', {
+          const response = await apiFetch('/api/user/tvbox-token/reset', {
             method: 'POST',
           });
 
@@ -635,7 +636,7 @@ export const UserMenu: React.FC = () => {
       const savedAnimeImageBaseUrl = readSetting('animeImageBaseUrl');
       setAnimeImageBaseUrl(savedAnimeImageBaseUrl || '');
 
-      fetch('/scripts/bangumi-proxy.worker.js')
+      apiFetch('/scripts/bangumi-proxy.worker.js')
         .then((response) => (response.ok ? response.text() : ''))
         .then(setBangumiProxyScript)
         .catch((error) => {
@@ -877,14 +878,14 @@ export const UserMenu: React.FC = () => {
     setEmailSettingsMessage('');
     setEmailSettingsMessageType(null);
     try {
-      const response = await fetch('/api/user/email-settings');
+      const response = await apiFetch('/api/user/email-settings');
       if (response.ok) {
         const data = await response.json();
         setUserEmail(data.email || '');
         setEmailNotifications(data.emailNotifications || false);
       }
 
-      const pushResponse = await fetch('/api/notifications/push');
+      const pushResponse = await apiFetch('/api/notifications/push');
       if (pushResponse.ok) {
         const pushData = await pushResponse.json();
         setPushNotificationsConfigured(
@@ -904,7 +905,7 @@ export const UserMenu: React.FC = () => {
         setPushNotifications(Boolean(pushData.pushNotifications));
       }
 
-      const telegramResponse = await fetch('/api/telegram/bind');
+      const telegramResponse = await apiFetch('/api/telegram/bind');
       if (telegramResponse.ok) {
         const telegramData = await telegramResponse.json();
         setTelegramEnabled(Boolean(telegramData.enabled));
@@ -923,7 +924,7 @@ export const UserMenu: React.FC = () => {
     setEmailSettingsMessage('');
     setEmailSettingsMessageType(null);
     try {
-      const response = await fetch('/api/telegram/bind', { method: 'POST' });
+      const response = await apiFetch('/api/telegram/bind', { method: 'POST' });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data.error || '生成 Telegram 绑定码失败');
@@ -1008,7 +1009,7 @@ export const UserMenu: React.FC = () => {
         const subscription = await registration?.pushManager.getSubscription();
         const endpoint = subscription?.endpoint;
         await subscription?.unsubscribe();
-        await fetch('/api/notifications/push', {
+        await apiFetch('/api/notifications/push', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint }),
@@ -1028,7 +1029,7 @@ export const UserMenu: React.FC = () => {
     setEmailSettingsMessage('');
     setEmailSettingsMessageType(null);
     try {
-      const statusResponse = await fetch('/api/notifications/push');
+      const statusResponse = await apiFetch('/api/notifications/push');
       const status = statusResponse.ok ? await statusResponse.json() : null;
       if (!status?.configured || !status?.publicKey) {
         throw new Error('管理员尚未配置 Web Push VAPID 密钥');
@@ -1057,7 +1058,7 @@ export const UserMenu: React.FC = () => {
         });
       }
 
-      const response = await fetch('/api/notifications/push', {
+      const response = await apiFetch('/api/notifications/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1092,7 +1093,7 @@ export const UserMenu: React.FC = () => {
     setEmailSettingsMessage('');
     setEmailSettingsMessageType(null);
     try {
-      const response = await fetch('/api/user/email-settings', {
+      const response = await apiFetch('/api/user/email-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1126,7 +1127,7 @@ export const UserMenu: React.FC = () => {
   const loadDevices = async () => {
     setDevicesLoading(true);
     try {
-      const response = await fetch('/api/auth/devices');
+      const response = await apiFetch('/api/auth/devices');
       if (response.ok) {
         const data = await response.json();
         setDevices(data.devices || []);
@@ -1148,7 +1149,7 @@ export const UserMenu: React.FC = () => {
         setConfirmDialog({ ...confirmDialog, isOpen: false });
         setRevoking(tokenId);
         try {
-          const response = await fetch('/api/auth/devices', {
+          const response = await apiFetch('/api/auth/devices', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tokenId }),
@@ -1182,7 +1183,7 @@ export const UserMenu: React.FC = () => {
       onConfirm: async () => {
         setConfirmDialog({ ...confirmDialog, isOpen: false });
         try {
-          const response = await fetch('/api/auth/devices', {
+          const response = await apiFetch('/api/auth/devices', {
             method: 'POST',
           });
 
@@ -1350,7 +1351,7 @@ export const UserMenu: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', {
+      await apiFetch('/api/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -1572,7 +1573,7 @@ export const UserMenu: React.FC = () => {
     setPasswordLoading(true);
 
     try {
-      const response = await fetch('/api/change-password', {
+      const response = await apiFetch('/api/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2613,7 +2614,7 @@ export const UserMenu: React.FC = () => {
   const pullRemoteSettings = async (manual: boolean): Promise<boolean> => {
     if (manual) setSyncBusy(true);
     try {
-      const res = await fetch('/api/local-settings-sync', {
+      const res = await apiFetch('/api/local-settings-sync', {
         cache: 'no-store',
       });
       if (!res.ok) {
@@ -2668,7 +2669,7 @@ export const UserMenu: React.FC = () => {
       };
 
       try {
-        const res = await fetch('/api/local-settings-sync', {
+        const res = await apiFetch('/api/local-settings-sync', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ payload }),

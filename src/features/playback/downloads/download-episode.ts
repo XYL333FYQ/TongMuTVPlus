@@ -4,6 +4,7 @@
 
 import type { MutableRefObject } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { SearchResult } from '@/lib/types';
 
 import type { Art } from '@/features/player';
@@ -72,7 +73,7 @@ export function makeHandleDownloadEpisode(ctx: DownloadEpisodeContext) {
         // 离线下载模式 - 调用服务器API
         try {
           const downloadTitle = `${videoTitle}_第${episodeIndex + 1}集`;
-          const response = await fetch('/api/offline-download', {
+          const response = await apiFetch('/api/offline-download', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -3,6 +3,7 @@
 import { ArrowLeft, ImageOff, Play, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import { matchesMedia } from '@/lib/device-tier';
 import { playMusicList } from '@/lib/music/actions';
@@ -83,7 +84,7 @@ export default function MusicMyPlaylistsPage() {
 
   const loadUserPlaylists = useCallback(() => {
     setLoadingUserPlaylists(true);
-    fetch('/api/music/v2/playlists')
+    apiFetch('/api/music/v2/playlists')
       .then((res) => res.json())
       .then((data) => setUserPlaylists(data.data?.playlists || []))
       .catch(() => setUserPlaylists([]))
@@ -105,7 +106,7 @@ export default function MusicMyPlaylistsPage() {
 
   const loadUserPlaylistSongs = useCallback((playlistId: string) => {
     setLoadingUserPlaylistSongs(true);
-    fetch(`/api/music/v2/playlists/${playlistId}/songs`)
+    apiFetch(`/api/music/v2/playlists/${playlistId}/songs`)
       .then((res) => res.json())
       .then((data) => setUserPlaylistSongs(data.data?.songs || []))
       .catch(() => setUserPlaylistSongs([]))
@@ -144,7 +145,7 @@ export default function MusicMyPlaylistsPage() {
 
     setDeletingPlaylistId(playlistId);
     try {
-      const response = await fetch(`/api/music/v2/playlists/${playlistId}`, {
+      const response = await apiFetch(`/api/music/v2/playlists/${playlistId}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -178,7 +179,7 @@ export default function MusicMyPlaylistsPage() {
 
     setRemovingSongId(song.id);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/music/v2/playlists/${
           selectedUserPlaylist.id
         }/songs?songId=${encodeURIComponent(song.id)}`,

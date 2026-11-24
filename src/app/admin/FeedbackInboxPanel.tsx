@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { FEATURE_PERMISSION_OPTIONS } from '@/lib/feature-permissions';
 import {
   type FeedbackItem,
@@ -49,7 +50,7 @@ export default function FeedbackInboxPanel({
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch('/api/feedback?all=1', {
+      const response = await apiFetch('/api/feedback?all=1', {
         cache: 'no-store',
       });
       const data = await response.json();
@@ -88,7 +89,7 @@ export default function FeedbackInboxPanel({
   const act = async (item: FeedbackItem, action: string) => {
     setBusy(item.id);
     try {
-      const response = await fetch(`/api/feedback/${item.id}`, {
+      const response = await apiFetch(`/api/feedback/${item.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, reply: replies[item.id] || '' }),

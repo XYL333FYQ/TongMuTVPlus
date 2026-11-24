@@ -19,6 +19,7 @@ import {
   isExcludePresetActive,
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
+import { apiFetch } from '@/lib/api-client';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
@@ -127,7 +128,7 @@ export default function AnimeSubscribeModal({
     try {
       setRecognizing(true);
       setRecognizeError('');
-      const res = await fetch('/api/admin/anime-subscription/recognize', {
+      const res = await apiFetch('/api/admin/anime-subscription/recognize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: keyword, source: form.source }),
@@ -192,7 +193,7 @@ export default function AnimeSubscribeModal({
     try {
       setTesting(true);
       setTestError('');
-      const res = await fetch('/api/admin/anime-subscription/test', {
+      const res = await apiFetch('/api/admin/anime-subscription/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -231,7 +232,7 @@ export default function AnimeSubscribeModal({
     try {
       setLoading(true);
       setError('');
-      const res = await fetch('/api/admin/anime-subscription', {
+      const res = await apiFetch('/api/admin/anime-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

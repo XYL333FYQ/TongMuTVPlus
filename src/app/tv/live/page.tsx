@@ -4,6 +4,7 @@ import { AlertTriangle, Play, Radio, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   Favorite,
   getAllFavorites,
@@ -77,7 +78,7 @@ export default function TVLivePage() {
       setLastChannel(null);
     }
 
-    fetch('/api/live/sources')
+    apiFetch('/api/live/sources')
       .then((r) => {
         if (!r.ok) throw new Error('获取直播源失败');
         return r.json();
@@ -136,7 +137,7 @@ export default function TVLivePage() {
     setError('');
     setSelectedGroup('全部');
     setVisibleCount(120);
-    fetch(`/api/live/channels?source=${encodeURIComponent(source)}`)
+    apiFetch(`/api/live/channels?source=${encodeURIComponent(source)}`)
       .then((r) => {
         if (r.status === 401 || r.status === 403)
           throw new Error('无权限访问电视直播，请先登录或检查权限');

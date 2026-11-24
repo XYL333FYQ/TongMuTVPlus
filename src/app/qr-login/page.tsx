@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import '@/styles/auth.css';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 import BusyDots from '@/components/feedback/BusyDots';
@@ -25,7 +26,7 @@ function QrLoginClient() {
   const confirm = async () => {
     setLoading(true);
     setMessage('');
-    const res = await fetch('/api/auth/qr/confirm', {
+    const res = await apiFetch('/api/auth/qr/confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
@@ -43,7 +44,7 @@ function QrLoginClient() {
   };
 
   const cancel = async () => {
-    await fetch('/api/auth/qr/cancel', {
+    await apiFetch('/api/auth/qr/cancel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),

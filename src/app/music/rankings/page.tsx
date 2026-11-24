@@ -4,6 +4,7 @@ import { ListMusic } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { musicSources, normalizeSource } from '@/lib/music/shared';
 import type { Playlist } from '@/lib/music/types';
 
@@ -37,7 +38,7 @@ export default function MusicRankingsPage() {
     const source = normalizeSource(searchParams.get('source'));
     setCurrentSource(source);
     setLoading(true);
-    fetch(`/api/music/v2/discovery/boards?source=${source}`)
+    apiFetch(`/api/music/v2/discovery/boards?source=${source}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {

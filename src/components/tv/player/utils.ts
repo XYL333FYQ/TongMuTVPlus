@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-client';
 import { readSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
 
@@ -27,7 +28,7 @@ async function fetchSearchResults(query: string) {
   const cached = getCachedSearchResults(query);
   if (cached) return cached;
 
-  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+  const res = await apiFetch(`/api/search?q=${encodeURIComponent(query)}`, {
     cache: 'no-store',
   });
   if (!res.ok) throw new Error('搜索播放源失败');
@@ -46,7 +47,7 @@ export async function fetchTVDetail(params: {
   if (source && id) {
     const qs = new URLSearchParams({ source, id, title: title || '' });
     if (fileName) qs.set('fileName', fileName);
-    const res = await fetch(`/api/source-detail?${qs.toString()}`, {
+    const res = await apiFetch(`/api/source-detail?${qs.toString()}`, {
       cache: 'no-store',
     });
     if (!res.ok) throw new Error('获取视频详情失败');
@@ -79,7 +80,7 @@ export async function fetchTVDetail(params: {
       id: detail.id,
       title: detail.title || title,
     });
-    const detailRes = await fetch(`/api/source-detail?${qs.toString()}`, {
+    const detailRes = await apiFetch(`/api/source-detail?${qs.toString()}`, {
       cache: 'no-store',
     });
     if (detailRes.ok) detail = (await detailRes.json()) as SearchResult;
@@ -105,7 +106,7 @@ export async function resolveTVEpisodeUrl(
   ];
   if (lazyPrefixes.some((prefix) => url.startsWith(prefix))) {
     const separator = url.includes('?') ? '&' : '?';
-    const res = await fetch(`${url}${separator}format=json`, {
+    const res = await apiFetch(`${url}${separator}format=json`, {
       cache: 'no-store',
     });
     const data = await res.json();

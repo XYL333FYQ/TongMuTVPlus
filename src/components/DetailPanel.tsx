@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getBangumiSubject, getBangumiSubjectUrl } from '@/lib/bangumi.client';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
@@ -268,7 +269,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     setEpisodeStills([]);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/tmdb/episode-images?id=${tmdbId}&season=${selectedSeason}&episode=${episode.episode_number}`
       );
 
@@ -309,7 +310,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     setGalleryError(null);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/tmdb/images?id=${galleryTmdbId}&type=${galleryMediaType}`
       );
 
@@ -474,7 +475,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     const mediaType = result.media_type || type;
 
     // 获取详情
-    const detailResponse = await fetch(
+    const detailResponse = await apiFetch(
       `/api/tmdb/detail?id=${detailId}&type=${mediaType}`
     );
     if (!detailResponse.ok) {
@@ -486,7 +487,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     let seasonDetail = null;
     if (extractedSeasonNumber && mediaType === 'tv') {
       try {
-        const seasonResponse = await fetch(
+        const seasonResponse = await apiFetch(
           `/api/tmdb/episodes?id=${detailId}&season=${extractedSeasonNumber}`
         );
         if (seasonResponse.ok) {
@@ -616,7 +617,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           // cmsData 存在但 desc 为空，尝试通过 API 获取详情
           if (sourceId && source) {
             try {
-              const response = await fetch(
+              const response = await apiFetch(
                 appendSpecialSourceParam(
                   `/api/source-detail?id=${encodeURIComponent(
                     sourceId
@@ -682,7 +683,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         if (doubanId && !isBangumi) {
           setCurrentSource('douban');
           setOriginalSource('douban');
-          const response = await fetch(`/api/douban/detail?id=${doubanId}`);
+          const response = await apiFetch(`/api/douban/detail?id=${doubanId}`);
           if (!response.ok) {
             throw new Error('获取豆瓣详情失败');
           }
@@ -735,7 +736,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       setCurrentSource('tmdb');
       const { searchTitle, extractedSeasonNumber } = parseTmdbSearchInfo();
 
-      const searchResponse = await fetch(
+      const searchResponse = await apiFetch(
         `/api/tmdb/search?query=${encodeURIComponent(searchTitle)}`
       );
       if (!searchResponse.ok) {
@@ -810,7 +811,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   const fetchTmdbDataForToggle = async () => {
     const { searchTitle, extractedSeasonNumber } = parseTmdbSearchInfo();
 
-    const searchResponse = await fetch(
+    const searchResponse = await apiFetch(
       `/api/tmdb/search?query=${encodeURIComponent(searchTitle)}`
     );
     if (!searchResponse.ok) {
@@ -847,7 +848,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       setLoadingSeasons(true);
       try {
         // 获取所有季度
-        const seasonsResponse = await fetch(
+        const seasonsResponse = await apiFetch(
           `/api/tmdb/seasons?tvId=${detailData.tmdbId}`
         );
         if (!seasonsResponse.ok) return;
@@ -866,7 +867,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         setSelectedSeason(defaultSeason);
 
         // 获取默认季度的集数详情
-        const episodesResponse = await fetch(
+        const episodesResponse = await apiFetch(
           `/api/tmdb/episodes?id=${detailData.tmdbId}&season=${defaultSeason}`
         );
         const episodesData = episodesResponse.ok
@@ -942,7 +943,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
     const fetchCredits = async () => {
       try {
-        const creditsResponse = await fetch(
+        const creditsResponse = await apiFetch(
           `/api/tmdb/credits?id=${detailData.tmdbId}&type=${detailData.mediaType}`
         );
         if (!creditsResponse.ok) return;
@@ -990,7 +991,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     setSelectedSeason(seasonNumber);
     setLoadingSeasons(true);
     try {
-      const episodesResponse = await fetch(
+      const episodesResponse = await apiFetch(
         `/api/tmdb/episodes?id=${detailData.tmdbId}&season=${seasonNumber}`
       );
       if (!episodesResponse.ok) return;

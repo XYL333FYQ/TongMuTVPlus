@@ -4,6 +4,7 @@ import { Folder, HardDrive, Lock, PlayCircle, Server } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { base58Encode } from '@/lib/utils';
 
@@ -70,7 +71,7 @@ export default function TVPrivatePage() {
 
   useEffect(() => {
     if (source !== 'emby') return;
-    fetch('/api/emby/sources')
+    apiFetch('/api/emby/sources')
       .then((r) => r.json())
       .then((data) => {
         const list = data.sources || [];
@@ -97,7 +98,7 @@ export default function TVPrivatePage() {
           : `/api/emby/list?page=1&pageSize=40&embyKey=${encodeURIComponent(
               embyKey
             )}&sortBy=DateCreated&sortOrder=Descending`;
-      const res = await fetch(endpoint);
+      const res = await apiFetch(endpoint);
       if (!res.ok) throw new Error('获取私人影库失败');
       const data = await res.json();
       if (data.error) throw new Error(data.error);

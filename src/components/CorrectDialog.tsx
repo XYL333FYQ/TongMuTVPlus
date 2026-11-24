@@ -5,6 +5,7 @@
 import { Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { type SettingKey, writeSetting } from '@/lib/settings';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
@@ -145,7 +146,7 @@ export default function CorrectDialog({
     setSelectedResult(null);
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/tmdb/search?query=${encodeURIComponent(searchQuery)}`
       );
 
@@ -176,7 +177,7 @@ export default function CorrectDialog({
     setLoadingSeasons(true);
     setError('');
     try {
-      const response = await fetch(`/api/tmdb/seasons?tvId=${tvId}`);
+      const response = await apiFetch(`/api/tmdb/seasons?tvId=${tvId}`);
 
       if (!response.ok) {
         throw new Error('获取季度列表失败');
@@ -280,7 +281,7 @@ export default function CorrectDialog({
           ...correctionData,
         };
 
-        const response = await fetch('/api/openlist/correct', {
+        const response = await apiFetch('/api/openlist/correct', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -406,7 +407,7 @@ export default function CorrectDialog({
           ...correctionData,
         };
 
-        const response = await fetch('/api/openlist/correct', {
+        const response = await apiFetch('/api/openlist/correct', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),

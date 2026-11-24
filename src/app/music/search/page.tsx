@@ -4,6 +4,7 @@ import { ArrowLeft, Play, RefreshCw, Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import { playMusicList } from '@/lib/music/actions';
 import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
@@ -248,7 +249,7 @@ export default function MusicSearchPage() {
 
     if (!cachedData || cacheExpired || forceRefresh) {
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/music/v2/discovery/hot-search?source=${source}`
         );
         const data = await res.json();
@@ -289,7 +290,7 @@ export default function MusicSearchPage() {
       }
 
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/music/v2/search?source=${source}&q=${encodeURIComponent(
             q
           )}&type=${searchType}&page=${pageNum}&limit=20`,
@@ -469,7 +470,7 @@ export default function MusicSearchPage() {
     setLoading(true);
     try {
       const itemSource = normalizeSource(singer.source || selectedSource);
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/music/v2/discovery/artist-songs?source=${itemSource}&id=${encodeURIComponent(
           String(singer.id)
         )}`
@@ -493,7 +494,7 @@ export default function MusicSearchPage() {
     setLoading(true);
     try {
       const itemSource = normalizeSource(album.source || selectedSource);
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/music/v2/discovery/album-songs?source=${itemSource}&id=${encodeURIComponent(
           String(album.id)
         )}`

@@ -3,6 +3,7 @@
  * 搜不到时给出相近推荐。搜索结果缓存在 sessionStorage（与搜索页共用）。
  */
 
+import { apiFetch } from '@/lib/api-client';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import {
   appendSpecialSourceParam,
@@ -207,7 +208,7 @@ export async function fetchSourceDetail(
     )}`
   );
   if (fileName) url += `&fileName=${encodeURIComponent(fileName)}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) throw new Error('获取视频详情失败');
   const detail = (await response.json()) as SearchResult | null;
   if (!detail) throw new Error('视频详情为空');
@@ -226,7 +227,7 @@ export async function searchEverything(
       return { results: cached.results, complete: true };
   }
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       appendSpecialSourceParam(
         `/api/search?q=${encodeURIComponent(query.trim())}`
       )

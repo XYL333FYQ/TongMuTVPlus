@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
 
+import { apiFetch } from '@/lib/api-client';
+
 interface SearchSuggestionsProps {
   query: string;
   isVisible: boolean;
@@ -43,7 +45,7 @@ export default function SearchSuggestions({
     abortControllerRef.current = controller;
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/search/suggestions?q=${encodeURIComponent(searchQuery)}`,
         {
           signal: controller.signal,

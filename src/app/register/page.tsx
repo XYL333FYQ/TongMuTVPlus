@@ -9,6 +9,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import '@/styles/auth.css';
 
+import { apiFetch } from '@/lib/api-client';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { getSafeRedirect } from '@/lib/safe-redirect';
 
@@ -158,7 +159,7 @@ function RegisterPageClient() {
 
     try {
       setLoading(true);
-      const res = await fetch('/api/register', {
+      const res = await apiFetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

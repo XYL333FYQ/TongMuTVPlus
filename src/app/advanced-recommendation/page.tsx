@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { SearchResult } from '@/lib/types';
 
@@ -46,7 +47,7 @@ export default function AdvancedRecommendationPage() {
     const fetchSources = async () => {
       setIsLoadingSources(true);
       try {
-        const response = await fetch('/api/advanced-recommendation/sources');
+        const response = await apiFetch('/api/advanced-recommendation/sources');
         const data = await response.json();
 
         if (!response.ok) {
@@ -106,7 +107,7 @@ export default function AdvancedRecommendationPage() {
     const fetchVideos = async () => {
       setIsLoadingVideos(true);
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/advanced-recommendation/videos?source=${encodeURIComponent(
             selectedSource
           )}&page=${page}`

@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
+
 import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
@@ -127,7 +129,7 @@ export default function AddToPlaylistModal({
   const loadPlaylists = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/music/v2/playlists');
+      const response = await apiFetch('/api/music/v2/playlists');
       if (response.ok) {
         const data = await response.json();
         setPlaylists(data.data?.playlists || []);
@@ -147,7 +149,7 @@ export default function AddToPlaylistModal({
 
     try {
       setCreating(true);
-      const response = await fetch('/api/music/v2/playlists', {
+      const response = await apiFetch('/api/music/v2/playlists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -178,7 +180,7 @@ export default function AddToPlaylistModal({
 
     try {
       setAddingToPlaylistId(playlistId);
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/music/v2/playlists/${playlistId}/songs`,
         {
           method: 'POST',

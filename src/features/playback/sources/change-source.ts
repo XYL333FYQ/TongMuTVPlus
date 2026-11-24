@@ -4,6 +4,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { clearDanmakuCacheByTitle } from '@/lib/danmaku/api';
 import {
   deleteSkipConfig,
@@ -153,7 +154,7 @@ export function makeHandleSourceChange(ctx: ChangeSourceContext) {
         (!newDetail.episodes || newDetail.episodes.length === 0)
       ) {
         try {
-          const detailResponse = await fetch(
+          const detailResponse = await apiFetch(
             appendSpecialSourceParam(
               `/api/source-detail?source=${newSource}&id=${newId}&title=${encodeURIComponent(
                 newTitle

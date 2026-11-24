@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   type FeaturePermissionKey,
   FEATURE_PERMISSION_OPTIONS,
@@ -41,7 +42,7 @@ function FeedbackForm() {
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch('/api/feedback', { cache: 'no-store' });
+      const response = await apiFetch('/api/feedback', { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || '加载失败');
       setItems(data.items || []);
@@ -59,7 +60,7 @@ function FeedbackForm() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const response = await fetch('/api/feedback', {
+      const response = await apiFetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

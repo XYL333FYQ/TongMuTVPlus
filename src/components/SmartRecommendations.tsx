@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import '@/styles/panels.css';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   getRecommendationCache,
   recommendationCacheKeys,
@@ -101,7 +102,7 @@ export default function SmartRecommendations({
         ? `/api/tmdb-recommendations?cachedId=${encodeURIComponent(cachedId)}`
         : `/api/tmdb-recommendations?title=${encodeURIComponent(videoTitle)}`;
 
-      const response = await fetch(url);
+      const response = await apiFetch(url);
 
       if (!response.ok) {
         throw new Error('获取TMDB推荐失败');
@@ -155,7 +156,7 @@ export default function SmartRecommendations({
         return;
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/douban-recommendations?id=${doubanId}`
       );
 

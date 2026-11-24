@@ -6,6 +6,7 @@ import type {
   PlaylistLoaderContext,
 } from 'hls.js';
 
+import { apiFetch } from '@/lib/api-client';
 import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 
 import type { HlsConstructor } from './art-types';
@@ -42,7 +43,7 @@ export async function syncCustomAdFilter(version: number) {
     }
     const cachedVersion = readSetting(VERSION_CACHE_KEY);
     if (cachedVersion && parseInt(cachedVersion, 10) === version) return;
-    const response = await fetch('/api/ad-filter?full=true');
+    const response = await apiFetch('/api/ad-filter?full=true');
     if (!response.ok) return;
     const { code } = (await response.json()) as { code?: string };
     if (code) {

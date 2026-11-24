@@ -15,6 +15,7 @@ import {
 import '@/styles/controls.css';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
+import { apiFetch } from '@/lib/api-client';
 import {
   CategoryNode,
   getChildCategories,
@@ -234,7 +235,7 @@ function SourceSearchPageClient() {
       setSourcesError('');
       try {
         const data = await readJson(
-          await fetch(appendSpecialSourceParam('/api/source-search/sources'))
+          await apiFetch(appendSpecialSourceParam('/api/source-search/sources'))
         );
         if (cancelled) return;
         if (!Array.isArray(data.sources)) throw new Error('视频源格式不正确');
@@ -287,7 +288,7 @@ function SourceSearchPageClient() {
       setHasMore(true);
       try {
         const data = await readJson(
-          await fetch(
+          await apiFetch(
             appendSpecialSourceParam(
               `/api/source-search/categories?source=${encodeURIComponent(
                 selectedSource
@@ -330,7 +331,7 @@ function SourceSearchPageClient() {
       setVideosError('');
       try {
         const data = await readJson(
-          await fetch(appendSpecialSourceParam(path))
+          await apiFetch(appendSpecialSourceParam(path))
         );
         if (cancelled) return;
         if (!Array.isArray(data.results)) throw new Error('列表格式不正确');

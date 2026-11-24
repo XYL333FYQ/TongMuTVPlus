@@ -14,6 +14,7 @@ import {
   WheelEvent as ReactWheelEvent,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { BookCatalogResult, BookListItem, BookSource } from '@/lib/book.types';
 import {
   buildBookDetailPath,
@@ -126,7 +127,7 @@ export default function BooksCatalogPage() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/books/sources')
+    apiFetch('/api/books/sources')
       .then((res) => res.json())
       .then((json) => setSources(json.sources || []));
   }, []);
@@ -147,7 +148,7 @@ export default function BooksCatalogPage() {
     const loadRootNavigation = async () => {
       try {
         const params = new URLSearchParams({ sourceId });
-        const res = await fetch(`/api/books/catalog?${params.toString()}`);
+        const res = await apiFetch(`/api/books/catalog?${params.toString()}`);
         const json = await res.json();
         if (!res.ok) return;
         if (!cancelled)
@@ -236,7 +237,7 @@ export default function BooksCatalogPage() {
       try {
         const params = new URLSearchParams({ sourceId });
         if (normalizedHref) params.set('href', normalizedHref);
-        const res = await fetch(`/api/books/catalog?${params.toString()}`);
+        const res = await apiFetch(`/api/books/catalog?${params.toString()}`);
         const json = await res.json();
         if (requestId !== catalogRequestIdRef.current) return;
         if (!res.ok) throw new Error(json.error || '获取目录失败');

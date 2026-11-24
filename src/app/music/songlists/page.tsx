@@ -4,6 +4,7 @@ import { ChevronDown, Disc3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import { musicSources, normalizeSource } from '@/lib/music/shared';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
@@ -170,7 +171,7 @@ export default function MusicSongListsPage() {
       setHotTags(cached.hotTags || []);
     }
 
-    fetch(`/api/music/v2/discovery/songlist-tags?source=${source}`)
+    apiFetch(`/api/music/v2/discovery/songlist-tags?source=${source}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -204,7 +205,7 @@ export default function MusicSongListsPage() {
       setTotal(cached.total || 0);
     }
 
-    fetch(
+    apiFetch(
       `/api/music/v2/discovery/songlists?source=${source}&tagId=${encodeURIComponent(
         tagId
       )}&sortId=${encodeURIComponent(sortId)}&page=${page}`

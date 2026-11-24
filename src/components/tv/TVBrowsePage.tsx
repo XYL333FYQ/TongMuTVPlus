@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 
 import './tv-surfaces.css';
 
+import { apiFetch } from '@/lib/api-client';
+
 import FilmPoster from '@/components/poster/FilmPoster';
 
 import TVLayout from './TVLayout';
@@ -22,7 +24,7 @@ async function loadDouban(
   tag: string,
   type: TVItem['type']
 ): Promise<TVItem[]> {
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/douban?type=${kind}&tag=${encodeURIComponent(tag)}&pageSize=12`,
     { cache: 'no-store' }
   );

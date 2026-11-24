@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { noteRoomServerTime, syncRoomClock } from '@/lib/room-clock';
 import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
@@ -493,7 +494,7 @@ export function useWatchRoom(
     addNotice('已离开房间，其他成员继续观看');
   }, [addNotice]);
   const getRoomList = useCallback(async (): Promise<Room[]> => {
-    const response = await fetch('/api/rooms', { cache: 'no-store' });
+    const response = await apiFetch('/api/rooms', { cache: 'no-store' });
     if (!response.ok) throw new Error('无法读取房间列表');
     const result = await response.json();
     return Array.isArray(result) ? result : result.rooms || [];

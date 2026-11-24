@@ -4,6 +4,8 @@ import { Smartphone } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
+
 import BusyDots from '@/components/feedback/BusyDots';
 import PageContainer from '@/components/PageContainer';
 import TVLayout from '@/components/tv/TVLayout';
@@ -20,7 +22,7 @@ export default function TVLoginPage() {
 
   const create = useCallback(async () => {
     setStatus('正在生成二维码...');
-    const res = await fetch('/api/auth/qr/create', { method: 'POST' });
+    const res = await apiFetch('/api/auth/qr/create', { method: 'POST' });
     const data = await res.json();
     const qrUrl =
       typeof window === 'undefined'
@@ -56,7 +58,7 @@ export default function TVLoginPage() {
   useEffect(() => {
     if (!qr) return;
     const timer = window.setInterval(async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/auth/qr/status?token=${encodeURIComponent(qr.token)}`,
         { cache: 'no-store' }
       );

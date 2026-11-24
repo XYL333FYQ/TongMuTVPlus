@@ -17,6 +17,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   deleteFavorite,
   generateStorageKey,
@@ -515,7 +516,7 @@ function LivePageClient() {
       setLoadingMessage('正在获取直播源...');
 
       // 获取 AdminConfig 中的直播源信息
-      const response = await fetch('/api/live/sources');
+      const response = await apiFetch('/api/live/sources');
       if (!response.ok) {
         throw new Error('获取直播源失败');
       }
@@ -570,7 +571,9 @@ function LivePageClient() {
       setIsVideoLoading(true);
 
       // 从 cachedLiveChannels 获取频道信息
-      const response = await fetch(`/api/live/channels?source=${source.key}`);
+      const response = await apiFetch(
+        `/api/live/channels?source=${source.key}`
+      );
       if (!request.isCurrent()) return false;
       if (!response.ok) {
         throw new Error('获取频道列表失败');
@@ -801,7 +804,7 @@ function LivePageClient() {
     if (channel.tvgId && source) {
       try {
         setIsEpgLoading(true); // 开始加载 EPG 数据
-        const response = await fetch(
+        const response = await apiFetch(
           `/api/live/epg?source=${source.key}&tvgId=${channel.tvgId}`
         );
         if (response.ok) {
@@ -1651,7 +1654,7 @@ function LivePageClient() {
 
   const fetchTextByClient = async (url: string, signal: AbortSignal) => {
     const startedAt = performance.now();
-    const response = await fetch(url, { cache: 'no-store', signal });
+    const response = await apiFetch(url, { cache: 'no-store', signal });
     const firstByteMs = performance.now() - startedAt;
     if (!response.ok) {
       response.body?.cancel();
@@ -1663,7 +1666,7 @@ function LivePageClient() {
 
   const sampleByClient = async (url: string, signal: AbortSignal) => {
     const startedAt = performance.now();
-    const response = await fetch(url, { cache: 'no-store', signal });
+    const response = await apiFetch(url, { cache: 'no-store', signal });
     if (!response.ok) {
       response.body?.cancel();
       throw new Error(`HTTP ${response.status}`);
@@ -2200,7 +2203,7 @@ function LivePageClient() {
           const precheckUrl = `/api/live/precheck?url=${encodeURIComponent(
             videoUrl
           )}&moontv-source=${currentSourceRef.current?.key || ''}`;
-          const precheckResponse = await fetch(precheckUrl);
+          const precheckResponse = await apiFetch(precheckUrl);
           if (cancelled) return;
           if (!precheckResponse.ok) {
             console.error('预检查失败:', precheckResponse.statusText);

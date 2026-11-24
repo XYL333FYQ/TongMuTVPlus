@@ -4,6 +4,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
 import {
   buildEpisodeProgressContentKey,
@@ -136,7 +137,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         if (fileNameParam) {
           url += `&fileName=${encodeURIComponent(fileNameParam)}`;
         }
-        const detailResponse = await fetch(url);
+        const detailResponse = await apiFetch(url);
         if (!detailResponse.ok) {
           throw new Error('获取视频详情失败');
         }
@@ -433,7 +434,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         }
 
         // 没有缓存或只有 partial 缓存时，重新请求完整搜索结果
-        const response = await fetch(
+        const response = await apiFetch(
           appendSpecialSourceParam(
             `/api/search?q=${encodeURIComponent(query.trim())}`
           )

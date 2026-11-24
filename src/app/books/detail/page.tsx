@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   deleteBookShelf,
   getAllBookShelf,
@@ -104,7 +105,7 @@ async function openBookFile(
   href?: string,
   title?: string
 ) {
-  const response = await fetch('/api/books/file', {
+  const response = await apiFetch('/api/books/file', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -178,7 +179,7 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     if (!sourceId || !bookId) return;
-    fetch('/api/books/detail', {
+    apiFetch('/api/books/detail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -232,7 +233,7 @@ export default function BookDetailPage() {
       sourceId: detail.sourceId,
       bookId: detail.id,
     });
-    fetch(`/api/books/read/chapters?${params.toString()}`, {
+    apiFetch(`/api/books/read/chapters?${params.toString()}`, {
       cache: 'no-store',
     })
       .then(async (res) => {

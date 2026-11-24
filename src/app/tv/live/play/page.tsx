@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { CSSProperties } from 'react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
 import { readSetting, writeSetting } from '@/lib/settings';
 
@@ -122,7 +123,7 @@ async function resolveLiveUrl(
 
   if (!source?.key) throw new Error('未知直播流格式');
 
-  const precheckRes = await fetch(
+  const precheckRes = await apiFetch(
     `/api/live/precheck?url=${encodeURIComponent(
       rawUrl
     )}&moontv-source=${encodeURIComponent(source.key)}`,
@@ -195,7 +196,7 @@ function TVLivePlayClient() {
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/live/sources')
+    apiFetch('/api/live/sources')
       .then((r) => {
         if (r.status === 401 || r.status === 403)
           throw new Error('无权限访问电视直播，请先登录或检查权限');
@@ -225,7 +226,7 @@ function TVLivePlayClient() {
     let alive = true;
     setLoading(true);
     setError('');
-    fetch(`/api/live/channels?source=${encodeURIComponent(source.key)}`)
+    apiFetch(`/api/live/channels?source=${encodeURIComponent(source.key)}`)
       .then((r) => {
         if (r.status === 401 || r.status === 403)
           throw new Error('无权限访问电视直播，请先登录或检查权限');
@@ -298,7 +299,7 @@ function TVLivePlayClient() {
     }
     let alive = true;
     setEpgLoading(true);
-    fetch(
+    apiFetch(
       `/api/live/epg?source=${encodeURIComponent(
         source.key
       )}&tvgId=${encodeURIComponent(channel.tvgId)}`
@@ -382,7 +383,7 @@ function TVLivePlayClient() {
   const precheckChannel = async (next: LiveChannel) => {
     if (!source) return;
     try {
-      await fetch(
+      await apiFetch(
         `/api/live/precheck?url=${encodeURIComponent(
           next.url
         )}&moontv-source=${encodeURIComponent(source.key)}`,

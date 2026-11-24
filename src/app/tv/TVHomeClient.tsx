@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   Favorite,
   getAllFavorites,
@@ -19,7 +20,7 @@ async function loadDouban(
   tag: string,
   type: TVItem['type']
 ): Promise<TVItem[]> {
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/douban?type=${kind}&tag=${encodeURIComponent(tag)}&pageSize=12`,
     { cache: 'no-store' }
   );

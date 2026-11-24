@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { posterTiltHandlers } from '@/lib/motion';
 import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
 import {
@@ -67,7 +68,7 @@ function usePublicCatalog(
       if (!reset && nextCursor.current)
         params.set('cursor', nextCursor.current);
       try {
-        const response = await fetch('/api/public/catalog?' + params, {
+        const response = await apiFetch('/api/public/catalog?' + params, {
           signal: request.signal,
         });
         if (!response.ok) throw new Error('catalog unavailable');

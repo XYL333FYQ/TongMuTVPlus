@@ -12,6 +12,7 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
@@ -226,7 +227,7 @@ export default function PansouSearch({
       const updates = await Promise.all(
         runningEntries.map(async ([cloudType, state]) => {
           try {
-            const response = await fetch(
+            const response = await apiFetch(
               `/api/netdisk/check/task?id=${encodeURIComponent(state.taskId)}`
             );
             const data = await response.json();
@@ -315,7 +316,7 @@ export default function PansouSearch({
       }
 
       try {
-        const response = await fetch('/api/pansou/search', {
+        const response = await apiFetch('/api/pansou/search', {
           method: 'POST',
           signal: controller.signal,
           headers: {
@@ -385,7 +386,7 @@ export default function PansouSearch({
   const handleQuarkTransfer = async (link: PansouLink) => {
     try {
       setTransferingUrl(link.url);
-      const response = await fetch('/api/netdisk/quark/transfer', {
+      const response = await apiFetch('/api/netdisk/quark/transfer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -442,7 +443,7 @@ export default function PansouSearch({
 
     setMagnetHealthCheckingIds((prev) => ({ ...prev, [url]: true }));
     try {
-      const response = await fetch('/api/acg/health', {
+      const response = await apiFetch('/api/acg/health', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -503,7 +504,7 @@ export default function PansouSearch({
     setShowNameDialog(false);
 
     try {
-      const response = await fetch('/api/acg/download', {
+      const response = await apiFetch('/api/acg/download', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -551,7 +552,7 @@ export default function PansouSearch({
           : cloudType === '123'
           ? '/api/netdisk/123/instant-play'
           : '/api/netdisk/quark/instant-play';
-      const response = await fetch(instantPlayApi, {
+      const response = await apiFetch(instantPlayApi, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -601,7 +602,7 @@ export default function PansouSearch({
       if (!platform) {
         throw new Error('当前网盘类型暂不支持有效性检测');
       }
-      const response = await fetch('/api/netdisk/check/start', {
+      const response = await apiFetch('/api/netdisk/check/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -632,7 +633,7 @@ export default function PansouSearch({
     const state = checkStatesByType[cloudType];
     if (!state?.taskId) return;
     try {
-      const response = await fetch('/api/netdisk/check/cancel', {
+      const response = await apiFetch('/api/netdisk/check/cancel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

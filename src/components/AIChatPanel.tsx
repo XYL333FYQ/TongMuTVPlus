@@ -8,6 +8,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import type { VideoContext } from '@/lib/ai-orchestrator';
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 import { viewportSize } from '@/lib/device-tier';
@@ -651,7 +652,7 @@ export default function AIChatPanel({
     abortControllerRef.current = abortController;
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await apiFetch('/api/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

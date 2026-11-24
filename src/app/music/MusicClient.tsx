@@ -38,6 +38,7 @@ import {
   useState,
 } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import {
   getSourceDisplayLabel,
@@ -914,7 +915,7 @@ export default function MusicClient({
     songQuality: MusicQuality,
     includeUrl = false
   ) => {
-    const response = await fetch('/api/music/v2/play', {
+    const response = await apiFetch('/api/music/v2/play', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -953,7 +954,7 @@ export default function MusicClient({
     lastPlayedAt = Date.now(),
     recordQuality: MusicQuality = quality
   ) => {
-    await fetch('/api/music/v2/history', {
+    await apiFetch('/api/music/v2/history', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1060,7 +1061,7 @@ export default function MusicClient({
   useEffect(() => {
     const initializePlayState = async () => {
       try {
-        const response = await fetch('/api/music/v2/history');
+        const response = await apiFetch('/api/music/v2/history');
         const history = await response.json();
         const dbRecords = (history.data?.records || []) as DbRecord[];
 
@@ -1333,7 +1334,7 @@ export default function MusicClient({
         return;
       }
 
-      await fetch('/api/music/v2/history', { method: 'DELETE' });
+      await apiFetch('/api/music/v2/history', { method: 'DELETE' });
       const baseTime = Date.now();
       const recordsToAdd = targetSongs.map((song, i) => ({
         song: {
@@ -1353,7 +1354,7 @@ export default function MusicClient({
         lastQuality: quality,
         createdAt: baseTime + i,
       }));
-      await fetch('/api/music/v2/history', {
+      await apiFetch('/api/music/v2/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ records: recordsToAdd }),
@@ -1894,7 +1895,7 @@ export default function MusicClient({
 
     try {
       // 只上报被移动歌曲的新邻居，服务端取中值即可，无需重写整个队列
-      const response = await fetch('/api/music/v2/history', {
+      const response = await apiFetch('/api/music/v2/history', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1918,7 +1919,7 @@ export default function MusicClient({
     if (!song) return;
 
     try {
-      await fetch(
+      await apiFetch(
         `/api/music/v2/history?songId=${encodeURIComponent(song.id)}`,
         { method: 'DELETE' }
       );
@@ -1945,7 +1946,7 @@ export default function MusicClient({
       message: '确定要清空全部播放记录吗？',
       onConfirm: async () => {
         try {
-          await fetch('/api/music/v2/history', { method: 'DELETE' });
+          await apiFetch('/api/music/v2/history', { method: 'DELETE' });
           clearCurrentPlaybackState();
           setPlaylist([]);
           setPlayRecords([]);
@@ -2057,7 +2058,7 @@ export default function MusicClient({
       return;
     }
     let cancelled = false;
-    fetch(`/music/effects/${preset.source}`)
+    apiFetch(`/music/effects/${preset.source}`)
       .then((response) => response.arrayBuffer())
       .then((data) => context.decodeAudioData(data))
       .then((buffer) => {

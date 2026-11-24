@@ -4,6 +4,7 @@ import { Star, Volume2, VolumeX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { viewportSize } from '@/lib/device-tier';
 import { getDoubanDetail } from '@/lib/douban.client';
 import { useReducedMotionSetting } from '@/lib/motion';
@@ -118,7 +119,7 @@ export default function BannerCarousel({
     '/',
     async (signal) => {
       const generation = ++trendingGeneration.current;
-      const response = await fetch('/api/tmdb/trending', {
+      const response = await apiFetch('/api/tmdb/trending', {
         cache: 'no-store',
         signal,
       });
@@ -315,7 +316,7 @@ export default function BannerCarousel({
 
         // 如果缓存过期或没有缓存，后台更新数据
         if (!cachedData || cacheExpired) {
-          const response = await fetch('/api/tmdb/trending');
+          const response = await apiFetch('/api/tmdb/trending');
           const result = await response.json();
           if (generation !== trendingGeneration.current) return;
 

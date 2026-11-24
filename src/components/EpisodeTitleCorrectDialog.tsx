@@ -5,6 +5,7 @@
 import { Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import {
   EpisodeTitleCorrection,
   getEpisodeTitleCorrection,
@@ -92,7 +93,7 @@ export default function EpisodeTitleCorrectDialog({
     setShowSeasonSelection(false);
     setSelectedResult(null);
     try {
-      const resp = await fetch(
+      const resp = await apiFetch(
         `/api/tmdb/search?query=${encodeURIComponent(searchQuery)}`
       );
       if (!resp.ok) throw new Error('搜索失败');
@@ -119,7 +120,7 @@ export default function EpisodeTitleCorrectDialog({
     setLoadingSeasons(true);
     setError('');
     try {
-      const resp = await fetch(`/api/tmdb/seasons?tvId=${tvId}`);
+      const resp = await apiFetch(`/api/tmdb/seasons?tvId=${tvId}`);
       if (!resp.ok) throw new Error('获取季度列表失败');
       const data = await resp.json();
       if (data.success && data.seasons) return data.seasons as TMDBSeason[];

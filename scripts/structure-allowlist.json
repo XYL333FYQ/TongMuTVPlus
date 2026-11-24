@@ -304,7 +304,6 @@
     "src/features/playback/downloads/file-system-download.ts :: no-console ×4",
     "src/features/playback/downloads/file-system-download.ts :: unused-imports/no-unused-imports ×1",
     "src/features/playback/downloads/local-download.ts :: no-console ×1",
-    "src/features/playback/downloads/local-download.ts :: unused-imports/no-unused-imports ×1",
     "src/features/playback/player/controls.ts :: no-console ×3",
     "src/features/playback/player/controls.ts :: unused-imports/no-unused-vars ×1",
     "src/features/playback/player/load-player.ts :: @typescript-eslint/no-non-null-assertion ×1",
@@ -425,5 +424,6 @@
   "parts:switch": [],
   "parts:poster": [],
   "parts:emptyState": [],
-  "parts:retryNotice": []
+  "parts:retryNotice": [],
+  "parts:fetch": []
 }

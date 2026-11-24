@@ -11,6 +11,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { readSetting, writeSetting } from '@/lib/settings';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
@@ -255,7 +256,7 @@ export default function AcgSearch({
           : source === 'nyaa'
           ? '/api/acg/nyaa'
           : '/api/acg/acgrip';
-      const response = await fetch(apiUrl, {
+      const response = await apiFetch(apiUrl, {
         method: 'POST',
         signal: controller.signal,
         headers: {
@@ -483,7 +484,7 @@ export default function AcgSearch({
 
     setHealthCheckingIds((prev) => ({ ...prev, [itemId]: true }));
     try {
-      const response = await fetch('/api/acg/health', {
+      const response = await apiFetch('/api/acg/health', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -541,7 +542,7 @@ export default function AcgSearch({
     setShowNameDialog(false);
 
     try {
-      const response = await fetch('/api/acg/download', {
+      const response = await apiFetch('/api/acg/download', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -26,6 +26,7 @@ import React, {
 import '@/styles/search.css';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
+import { apiFetch } from '@/lib/api-client';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import {
   getLoadedTraditionalToSimplifiedConverter,
@@ -1458,7 +1459,7 @@ export function SearchPageClient({
         setIsFromCache(false);
         setTotalSources(1);
         setCompletedSources(0);
-        fetch(
+        apiFetch(
           `/api/public/catalog?mode=search&q=${encodeURIComponent(trimmed)}`,
           { signal: controller.signal }
         )
@@ -1707,7 +1708,7 @@ export function SearchPageClient({
         }`;
         const controller = new AbortController();
         setCancel(() => controller.abort());
-        fetch(appendSpecialSourceParam(searchUrl), {
+        apiFetch(appendSpecialSourceParam(searchUrl), {
           signal: controller.signal,
         })
           .then((response) => {

@@ -4,6 +4,7 @@ import { CheckCircle2, Compass, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { getAllBookReadRecords } from '@/lib/book.db.client';
 import { BookReadRecord, BookSource } from '@/lib/book.types';
 import { buildBookReadPath } from '@/lib/book-route-cache.client';
@@ -88,7 +89,7 @@ export default function BooksHomePage() {
       window.location.href = '/';
       return;
     }
-    fetch('/api/books/sources')
+    apiFetch('/api/books/sources')
       .then((res) => res.json())
       .then((data) => setSources(data.sources || []))
       .catch((err) => setError(err.message || '加载书源失败'))

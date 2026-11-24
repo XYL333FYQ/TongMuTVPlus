@@ -6,6 +6,7 @@ import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { base58Encode } from '@/lib/utils';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -146,7 +147,7 @@ export default function PrivateLibraryPage() {
 
     setIsSearching(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/xiaoya/search?keyword=${encodeURIComponent(xiaoyaSearchKeyword)}`
       );
       if (!response.ok) {
@@ -193,7 +194,7 @@ export default function PrivateLibraryPage() {
   useEffect(() => {
     const fetchEmbySources = async () => {
       try {
-        const response = await fetch('/api/emby/sources');
+        const response = await apiFetch('/api/emby/sources');
         if (response.ok) {
           const data = await response.json();
           setEmbySourceOptions(data.sources || []);
@@ -297,7 +298,7 @@ export default function PrivateLibraryPage() {
       setLoadingViews(true);
       try {
         const params = new URLSearchParams({ embyKey });
-        const response = await fetch(`/api/emby/views?${params.toString()}`);
+        const response = await apiFetch(`/api/emby/views?${params.toString()}`);
         const data = await response.json();
 
         if (data.error) {
@@ -462,7 +463,7 @@ export default function PrivateLibraryPage() {
                 selectedView !== 'all' ? `&parentId=${selectedView}` : ''
               }&embyKey=${embyKey}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
 
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
           signal: abortController.signal,
         });
 

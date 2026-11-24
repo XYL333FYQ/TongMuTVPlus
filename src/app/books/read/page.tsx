@@ -20,6 +20,7 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { saveBookReadRecord } from '@/lib/book.db.client';
 import {
   BookChapter,
@@ -617,7 +618,7 @@ async function fetchJsonWithRetry<T>(
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
-      const res = await fetch(url, init);
+      const res = await apiFetch(url, init);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || `请求失败: ${res.status}`);
       return json as T;
@@ -637,7 +638,7 @@ async function downloadBookWithProgress(
   manifest: Pick<BookReadManifest, 'book' | 'format' | 'acquisitionHref'>,
   onProgress: (received: number, total: number | null) => void
 ): Promise<Blob> {
-  const response = await fetch('/api/books/file', {
+  const response = await apiFetch('/api/books/file', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -828,7 +829,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       return;
     }
     let cancelled = false;
-    fetch('/api/books/tts/voices')
+    apiFetch('/api/books/tts/voices')
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || '获取朗读配置失败');
@@ -1097,7 +1098,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
   const fetchTtsChunkAudioUrl = useCallback(
     async (chunk: TtsChunk, chapterHref: string) => {
       if (!manifest) throw new Error('书籍信息未准备好');
-      const response = await fetch('/api/books/tts/synthesize', {
+      const response = await apiFetch('/api/books/tts/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2299,7 +2300,7 @@ export default function BookReadPage() {
 
   useEffect(() => {
     if (!sourceId || !bookId) return;
-    fetch('/api/books/read/manifest', {
+    apiFetch('/api/books/read/manifest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2333,7 +2334,7 @@ export default function BookReadPage() {
       return;
     }
     let cancelled = false;
-    fetch('/api/books/tts/voices')
+    apiFetch('/api/books/tts/voices')
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || '获取朗读配置失败');
@@ -2693,7 +2694,7 @@ export default function BookReadPage() {
         return url;
       }
 
-      const response = await fetch('/api/books/tts/synthesize', {
+      const response = await apiFetch('/api/books/tts/synthesize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

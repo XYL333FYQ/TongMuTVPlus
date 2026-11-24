@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import {
   getAllMangaReadRecords,
@@ -385,7 +386,7 @@ export default function MangaReadPage() {
   useEffect(() => {
     if (!chapterId) return;
     let cancelled = false;
-    fetch(`/api/manga/pages?chapterId=${encodeURIComponent(chapterId)}`)
+    apiFetch(`/api/manga/pages?chapterId=${encodeURIComponent(chapterId)}`)
       .then((res) => res.json())
       .then((data) => {
         if (!cancelled) setChapterPages({ chapterId, pages: data.pages || [] });
@@ -409,7 +410,7 @@ export default function MangaReadPage() {
       sourceName,
     });
 
-    fetch(`/api/manga/detail?${params.toString()}`)
+    apiFetch(`/api/manga/detail?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => setMangaDetail(data))
       .catch(() => setMangaDetail(null));
