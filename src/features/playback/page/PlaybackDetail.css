@@ -1,0 +1,391 @@
+/* PlaybackDetail.tsx 的样式（块 tm-pdetail）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4 */
+.tm-pdetail-div-1 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-pdetail-div-1 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+:where(html[data-tm-device='wide']) .tm-pdetail-div-1 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+/* md:col-span-4 lg:col-span-5 */
+:where(html:not([data-tm-device='phone'])) .tm-pdetail-div-2 {
+  grid-column: span 4 / span 4;
+}
+:where(html[data-tm-device='wide']) .tm-pdetail-div-2 {
+  grid-column: span 5 / span 5;
+}
+
+/* p-6 flex flex-col min-h-0 */
+.tm-pdetail-div-3 {
+  display: flex;
+  min-height: 0px;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+
+/* text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full flex-wrap gap-2 */
+.tm-pdetail-h1-1 {
+  margin-bottom: 0.5rem;
+  display: flex;
+  width: 100%;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+:where(html:not([data-tm-device='phone'])) .tm-pdetail-h1-1 {
+  text-align: left;
+}
+
+/* text-on-art */
+.tm-pdetail-h1-2 {
+  --tw-text-opacity: 1;
+  color: rgb(var(--tm-on-art-rgb) / var(--tw-text-opacity, 1));
+}
+
+/* text-fg */
+.tm-pdetail-h1-3 {
+  color: var(--tm-text);
+}
+
+/* relative cursor-help */
+.tm-pdetail-span-1 {
+  position: relative;
+  cursor: help;
+}
+
+/* absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-surface text-fg text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out whitespace-nowrap z-[3] pointer-events-none */
+.tm-pdetail-div-4 {
+  pointer-events: none;
+  visibility: hidden;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 3;
+  margin-bottom: 0.5rem;
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  white-space: nowrap;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-text);
+  opacity: 0;
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color),
+    0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+  transition-timing-function: var(--tm-ease-out);
+}
+.tm-pdetail-group:hover .tm-pdetail-div-4 {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* font-medium text-[13px] text-muted mb-1 */
+.tm-pdetail-div-5 {
+  margin-bottom: 0.25rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+
+/* text-sm */
+.tm-pdetail-div-6 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-line */
+.tm-pdetail-div-7 {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  height: 0px;
+  width: 0px;
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  border-color: transparent;
+  border-top-color: var(--tm-line);
+}
+
+/* flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center */
+.tm-pdetail-button-1 {
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-pdetail-button-1:hover {
+  opacity: 0.8;
+}
+
+/* h-6 w-6 text-muted */
+.tm-pdetail-cloud-1 {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: var(--tm-muted);
+}
+
+/* flex-shrink-0 hover:opacity-80 transition-opacity min-w-[44px] px-2 py-1 text-base font-medium text-muted min-h-[44px] */
+.tm-pdetail-button-2 {
+  min-height: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  color: var(--tm-muted);
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-pdetail-button-2:hover {
+  opacity: 0.8;
+}
+
+/* flex items-center gap-2 text-base font-normal */
+.tm-pdetail-div-8 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+}
+
+/* flex items-center gap-1 */
+.tm-pdetail-div-9 {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* relative w-5 h-5 */
+.tm-pdetail-div-10 {
+  position: relative;
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+/* w-5 h-5 text-fg fill-fg */
+.tm-pdetail-svg-1 {
+  height: 1.25rem;
+  width: 1.25rem;
+  fill: var(--tm-text);
+  color: var(--tm-text);
+}
+
+/* absolute w-5 h-5 text-muted fill-fg */
+.tm-pdetail-svg-2 {
+  position: absolute;
+  height: 1.25rem;
+  width: 1.25rem;
+  fill: var(--tm-text);
+  color: var(--tm-muted);
+}
+
+/* absolute w-5 h-5 text-fg fill-fg */
+.tm-pdetail-svg-3 {
+  position: absolute;
+  height: 1.25rem;
+  width: 1.25rem;
+  fill: var(--tm-text);
+  color: var(--tm-text);
+}
+
+/* w-5 h-5 text-muted fill-fg */
+.tm-pdetail-svg-4 {
+  height: 1.25rem;
+  width: 1.25rem;
+  fill: var(--tm-text);
+  color: var(--tm-muted);
+}
+
+/* font-medium */
+.tm-pdetail-span-2 {
+  font-weight: 500;
+}
+
+/* text-muted */
+.tm-pdetail-span-3 {
+  color: var(--tm-muted);
+}
+
+/* text-[color:color-mix(in_srgb,var(--tm-text)_80%,transparent)] */
+.tm-pdetail-span-4 {
+  color: color-mix(in srgb, var(--tm-text) 80%, transparent);
+}
+
+/* flex flex-wrap items-center gap-3 text-base mb-4 opacity-80 flex-shrink-0 */
+.tm-pdetail-div-11 {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  opacity: 0.8;
+}
+
+/* text-fg font-medium */
+.tm-pdetail-span-5 {
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* relative cursor-pointer border px-2 py-[1px] rounded border-line */
+.tm-pdetail-span-6 {
+  position: relative;
+  cursor: pointer;
+  border-radius: var(--tm-radius-sm);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+/* mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide */
+.tm-pdetail-div-12 {
+  margin-top: 0px;
+  min-height: 0px;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  line-height: 1.625;
+  opacity: 0.9;
+}
+
+/* mb-3 pb-3 border-b border-line */
+.tm-pdetail-div-13 {
+  margin-bottom: 0.75rem;
+  border-bottom-width: 1px;
+  border-color: var(--tm-line);
+  padding-bottom: 0.75rem;
+}
+
+/* hidden md:block md:col-span-1 md:order-first */
+.tm-pdetail-div-14 {
+  display: none;
+}
+:where(html:not([data-tm-device='phone'])) .tm-pdetail-div-14 {
+  order: -9999;
+  grid-column: span 1 / span 1;
+  display: block;
+}
+
+/* pl-0 py-4 pr-6 max-w-sm mx-auto */
+.tm-pdetail-div-15 {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 24rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 0px;
+  padding-right: 1.5rem;
+}
+
+/* absolute top-3 left-3 min-h-[44px] inline-flex items-center */
+.tm-pdetail-a-1 {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
+
+/* bg-raised text-fg text-[13px] font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-line hover:scale-[1.1] transition-all duration-300 ease-out */
+.tm-pdetail-div-16 {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tm-text);
+  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color),
+    0 2px 4px -2px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 300ms;
+  transition-timing-function: var(--tm-ease-out);
+}
+.tm-pdetail-div-16:hover {
+  --tw-scale-x: 1.1;
+  --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  background-color: var(--tm-line);
+}
+
+/* h-7 w-7 */
+.tm-pdetail-svg-5 {
+  height: 1.75rem;
+  width: 1.75rem;
+}
+
+/* h-7 w-7 stroke-[1] text-muted */
+.tm-pdetail-heart-1 {
+  height: 1.75rem;
+  width: 1.75rem;
+  stroke-width: 1;
+  color: var(--tm-muted);
+}

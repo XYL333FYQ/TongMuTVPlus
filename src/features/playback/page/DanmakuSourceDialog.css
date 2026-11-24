@@ -1,0 +1,308 @@
+/* DanmakuSourceDialog.tsx 的样式（块 tm-pdmsrc）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* fixed inset-0 z-[var(--tm-z-overlay)] flex items-center justify-center bg-ink/60 backdrop-blur-sm */
+.tm-pdmsrc-div-1 {
+  position: fixed;
+  inset: 0px;
+  z-index: var(--tm-z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(var(--tm-ink-rgb) / 0.6);
+  --tw-backdrop-blur: blur(4px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+    var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+    var(--tw-backdrop-sepia);
+}
+
+/* relative w-full max-w-2xl max-h-[80vh] mx-4 bg-surface rounded-2xl shadow-2xl overflow-hidden */
+.tm-pdmsrc-div-2 {
+  position: relative;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  max-height: 80vh;
+  width: 100%;
+  max-width: 42rem;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface);
+  --tw-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --tw-shadow-colored: 0 25px 50px -12px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+}
+
+/* sticky top-0 z-[1] bg-surface px-6 py-4 */
+.tm-pdmsrc-div-3 {
+  position: sticky;
+  top: 0px;
+  z-index: 1;
+  background-color: var(--tm-surface);
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* text-xl font-bold text-fg flex items-center gap-2 */
+.tm-pdmsrc-h3-1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  color: var(--tm-text);
+}
+
+/* w-6 h-6 */
+.tm-pdmsrc-svg-1 {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+/* text-sm text-[color:color-mix(in_srgb,var(--tm-text)_90%,transparent)] mt-1 */
+.tm-pdmsrc-p-1 {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: color-mix(in srgb, var(--tm-text) 90%, transparent);
+}
+
+/* overflow-y-auto max-h-[60vh] p-4 */
+.tm-pdmsrc-div-4 {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* space-y-4 */
+.tm-pdmsrc-div-5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+
+/* w-full flex flex-col p-5 bg-raised hover:bg-line rounded-xl transition-all duration-200 text-left border-2 border-transparent hover:border-line hover:shadow-lg min-h-[44px] */
+.tm-pdmsrc-button-1 {
+  display: flex;
+  min-height: 44px;
+  width: 100%;
+  flex-direction: column;
+  border-radius: var(--tm-radius-md);
+  border-width: 2px;
+  border-color: transparent;
+  background-color: var(--tm-surface-raised);
+  padding: 1.25rem;
+  text-align: left;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pdmsrc-button-1:hover {
+  border-color: var(--tm-line);
+  background-color: var(--tm-line);
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),
+    0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+}
+
+/* flex items-start gap-3 mb-3 */
+.tm-pdmsrc-div-6 {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* flex-shrink-0 w-8 h-8 rounded-full bg-raised text-fg flex items-center justify-center font-bold text-sm group-hover:bg-line transition-colors duration-200 */
+.tm-pdmsrc-div-7 {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+  color: var(--tm-text);
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pdmsrc-group:hover .tm-pdmsrc-div-7 {
+  background-color: var(--tm-line);
+}
+
+/* flex-1 text-lg font-bold text-fg group-hover:text-fg transition-colors duration-200 leading-tight */
+.tm-pdmsrc-h4-1 {
+  flex: 1 1 0%;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--tm-text);
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pdmsrc-group:hover .tm-pdmsrc-h4-1 {
+  color: var(--tm-text);
+}
+
+/* flex-shrink-0 */
+.tm-pdmsrc-div-8 {
+  flex-shrink: 0;
+}
+
+/* w-6 h-6 text-muted group-hover:text-fg transition-colors duration-200 */
+.tm-pdmsrc-svg-2 {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: var(--tm-muted);
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pdmsrc-group:hover .tm-pdmsrc-svg-2 {
+  color: var(--tm-text);
+}
+
+/* flex gap-4 */
+.tm-pdmsrc-div-9 {
+  display: flex;
+  gap: 1rem;
+}
+
+/* flex-shrink-0 w-20 h-28 */
+.tm-pdmsrc-filmposter-1 {
+  height: 7rem;
+  width: 5rem;
+  flex-shrink: 0;
+}
+
+/* flex-1 space-y-2 */
+.tm-pdmsrc-div-10 {
+  flex: 1 1 0%;
+}
+.tm-pdmsrc-div-10 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+
+/* flex flex-wrap gap-2 */
+.tm-pdmsrc-div-11 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* inline-flex items-center px-2.5 py-1 rounded-md bg-raised text-fg text-sm font-medium */
+.tm-pdmsrc-span-1 {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* inline-flex items-center px-2.5 py-1 rounded-md bg-raised text-muted text-sm font-medium */
+.tm-pdmsrc-span-2 {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+
+/* text-[13px] text-muted */
+.tm-pdmsrc-div-12 {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* text-sm text-muted pt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 */
+.tm-pdmsrc-div-13 {
+  padding-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+  opacity: 0;
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pdmsrc-group:hover .tm-pdmsrc-div-13 {
+  opacity: 1;
+}
+
+/* sticky bottom-0 z-[1] bg-surface border-t border-line px-6 py-4 */
+.tm-pdmsrc-div-14 {
+  position: sticky;
+  bottom: 0px;
+  z-index: 1;
+  border-top-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface);
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* w-full px-4 py-2.5 bg-raised hover:bg-line text-muted rounded-lg font-medium transition-colors duration-200 min-h-[44px] */
+.tm-pdmsrc-button-2 {
+  min-height: 44px;
+  width: 100%;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  font-weight: 500;
+  color: var(--tm-muted);
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pdmsrc-button-2:hover {
+  background-color: var(--tm-line);
+}

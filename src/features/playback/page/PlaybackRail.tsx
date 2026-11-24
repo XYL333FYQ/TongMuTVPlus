@@ -11,6 +11,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import './PlaybackRail.css';
+
 import type { PlaybackDrawer } from './PlaybackDrawers';
 import type { PlaybackPanel } from './types';
 
@@ -56,37 +58,37 @@ export default function PlaybackRail({
           aria-pressed={activePanel === panel}
           onClick={() => onPanel(panel)}
         >
-          <Icon className='h-5 w-5' aria-hidden='true' />
+          <Icon className='tm-prail-icon-1' aria-hidden='true' />
           {label}
         </button>
       ))}
       <span className='tm-solo-rail-sep' aria-hidden='true' />
       {showTools && (
         <button type='button' aria-pressed={toolsOpen} onClick={onToggleTools}>
-          <Ellipsis className='h-5 w-5' aria-hidden='true' />
+          <Ellipsis className='tm-prail-icon-1' aria-hidden='true' />
           工具
         </button>
       )}
       {showDetail && (
         <button type='button' onClick={() => onDrawer('detail')}>
-          <FileText className='h-5 w-5' aria-hidden='true' />
+          <FileText className='tm-prail-icon-1' aria-hidden='true' />
           详情
         </button>
       )}
       {showAiChat && (
         <button type='button' onClick={() => onDrawer('aiChat')}>
-          <Sparkles className='h-5 w-5' aria-hidden='true' />
+          <Sparkles className='tm-prail-icon-1' aria-hidden='true' />
           AI 问片
         </button>
       )}
       {showNetdisk && (
         <button type='button' onClick={() => onDrawer('pansou')}>
-          <Cloud className='h-5 w-5' aria-hidden='true' />
+          <Cloud className='tm-prail-icon-1' aria-hidden='true' />
           网盘
         </button>
       )}
       <button type='button' className='tm-solo-rail-end' onClick={onShortcuts}>
-        <Keyboard className='h-5 w-5' aria-hidden='true' />
+        <Keyboard className='tm-prail-icon-1' aria-hidden='true' />
         快捷键
       </button>
     </nav>

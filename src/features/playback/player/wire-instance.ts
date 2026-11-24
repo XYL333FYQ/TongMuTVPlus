@@ -333,13 +333,9 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                         align-items: center;
                         gap: 8px;
                         padding: 8px 12px;
-                        background-color: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent);
                         border-radius: var(--tm-radius-sm);
-                        color: var(--tm-text);
                         font-size: 14px;
                         font-family: system-ui, -apple-system, sans-serif;
-                        box-shadow: 0 2px 8px var(--tm-room-cinema-bg);
-                        backdrop-filter: blur(4px);
                         pointer-events: auto;
                       ">
                         <span style="margin-right: 4px;">
@@ -347,10 +343,9 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                         </span>
                         <button id="play-record-jump-btn" style="
                           padding: 4px 12px;
-                          background-color: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent);
-                          border: 1px solid var(--tm-line);
+                          border-width: 1px;
+                          border-style: solid;
                           border-radius: var(--tm-radius-sm);
-                          color: var(--tm-text);
                           font-size: 13px;
                           cursor: pointer;
                           transition: all 0.2s;
@@ -360,9 +355,8 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                         </button>
                         <button id="play-record-dismiss-btn" style="
                           padding: 4px 8px;
-                          background-color: transparent;
-                          border: none;
-                          color: var(--tm-text);
+                          border-width: 0;
+                          border-style: solid;
                           font-size: 18px;
                           cursor: pointer;
                           line-height: 1;

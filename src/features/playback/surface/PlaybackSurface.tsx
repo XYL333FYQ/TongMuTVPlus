@@ -8,6 +8,8 @@
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
+import './PlaybackSurface.css';
+
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import {
   generateStorageKey,
@@ -1897,7 +1899,7 @@ function PlayPageClient() {
       {/* TMDB背景图 */}
       {tmdbBackdrop && (
         <div
-          className='fixed inset-0 z-0'
+          className='tm-psurface-div-1'
           style={{
             backgroundImage: `url(${tmdbBackdrop})`,
             backgroundSize: 'cover',
@@ -1915,7 +1917,7 @@ function PlayPageClient() {
         />
       )}
 
-      <div className='tm-page-container relative z-[1] flex flex-col gap-3 py-4 tm-solo-page'>
+      <div className='tm-page-container tm-psurface-div-2 tm-solo-page'>
         {/* 第一行：影片标题 */}
         <PlaybackTitle
           detail={detail}
@@ -1929,27 +1931,29 @@ function PlayPageClient() {
           totalEpisodes={totalEpisodes}
         />
         {/* 第二行：播放器和选集 */}
-        <div className='space-y-2 tm-solo-row'>
+        <div className='tm-psurface-div-3 tm-solo-row'>
           <div
-            // 手机 / 平板上和标题之间留 8px（电脑上由 playback.css 归零）
-            className={`mt-2 grid gap-4 wide:h-[520px] wide:xl:h-[620px] wide:2xl:h-[680px] transition-all duration-300 ease-in-out ${
+            // 手机 / 平板上和标题之间留 8px（电脑档不留，见 PlaybackSurface.css）
+            className={`tm-psurface-div-4 ${
               isEpisodeSelectorCollapsed
-                ? 'grid-cols-1'
-                : 'grid-cols-1 wide:grid-cols-4'
+                ? 'tm-psurface-div-5'
+                : 'tm-psurface-div-6'
             }`}
           >
             {/* 播放器 */}
             <div
-              className={`transition-all duration-300 ease-in-out rounded-xl border border-line flex flex-col ${
-                isEpisodeSelectorCollapsed ? 'col-span-1' : 'wide:col-span-3'
+              className={`tm-psurface-div-7 ${
+                isEpisodeSelectorCollapsed
+                  ? 'tm-psurface-div-8'
+                  : 'tm-psurface-div-9'
               }`}
             >
               {/* 播放器容器 */}
-              <div className='tm-playback-video-frame relative w-full h-[300px] wide:flex-1 wide:min-h-0'>
+              <div className='tm-playback-video-frame tm-psurface-div-10'>
                 <div
                   ref={artRef}
                   data-tm-player-mount
-                  className='bg-surface w-full h-full rounded-xl overflow-hidden shadow-lg'
+                  className='tm-psurface-div-11'
                 ></div>
 
                 <VideoOverlays
@@ -2167,7 +2171,7 @@ function PlayPageClient() {
         ref={customSubtitleInputRef}
         type='file'
         accept={CUSTOM_SUBTITLE_ACCEPT}
-        className='hidden'
+        className='tm-psurface-input-1'
         onChange={(event) => {
           const file = event.target.files?.[0];
           event.target.value = '';

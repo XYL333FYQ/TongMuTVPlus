@@ -1,0 +1,105 @@
+/* PlaybackTitle.tsx 的样式（块 tm-ptitle）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* py-1 */
+.tm-ptitle-div-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+/* text-2xl font-semibold tracking-tight flex items-center gap-2 flex-wrap */
+.tm-ptitle-h1-1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* text-on-art */
+.tm-ptitle-h1-2 {
+  --tw-text-opacity: 1;
+  color: rgb(var(--tm-on-art-rgb) / var(--tw-text-opacity, 1));
+}
+
+/* text-fg */
+.tm-ptitle-h1-3 {
+  color: var(--tm-text);
+}
+
+/* text-fg opacity-80 */
+.tm-ptitle-span-1 {
+  color: var(--tm-text);
+  opacity: 0.8;
+}
+
+/* text-muted */
+.tm-ptitle-span-2 {
+  color: var(--tm-muted);
+}
+
+/* inline-flex items-center px-2.5 py-0.5 rounded-full text-[13px] font-medium bg-raised text-fg */
+.tm-ptitle-span-3 {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* mt-2 flex flex-wrap items-center gap-2 text-[13px] */
+.tm-ptitle-div-2 {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+}
+
+/* inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg */
+.tm-ptitle-span-4 {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  color: var(--tm-text);
+}
+
+/* inline-flex items-center rounded-full border border-line px-2.5 py-0.5 text-muted */
+.tm-ptitle-span-5 {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--tm-radius-full);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  color: var(--tm-muted);
+}
+
+/* 外层容器给这个组件的覆盖（原来写在外层样式里，点名 Tailwind 类；按块名归属搬到这里） */
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-title
+  .tm-ptitle-div-2
+  > span {
+  padding: 1px 9px;
+  font-size: 12px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-title .tm-ptitle-div-2 {
+  gap: 6px;
+  margin-top: 6px;
+}

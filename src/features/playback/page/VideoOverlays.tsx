@@ -2,6 +2,8 @@
 
 import { Clapperboard, TriangleAlert } from 'lucide-react';
 
+import './VideoOverlays.css';
+
 import BusyDots from '@/components/feedback/BusyDots';
 import LoadingStyle, {
   LoadingErrorStyle,
@@ -54,13 +56,13 @@ export default function VideoOverlays({
     <>
       {/* 换源加载蒙层 */}
       {(loading || videoError) && (
-        <div className='absolute inset-0 bg-ink/85 backdrop-blur-sm rounded-xl flex items-center justify-center z-[var(--tm-z-player-cover)] transition-all duration-300'>
-          <div className='text-center max-w-md mx-auto px-6'>
+        <div className='tm-poverlay-div-1'>
+          <div className='tm-poverlay-div-2'>
             {videoError ? (
               // 错误显示
               <>
                 {/* 错误图标：跟页面级失败态同款，遮罩是深色底所以钉暗色 */}
-                <div className='relative mb-4 wide:mb-8'>
+                <div className='tm-poverlay-div-3'>
                   {/* 失败态款式（旧版那一套各页自备） */}
                   <LoadingErrorStyle
                     steps={VIDEO_LOAD_STEPS}
@@ -69,10 +71,10 @@ export default function VideoOverlays({
                     onDark
                     legacy={
                       <>
-                        <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center'>
+                        <div className='tm-poverlay-div-4'>
                           <TriangleAlert
                             size={36}
-                            className='text-fg'
+                            className='tm-poverlay-trianglealert-1'
                             aria-hidden='true'
                           />
                         </div>
@@ -82,14 +84,12 @@ export default function VideoOverlays({
                 </div>
 
                 {/* 错误消息 */}
-                <div className='space-y-2 wide:space-y-4'>
-                  <p className='text-xl font-medium text-fg'>播放失败</p>
-                  <p className='mtv-err-box text-base text-muted'>
-                    {videoError}
-                  </p>
+                <div className='tm-poverlay-div-5'>
+                  <p className='tm-poverlay-p-1'>播放失败</p>
+                  <p className='mtv-err-box tm-poverlay-p-2'>{videoError}</p>
                   <button
                     onClick={onRetry}
-                    className='mt-4 px-6 py-2 bg-surface text-fg rounded-lg transition-all duration-200 min-h-[44px] tm-press'
+                    className='tm-poverlay-button-1 tm-press'
                   >
                     重试
                   </button>
@@ -97,7 +97,7 @@ export default function VideoOverlays({
                   {canUseProxy && (
                     <button
                       onClick={onUseProxy}
-                      className='mt-4 ml-3 px-6 py-2 bg-surface text-fg rounded-lg transition-all duration-200 min-h-[44px] tm-press'
+                      className='tm-poverlay-button-2 tm-press'
                     >
                       使用代理播放
                     </button>
@@ -114,32 +114,32 @@ export default function VideoOverlays({
                 legacy={
                   <>
                     {/* 动画影院图标 */}
-                    <div className='relative mb-8'>
-                      <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
+                    <div className='tm-poverlay-div-6'>
+                      <div className='tm-poverlay-div-7'>
                         <Clapperboard
                           size={36}
-                          className='text-fg'
+                          className='tm-poverlay-trianglealert-1'
                           aria-hidden='true'
                         />
                       </div>
 
                       {/* 浮动粒子效果 */}
-                      <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
-                        <div className='absolute top-2 left-2 w-2 h-2 bg-fg rounded-full animate-bounce'></div>
+                      <div className='tm-poverlay-div-8'>
+                        <div className='tm-poverlay-div-9'></div>
                         <div
-                          className='absolute top-4 right-4 w-1.5 h-1.5 bg-fg rounded-full animate-bounce'
+                          className='tm-poverlay-div-10'
                           style={{ animationDelay: '0.5s' }}
                         ></div>
                         <div
-                          className='absolute bottom-3 left-6 w-1 h-1 bg-fg rounded-full animate-bounce'
+                          className='tm-poverlay-div-11'
                           style={{ animationDelay: '1s' }}
                         ></div>
                       </div>
                     </div>
 
                     {/* 换源消息 */}
-                    <div className='space-y-2'>
-                      <p className='text-xl font-medium text-fg tm-skeleton'>
+                    <div className='tm-poverlay-div-12'>
+                      <p className='tm-poverlay-p-1 tm-skeleton'>
                         {videoLoadingStage === 'sourceChanging'
                           ? '切换播放源...'
                           : '视频加载中...'}
@@ -155,8 +155,8 @@ export default function VideoOverlays({
 
       {/* 链接刷新提示（右上角，无遮罩） */}
       {refreshingLink && (
-        <div className='absolute top-3 right-3 z-[var(--tm-z-player-badge)] pointer-events-none'>
-          <div className='bg-ink/70 text-fg px-3 py-1.5 rounded-md flex items-center gap-2 text-sm border border-line shadow-lg'>
+        <div className='tm-poverlay-div-13'>
+          <div className='tm-poverlay-div-14'>
             <BusyDots />
             <span>正在刷新链接...</span>
           </div>
@@ -165,11 +165,11 @@ export default function VideoOverlays({
 
       {/* 弹幕加载蒙层 */}
       {danmakuLoading && (
-        <div className='absolute top-0 right-0 m-4 bg-ink/80 backdrop-blur-sm rounded-lg px-4 py-2 z-[calc(var(--tm-z-player-cover)_+_1)] flex items-center gap-2 border border-line'>
+        <div className='tm-poverlay-div-15 z-[calc(var(--tm-z-player-cover)_+_1)]'>
           {danmakuCount > 0 ? (
             <>
               <svg
-                className='w-4 h-4 text-fg'
+                className='tm-poverlay-svg-1'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -181,7 +181,7 @@ export default function VideoOverlays({
                   d='M5 13l4 4L19 7'
                 />
               </svg>
-              <span className='text-sm font-medium text-fg'>
+              <span className='tm-poverlay-span-1'>
                 {danmakuOriginalCount > 0
                   ? `已加载 ${danmakuCount} 条弹幕（原始 ${danmakuOriginalCount} 条）`
                   : `已加载 ${danmakuCount} 条弹幕`}
@@ -190,7 +190,7 @@ export default function VideoOverlays({
           ) : (
             <>
               <BusyDots />
-              <span className='text-sm font-medium text-fg'>加载弹幕中...</span>
+              <span className='tm-poverlay-span-1'>加载弹幕中...</span>
             </>
           )}
         </div>

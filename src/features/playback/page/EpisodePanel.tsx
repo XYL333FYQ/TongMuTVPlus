@@ -3,6 +3,8 @@
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import './EpisodePanel.css';
+
 interface EpisodePanelProps {
   /** 手机 / 平板：作为底部面板打开 */
   open: boolean;
@@ -21,10 +23,8 @@ export default function EpisodePanel({
 }: EpisodePanelProps) {
   return (
     <div
-      className={`relative z-[1] h-[350px] wide:h-full md:overflow-hidden transition-all duration-300 ease-in-out tm-solo-selector tm-solo-sheet ${
-        collapsed
-          ? 'wide:col-span-1 wide:hidden wide:opacity-0 wide:scale-95'
-          : 'wide:col-span-1 wide:opacity-100 wide:scale-100'
+      className={`tm-pepisodes-div-1 tm-solo-selector tm-solo-sheet ${
+        collapsed ? 'tm-pepisodes-div-2' : 'tm-pepisodes-div-3'
       }`}
       data-tm-sheet={open ? 'open' : undefined}
       role={open ? 'dialog' : undefined}
@@ -36,7 +36,7 @@ export default function EpisodePanel({
         onClick={onClose}
         aria-label='关闭'
       >
-        <X className='h-5 w-5' />
+        <X className='tm-pepisodes-x-1' />
       </button>
       {children}
     </div>

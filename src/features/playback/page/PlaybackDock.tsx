@@ -8,6 +8,8 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
+import './PlaybackDock.css';
+
 import type { PlaybackPanel } from './types';
 
 interface PlaybackDockProps {
@@ -48,17 +50,20 @@ export default function PlaybackDock({
       />
       <nav className='tm-solo-dock' aria-label='播放工具'>
         <button type='button' onClick={() => onOpen('episodes')}>
-          <ListVideo className='h-5 w-5' aria-hidden='true' />
+          <ListVideo className='tm-pdock-listvideo-1' aria-hidden='true' />
           <span>选集</span>
           <em>{episodeHint}</em>
         </button>
         <button type='button' onClick={() => onOpen('sources')}>
-          <RefreshCw className='h-5 w-5' aria-hidden='true' />
+          <RefreshCw className='tm-pdock-listvideo-1' aria-hidden='true' />
           <span>换源</span>
           <em>{sourceName}</em>
         </button>
         <button type='button' onClick={() => onOpen('danmaku')}>
-          <MessageSquareText className='h-5 w-5' aria-hidden='true' />
+          <MessageSquareText
+            className='tm-pdock-listvideo-1'
+            aria-hidden='true'
+          />
           <span>弹幕</span>
           <em>
             {danmakuCount > 0
@@ -68,14 +73,14 @@ export default function PlaybackDock({
         </button>
         {showTools && (
           <button type='button' onClick={() => onOpen('tools')}>
-            <Ellipsis className='h-5 w-5' aria-hidden='true' />
+            <Ellipsis className='tm-pdock-listvideo-1' aria-hidden='true' />
             <span>工具</span>
             <em>下载等</em>
           </button>
         )}
         {detailHint !== null && (
           <button type='button' onClick={onDetail}>
-            <FileText className='h-5 w-5' aria-hidden='true' />
+            <FileText className='tm-pdock-listvideo-1' aria-hidden='true' />
             <span>详情</span>
             <em>{detailHint}</em>
           </button>

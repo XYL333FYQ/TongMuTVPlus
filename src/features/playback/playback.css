@@ -148,17 +148,16 @@ html[data-tm-reduced-motion='true'] .tm-playback-host * {
   --art-theme: var(--tm-room-player-text) !important;
 }
 .tm-playback-host #play-record-jump-container {
-  background: var(--tm-glass-solid) !important;
-  color: var(--tm-text) !important;
+  background: var(--tm-glass-solid);
+  color: var(--tm-text);
   border: 0;
-  box-shadow: 0 2px 8px var(--tm-room-shadow) !important;
-  backdrop-filter: none !important;
+  box-shadow: 0 2px 8px var(--tm-room-shadow);
 }
 .tm-playback-host #play-record-jump-btn,
 .tm-playback-host #play-record-dismiss-btn {
-  background: var(--tm-surface-raised) !important;
-  color: var(--tm-text) !important;
-  border-color: var(--tm-line) !important;
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  border-color: var(--tm-line);
 }
 .tm-playback-host [data-tm-player-mount] {
   transition: left 400ms var(--tm-ease-in-out), top 400ms var(--tm-ease-in-out),
@@ -382,11 +381,6 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   border: 0;
   background: none;
 }
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-tools[data-tm-sheet]
-  .flex-nowrap {
-  flex-wrap: wrap;
-}
 :where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] button {
   width: auto;
   height: 44px;
@@ -492,13 +486,6 @@ html[data-tm-reduced-motion]
   gap: 12px;
   align-items: stretch;
 }
-:where(html[data-tm-device='wide']) .tm-solo-row > * {
-  margin-top: 0 !important;
-}
-:where(html[data-tm-device='wide']) .tm-solo-row > .grid {
-  flex: 1;
-  min-width: 0;
-}
 /* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
 :where(html[data-tm-device='wide']) .tm-solo-rail {
   display: flex;
@@ -596,14 +583,6 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 :where(html:not([data-tm-device='wide'])) .tm-page-container.tm-solo-page {
   padding-top: 0;
 }
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-row
-  > .grid
-  > div:has(> .tm-playback-video-frame) {
-  margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
-  border: 0;
-  border-radius: 0;
-}
 /* 只管播放页里的画面；以前没限定形态，画面转成小窗后这条还在，竖屏小窗四角变尖 */
 :where(html:not([data-tm-device='wide']))
   .tm-playback-host[data-presentation='full']
@@ -647,20 +626,25 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
   font-size: 19px;
   line-height: 1.3;
 }
-:where(html:not([data-tm-device='wide'])) .tm-solo-title h1 span.rounded-full,
-:where(html:not([data-tm-device='wide'])) .tm-solo-title .mt-2 > span {
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-title
+  h1
+  span:is(.tm-ptitle-span-3, .tm-ptitle-span-4, .tm-ptitle-span-5) {
   padding: 1px 9px;
   font-size: 12px;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-title .mt-2 {
-  gap: 6px;
-  margin-top: 6px;
 }
 :where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 button {
   min-width: 40px;
   min-height: 40px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-solo-detail .text-base {
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-detail
+  :is(
+    .tm-pdetail-button-2,
+    .tm-pdetail-div-8,
+    .tm-pdetail-div-11,
+    .tm-pdetail-div-12
+  ) {
   font-size: 14px;
 }
 :where(html:not([data-tm-device='wide'])) .tm-solo-dock svg {
@@ -739,8 +723,19 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
   border: 0;
   background: none;
 }
-:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] .flex,
-:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] .flex-nowrap {
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  :is(
+    .tm-ptools-div-3,
+    .tm-ptools-div-4,
+    .tm-ptools-button-1,
+    .tm-ptools-button-2,
+    .tm-ptools-button-3,
+    .tm-ptools-button-4,
+    .tm-ptools-button-7,
+    .tm-ptools-button-8,
+    .tm-ptools-button-9
+  ) {
   flex-wrap: wrap;
   justify-content: flex-start;
 }
@@ -778,7 +773,27 @@ html[data-tm-reduced-motion] .tm-solo-tools[data-tm-sheet] {
 /* 工具按钮一排排往下排，去广告等开关另起一行 */
 :where(html[data-tm-device='wide'])
   .tm-solo-tools[data-tm-sheet]
-  .flex
-  > .flex {
+  :is(
+    .tm-ptools-div-3,
+    .tm-ptools-div-4,
+    .tm-ptools-button-1,
+    .tm-ptools-button-2,
+    .tm-ptools-button-3,
+    .tm-ptools-button-4,
+    .tm-ptools-button-7,
+    .tm-ptools-button-8,
+    .tm-ptools-button-9
+  )
+  > :is(
+    .tm-ptools-div-3,
+    .tm-ptools-div-4,
+    .tm-ptools-button-1,
+    .tm-ptools-button-2,
+    .tm-ptools-button-3,
+    .tm-ptools-button-4,
+    .tm-ptools-button-7,
+    .tm-ptools-button-8,
+    .tm-ptools-button-9
+  ) {
   flex: 0 0 100%;
 }

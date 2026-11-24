@@ -1,0 +1,129 @@
+/* PlaybackSurface.tsx 的样式（块 tm-psurface）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* fixed inset-0 z-0 */
+.tm-psurface-div-1 {
+  position: fixed;
+  inset: 0px;
+  z-index: 0;
+}
+
+/* relative z-[1] flex flex-col gap-3 py-4 */
+.tm-psurface-div-2 {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* space-y-2（电脑档画面和右侧图标栏并排，不要这段间距） */
+:where(html:not([data-tm-device='wide']))
+  .tm-psurface-div-3
+  > :not([hidden])
+  ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+
+/* mt-2 grid gap-4 wide:h-[520px] wide:xl:h-[620px] wide:2xl:h-[680px] transition-all duration-300 ease-in-out */
+.tm-psurface-div-4 {
+  display: grid;
+  gap: 1rem;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 300ms;
+  transition-timing-function: var(--tm-ease-in-out);
+}
+/* 手机 / 平板上和标题之间留 8px；电脑档不留 */
+:where(html:not([data-tm-device='wide'])) .tm-psurface-div-4 {
+  margin-top: 0.5rem;
+}
+/* 电脑档的画面高度随屏宽分三档，档位值在 tokens.css（--tm-solo-stage-height） */
+:where(html[data-tm-device='wide']) .tm-psurface-div-4 {
+  height: var(--tm-solo-stage-height);
+}
+
+/* grid-cols-1 */
+.tm-psurface-div-5 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+/* grid-cols-1 wide:grid-cols-4 */
+.tm-psurface-div-6 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+:where(html[data-tm-device='wide']) .tm-psurface-div-6 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* transition-all duration-300 ease-in-out rounded-xl border border-line flex flex-col */
+.tm-psurface-div-7 {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 300ms;
+  transition-timing-function: var(--tm-ease-in-out);
+}
+
+/* col-span-1 */
+.tm-psurface-div-8 {
+  grid-column: span 1 / span 1;
+}
+
+/* wide:col-span-3 */
+:where(html[data-tm-device='wide']) .tm-psurface-div-9 {
+  grid-column: span 3 / span 3;
+}
+
+/* relative w-full h-[300px] wide:flex-1 wide:min-h-0 */
+.tm-psurface-div-10 {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+:where(html[data-tm-device='wide']) .tm-psurface-div-10 {
+  min-height: 0px;
+  flex: 1 1 0%;
+}
+
+/* bg-surface w-full h-full rounded-xl overflow-hidden shadow-lg */
+.tm-psurface-div-11 {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface);
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),
+    0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+}
+
+/* hidden */
+.tm-psurface-input-1 {
+  display: none;
+}
+
+/* 外层容器给这个组件的覆盖（原来写在外层样式里，点名 Tailwind 类；按块名归属搬到这里） */
+:where(html[data-tm-device='wide']) .tm-solo-row > .tm-psurface-div-4 {
+  flex: 1;
+  min-width: 0;
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-row
+  > .tm-psurface-div-4
+  > div:has(> .tm-playback-video-frame) {
+  margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+  border: 0;
+  border-radius: 0;
+}

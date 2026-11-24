@@ -2,6 +2,8 @@
 
 import { AlertCircle, Cloud, Heart, Sparkles } from 'lucide-react';
 
+import './PlaybackDetail.css';
+
 import type { SearchResult } from '@/lib/types';
 
 import FilmPoster from '@/components/poster/FilmPoster';
@@ -57,34 +59,32 @@ export default function PlaybackDetail({
   onArt,
 }: PlaybackDetailProps) {
   return (
-    <div className='grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4 tm-solo-detail'>
+    <div className='tm-pdetail-div-1 tm-solo-detail'>
       {/* 文字区 */}
-      <div className='md:col-span-4 lg:col-span-5'>
-        <div className='p-6 flex flex-col min-h-0'>
+      <div className='tm-pdetail-div-2'>
+        <div className='tm-pdetail-div-3'>
           {/* 标题 */}
           <h1
-            className={`text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full flex-wrap gap-2 ${
-              onArt ? 'text-on-art' : 'text-fg'
+            className={`tm-pdetail-h1-1 ${
+              onArt ? 'tm-pdetail-h1-2' : 'tm-pdetail-h1-3'
             }`}
           >
             <span
               className={
-                doubanAka.length > 0 ? 'relative group cursor-help' : ''
+                doubanAka.length > 0 ? 'tm-pdetail-span-1 tm-pdetail-group' : ''
               }
             >
               {videoTitle || '影片标题'}
               {/* aka 悬浮提示 */}
               {doubanAka.length > 0 && (
-                <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-surface text-fg text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out whitespace-nowrap z-[3] pointer-events-none'>
-                  <div className='font-medium text-[13px] text-muted mb-1'>
-                    又名：
-                  </div>
+                <div className='tm-pdetail-div-4'>
+                  <div className='tm-pdetail-div-5'>又名：</div>
                   {doubanAka.map((name, index) => (
-                    <div key={index} className='text-sm'>
+                    <div key={index} className='tm-pdetail-div-6'>
                       {name}
                     </div>
                   ))}
-                  <div className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'></div>
+                  <div className='tm-pdetail-div-7'></div>
                 </div>
               )}
             </span>
@@ -93,7 +93,7 @@ export default function PlaybackDetail({
                 e.stopPropagation();
                 onToggleFavorite();
               }}
-              className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
+              className='tm-pdetail-button-1 tm-press'
             >
               <FavoriteIcon filled={favorited} />
             </button>
@@ -104,10 +104,10 @@ export default function PlaybackDetail({
                   e.stopPropagation();
                   onDrawer('pansou');
                 }}
-                className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
+                className='tm-pdetail-button-1 tm-press'
                 title='搜索网盘资源'
               >
-                <Cloud className='h-6 w-6 text-muted' />
+                <Cloud className='tm-pdetail-cloud-1' />
               </button>
             )}
             {/* AI问片按钮 */}
@@ -117,10 +117,10 @@ export default function PlaybackDetail({
                   e.stopPropagation();
                   onDrawer('aiChat');
                 }}
-                className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
+                className='tm-pdetail-button-1 tm-press'
                 title='AI问片'
               >
-                <Sparkles className='h-6 w-6 text-muted' />
+                <Sparkles className='tm-pdetail-cloud-1' />
               </button>
             )}
             {/* 详情按钮 */}
@@ -130,7 +130,7 @@ export default function PlaybackDetail({
                   e.stopPropagation();
                   onDrawer('detail');
                 }}
-                className='flex-shrink-0 hover:opacity-80 transition-opacity min-w-[44px] px-2 py-1 text-base font-medium text-muted min-h-[44px] tm-press'
+                className='tm-pdetail-button-2 tm-press'
                 title='详情'
               >
                 详
@@ -143,17 +143,17 @@ export default function PlaybackDetail({
                   e.stopPropagation();
                   onDrawer('correct');
                 }}
-                className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
+                className='tm-pdetail-button-1 tm-press'
                 title='纠错'
               >
-                <AlertCircle className='h-6 w-6 text-muted' />
+                <AlertCircle className='tm-pdetail-cloud-1' />
               </button>
             )}
             {/* 豆瓣评分显示 */}
             {doubanRating && doubanRating.value > 0 && (
-              <div className='flex items-center gap-2 text-base font-normal'>
+              <div className='tm-pdetail-div-8'>
                 {/* 星级显示 */}
-                <div className='flex items-center gap-1'>
+                <div className='tm-pdetail-div-9'>
                   {[1, 2, 3, 4, 5].map((star) => {
                     const starValue = doubanRating.value / 2; // 转换为5星制
                     const isFullStar = star <= Math.floor(starValue);
@@ -163,11 +163,11 @@ export default function PlaybackDetail({
                       starValue % 1 >= 0.25;
 
                     return (
-                      <div key={star} className='relative w-5 h-5'>
+                      <div key={star} className='tm-pdetail-div-10'>
                         {isFullStar ? (
                           // 全星
                           <svg
-                            className='w-5 h-5 text-fg fill-fg'
+                            className='tm-pdetail-svg-1'
                             viewBox='0 0 24 24'
                             xmlns='http://www.w3.org/2000/svg'
                           >
@@ -178,7 +178,7 @@ export default function PlaybackDetail({
                           <>
                             {/* 空星背景 */}
                             <svg
-                              className='absolute w-5 h-5 text-muted fill-fg'
+                              className='tm-pdetail-svg-2'
                               viewBox='0 0 24 24'
                               xmlns='http://www.w3.org/2000/svg'
                             >
@@ -186,7 +186,7 @@ export default function PlaybackDetail({
                             </svg>
                             {/* 半星遮罩 */}
                             <svg
-                              className='absolute w-5 h-5 text-fg fill-fg'
+                              className='tm-pdetail-svg-3'
                               viewBox='0 0 24 24'
                               xmlns='http://www.w3.org/2000/svg'
                               style={{ clipPath: 'inset(0 50% 0 0)' }}
@@ -197,7 +197,7 @@ export default function PlaybackDetail({
                         ) : (
                           // 空星
                           <svg
-                            className='w-5 h-5 text-muted fill-fg'
+                            className='tm-pdetail-svg-4'
                             viewBox='0 0 24 24'
                             xmlns='http://www.w3.org/2000/svg'
                           >
@@ -210,16 +210,16 @@ export default function PlaybackDetail({
                 </div>
                 {/* 评分数值 */}
                 <span
-                  className={`font-medium ${onArt ? 'text-fg' : 'text-muted'}`}
+                  className={`tm-pdetail-span-2 ${
+                    onArt ? 'tm-pdetail-h1-3' : 'tm-pdetail-span-3'
+                  }`}
                 >
                   {doubanRating.value.toFixed(1)}
                 </span>
                 {/* 评分人数 */}
                 <span
-                  className={`text-sm ${
-                    onArt
-                      ? 'text-[color:color-mix(in_srgb,var(--tm-text)_80%,transparent)]'
-                      : 'text-muted'
+                  className={`tm-pdetail-div-6 ${
+                    onArt ? 'tm-pdetail-span-4' : 'tm-pdetail-span-3'
                   }`}
                 >
                   ({doubanRating.count.toLocaleString()}人评价)
@@ -230,12 +230,10 @@ export default function PlaybackDetail({
 
           {/* 关键信息行 */}
           <div
-            className={`flex flex-wrap items-center gap-3 text-base mb-4 opacity-80 flex-shrink-0 ${
-              onArt ? 'text-fg' : ''
-            }`}
+            className={`tm-pdetail-div-11 ${onArt ? 'tm-pdetail-h1-3' : ''}`}
           >
             {detail?.class && (
-              <span className='text-fg font-medium'>{detail.class}</span>
+              <span className='tm-pdetail-span-5'>{detail.class}</span>
             )}
             {/* 优先使用 doubanYear，如果没有则使用 detail.year 或 videoYear */}
             {(doubanYear ||
@@ -251,18 +249,18 @@ export default function PlaybackDetail({
             )}
             {detail?.source_name && (
               <span
-                className='relative group cursor-pointer border px-2 py-[1px] rounded border-line'
+                className='tm-pdetail-span-6 tm-pdetail-group'
                 onClick={onSourceInfo}
               >
                 {detail.source_name}
                 {/* 视频信息悬浮提示 */}
                 {sourceInfo && (
-                  <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-surface text-fg text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out whitespace-nowrap z-[3] pointer-events-none'>
-                    <div className='text-sm'>
+                  <div className='tm-pdetail-div-4'>
+                    <div className='tm-pdetail-div-6'>
                       <div>分辨率: {sourceInfo.quality}</div>
                       <div>码率: {sourceInfo.bitrate}</div>
                     </div>
-                    <div className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'></div>
+                    <div className='tm-pdetail-div-7'></div>
                   </div>
                 )}
               </span>
@@ -275,16 +273,14 @@ export default function PlaybackDetail({
             correctedDesc ||
             detail?.desc) && (
             <div
-              className={`mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide ${
-                onArt ? 'text-fg' : ''
+              className={`tm-pdetail-div-12 scrollbar-hide ${
+                onArt ? 'tm-pdetail-h1-3' : ''
               }`}
               style={{ whiteSpace: 'pre-line' }}
             >
               {/* card_subtitle 在前，desc 在后 */}
               {doubanCardSubtitle && (
-                <div className='mb-3 pb-3 border-b border-line'>
-                  {doubanCardSubtitle}
-                </div>
+                <div className='tm-pdetail-div-13'>{doubanCardSubtitle}</div>
               )}
               {netdiskTMDBMeta?.desc || correctedDesc || detail?.desc}
             </div>
@@ -293,8 +289,8 @@ export default function PlaybackDetail({
       </div>
 
       {/* 封面展示 */}
-      <div className='hidden md:block md:col-span-1 md:order-first'>
-        <div className='pl-0 py-4 pr-6 max-w-sm mx-auto'>
+      <div className='tm-pdetail-div-14'>
+        <div className='tm-pdetail-div-15'>
           <FilmPoster
             src={videoCover}
             title={videoTitle}
@@ -307,9 +303,9 @@ export default function PlaybackDetail({
                 href={`https://movie.douban.com/subject/${videoDoubanId.toString()}`}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='absolute top-3 left-3 min-h-[44px] inline-flex items-center tm-press'
+                className='tm-pdetail-a-1 tm-press'
               >
-                <div className='bg-raised text-fg text-[13px] font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-line hover:scale-[1.1] transition-all duration-300 ease-out'>
+                <div className='tm-pdetail-div-16'>
                   <svg
                     width='16'
                     height='16'
@@ -338,7 +334,7 @@ function FavoriteIcon({ filled }: { filled: boolean }) {
   if (filled) {
     return (
       <svg
-        className='h-7 w-7'
+        className='tm-pdetail-svg-5'
         viewBox='0 0 24 24'
         xmlns='http://www.w3.org/2000/svg'
       >
@@ -353,5 +349,5 @@ function FavoriteIcon({ filled }: { filled: boolean }) {
       </svg>
     );
   }
-  return <Heart className='h-7 w-7 stroke-[1] text-muted' />;
+  return <Heart className='tm-pdetail-heart-1' />;
 }

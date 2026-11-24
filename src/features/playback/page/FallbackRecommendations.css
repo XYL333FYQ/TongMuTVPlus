@@ -1,0 +1,76 @@
+/* FallbackRecommendations.tsx 的样式（块 tm-precs）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* mt-4 w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-raised p-3 text-left sm:max-w-3xl lg:max-w-5xl */
+.tm-precs-div-1 {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: calc(100vw - 2rem);
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface-raised);
+  padding: 0.75rem;
+  text-align: left;
+}
+:where(html:not([data-tm-device='phone'])) .tm-precs-div-1 {
+  max-width: 48rem;
+}
+:where(html[data-tm-device='wide']) .tm-precs-div-1 {
+  max-width: 64rem;
+}
+
+/* mb-3 flex items-center gap-2 */
+.tm-precs-div-2 {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* h-4 w-4 flex-shrink-0 text-fg */
+.tm-precs-sparkles-1 {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  color: var(--tm-text);
+}
+
+/* text-sm font-medium text-fg */
+.tm-precs-h3-1 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* w-full overflow-x-auto overflow-y-hidden pb-1 cursor-grab active:cursor-grabbing */
+.tm-precs-div-3 {
+  width: 100%;
+  cursor: grab;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.25rem;
+}
+.tm-precs-div-3:active {
+  cursor: grabbing;
+}
+
+/* inline-flex gap-2.5 sm:gap-3 */
+.tm-precs-div-4 {
+  display: inline-flex;
+  gap: 0.625rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-precs-div-4 {
+  gap: 0.75rem;
+}
+
+/* w-[118px] min-w-[118px] flex-shrink-0 sm:w-[150px] sm:min-w-[150px] */
+.tm-precs-div-5 {
+  width: 118px;
+  min-width: 118px;
+  flex-shrink: 0;
+}
+:where(html:not([data-tm-device='phone'])) .tm-precs-div-5 {
+  width: 150px;
+  min-width: 150px;
+}

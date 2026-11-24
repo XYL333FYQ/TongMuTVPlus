@@ -1,0 +1,79 @@
+/* PlaybackComments.tsx 的样式（块 tm-pcomments）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* mt-6 -mx-3 md:mx-0 md:px-4 */
+.tm-pcomments-div-1 {
+  margin-left: -0.75rem;
+  margin-right: -0.75rem;
+  margin-top: 1.5rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-pcomments-div-1 {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* bg-raised backdrop-blur-sm rounded-xl border border-line overflow-hidden */
+.tm-pcomments-div-2 {
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface-raised);
+  --tw-backdrop-blur: blur(4px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+    var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+    var(--tw-backdrop-sepia);
+}
+
+/* px-3 md:px-6 py-4 border-b border-line */
+.tm-pcomments-div-3 {
+  border-bottom-width: 1px;
+  border-color: var(--tm-line);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-pcomments-div-3 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* text-lg font-medium text-fg flex items-center gap-2 */
+.tm-pcomments-h3-1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* w-5 h-5 */
+.tm-pcomments-svg-1 {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+/* p-3 md:p-6 */
+.tm-pcomments-div-4 {
+  padding: 0.75rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-pcomments-div-4 {
+  padding: 1.5rem;
+}
+
+/* w-5 h-5 text-fg */
+.tm-pcomments-svg-2 {
+  height: 1.25rem;
+  width: 1.25rem;
+  color: var(--tm-text);
+}

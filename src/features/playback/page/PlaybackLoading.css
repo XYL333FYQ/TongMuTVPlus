@@ -1,0 +1,229 @@
+/* PlaybackLoading.tsx 的样式（块 tm-pload）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* fixed inset-0 flex items-center justify-center pointer-events-none */
+.tm-pload-div-1 {
+  pointer-events: none;
+  position: fixed;
+  inset: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* text-center max-w-md mx-auto px-6 */
+.tm-pload-div-2 {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 28rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  text-align: center;
+}
+
+/* relative mb-8 */
+.tm-pload-div-3 {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+/* relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300 */
+.tm-pload-div-4 {
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  height: 6rem;
+  width: 6rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface);
+  --tw-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --tw-shadow-colored: 0 25px 50px -12px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 300ms;
+}
+.tm-pload-div-4:hover {
+  --tw-scale-x: 1.05;
+  --tw-scale-y: 1.05;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+/* text-fg */
+.tm-pload-div-5 {
+  color: var(--tm-text);
+}
+
+/* absolute top-0 left-0 w-full h-full pointer-events-none */
+.tm-pload-div-6 {
+  pointer-events: none;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  height: 100%;
+  width: 100%;
+}
+
+/* absolute top-2 left-2 w-2 h-2 bg-fg rounded-full animate-bounce */
+.tm-pload-div-7 {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  height: 0.5rem;
+  width: 0.5rem;
+  animation: bounce 1s infinite;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-text);
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* absolute top-4 right-4 w-1.5 h-1.5 bg-fg rounded-full animate-bounce */
+.tm-pload-div-8 {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  height: 0.375rem;
+  width: 0.375rem;
+  animation: bounce 1s infinite;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-text);
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* absolute bottom-3 left-6 w-1 h-1 bg-fg rounded-full animate-bounce */
+.tm-pload-div-9 {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 1.5rem;
+  height: 0.25rem;
+  width: 0.25rem;
+  animation: bounce 1s infinite;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-text);
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* mb-6 w-80 mx-auto */
+.tm-pload-div-10 {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+  width: 20rem;
+}
+
+/* flex justify-center space-x-2 mb-4 */
+.tm-pload-div-11 {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+}
+.tm-pload-div-11 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+  margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+/* w-3 h-3 rounded-full transition-all duration-500 */
+.tm-pload-div-12 {
+  height: 0.75rem;
+  width: 0.75rem;
+  border-radius: var(--tm-radius-full);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 500ms;
+}
+
+/* bg-fg scale-125 */
+.tm-pload-div-13 {
+  --tw-scale-x: 1.25;
+  --tw-scale-y: 1.25;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  background-color: var(--tm-text);
+}
+
+/* bg-fg */
+.tm-pload-div-14 {
+  background-color: var(--tm-text);
+}
+
+/* bg-surface */
+.tm-pload-div-15 {
+  background-color: var(--tm-surface);
+}
+
+/* w-full bg-raised rounded-full h-2 overflow-hidden */
+.tm-pload-div-16 {
+  height: 0.5rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+}
+
+/* h-full bg-surface rounded-full transition-all duration-1000 ease-out */
+.tm-pload-div-17 {
+  height: 100%;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 1000ms;
+  transition-timing-function: var(--tm-ease-out);
+}
+
+/* space-y-2 */
+.tm-pload-div-18 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+
+/* text-xl font-medium text-fg */
+.tm-pload-p-1 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}

@@ -3,6 +3,8 @@
 import { Keyboard, X } from 'lucide-react';
 import { useEffect } from 'react';
 
+import './ShortcutDialog.css';
+
 const PLAY_SHORTCUT_GROUPS = [
   {
     title: '播放控制',
@@ -42,77 +44,64 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div
-      className='fixed inset-0 z-[var(--tm-z-top)] flex items-center justify-center bg-ink/50 px-4 py-6 backdrop-blur-sm'
-      onClick={onClose}
-    >
+    <div className='tm-pkeys-div-1' onClick={onClose}>
       <div
-        className='relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-fg shadow-2xl shadow-ink/20 shadow-ink/40'
+        className='tm-pkeys-div-2'
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role='dialog'
         aria-modal='true'
         aria-labelledby='shortcut-dialog-title'
       >
-        <div className='absolute inset-x-0 top-0 h-24 bg-surface to-transparent pointer-events-none' />
-        <div className='relative flex items-start justify-between gap-4 border-b border-line px-5 py-4'>
-          <div className='flex items-center gap-3'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-raised text-fg'>
-              <Keyboard className='h-5 w-5' />
+        <div className='tm-pkeys-div-3' />
+        <div className='tm-pkeys-div-4'>
+          <div className='tm-pkeys-div-5'>
+            <div className='tm-pkeys-div-6'>
+              <Keyboard className='tm-pkeys-keyboard-1' />
             </div>
             <div>
-              <h2
-                id='shortcut-dialog-title'
-                className='text-base font-medium text-fg'
-              >
+              <h2 id='shortcut-dialog-title' className='tm-pkeys-h2-1'>
                 播放快捷键
               </h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className='rounded-lg p-2 text-muted transition-colors duration-200 hover:bg-line hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fg cursor-pointer min-h-[44px] tm-press'
+            className='tm-pkeys-button-1 tm-press'
             aria-label='关闭快捷键说明'
           >
-            <X className='h-5 w-5' />
+            <X className='tm-pkeys-keyboard-1' />
           </button>
         </div>
 
-        <div className='relative max-h-[70vh] overflow-y-auto px-5 py-4'>
-          <div className='grid gap-3'>
+        <div className='tm-pkeys-div-7'>
+          <div className='tm-pkeys-div-8'>
             {PLAY_SHORTCUT_GROUPS.map((group) => (
-              <section
-                key={group.title}
-                className='rounded-xl border border-line bg-raised p-3'
-              >
-                <h3 className='mb-3 text-sm font-medium text-fg'>
-                  {group.title}
-                </h3>
-                <div className='space-y-2'>
+              <section key={group.title} className='tm-pkeys-section-1'>
+                <h3 className='tm-pkeys-h3-1'>{group.title}</h3>
+                <div className='tm-pkeys-div-9'>
                   {group.items.map((item) => (
                     <div
                       key={`${group.title}-${item.description}`}
-                      className='flex items-center justify-between gap-4 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-line'
+                      className='tm-pkeys-div-10'
                     >
-                      <div className='flex flex-wrap items-center gap-1.5'>
+                      <div className='tm-pkeys-div-11'>
                         {item.keys.map((key, index) => (
                           <span
                             key={`${item.description}-${key}`}
-                            className='flex items-center gap-1.5'
+                            className='tm-pkeys-span-1'
                           >
                             {index > 0 && (
-                              <span className='text-[13px] text-muted'>
+                              <span className='tm-pkeys-span-2'>
                                 {/* 含 Alt 才是同时按下；其余是两个独立按键 */}
                                 {item.keys[0] === 'Alt' ? '+' : '/'}
                               </span>
                             )}
-                            <kbd className='min-w-7 rounded-md border border-line bg-surface px-2 py-1 text-center text-[13px] font-medium text-fg shadow-sm dark:shadow-inner shadow-ink/5'>
-                              {key}
-                            </kbd>
+                            <kbd className='tm-pkeys-kbd-1'>{key}</kbd>
                           </span>
                         ))}
                       </div>
-                      <span className='text-right text-[13px] text-muted'>
+                      <span className='tm-pkeys-span-3'>
                         {item.description}
                       </span>
                     </div>

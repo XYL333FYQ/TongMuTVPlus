@@ -1,0 +1,77 @@
+/* PansouDialog.tsx 的样式（块 tm-ppansou）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* p-4 */
+.tm-ppansou-div-1 {
+  padding: 1rem;
+}
+
+/* fixed inset-0 z-[var(--tm-z-top)] flex items-center justify-center bg-ink/50 */
+.tm-ppansou-div-2 {
+  position: fixed;
+  inset: 0px;
+  z-index: var(--tm-z-top);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(var(--tm-ink-rgb) / 0.5);
+}
+
+/* relative w-full max-w-4xl max-h-[80vh] overflow-y-auto bg-surface rounded-lg shadow-xl m-4 */
+.tm-ppansou-div-3 {
+  position: relative;
+  margin: 1rem;
+  max-height: 80vh;
+  width: 100%;
+  max-width: 56rem;
+  overflow-y: auto;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface);
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color),
+    0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+}
+
+/* sticky top-0 z-[1] flex items-center justify-between p-4 border-b border-line bg-surface */
+.tm-ppansou-div-4 {
+  position: sticky;
+  top: 0px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface);
+  padding: 1rem;
+}
+
+/* text-xl font-bold text-fg */
+.tm-ppansou-h2-1 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  color: var(--tm-text);
+}
+
+/* p-2 hover:bg-line rounded-lg transition-colors min-h-[44px] */
+.tm-ppansou-button-1 {
+  min-height: 44px;
+  border-radius: var(--tm-radius-md);
+  padding: 0.5rem;
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-ppansou-button-1:hover {
+  background-color: var(--tm-line);
+}
+
+/* h-5 w-5 text-muted */
+.tm-ppansou-x-1 {
+  height: 1.25rem;
+  width: 1.25rem;
+  color: var(--tm-muted);
+}

@@ -1,0 +1,260 @@
+/* ShortcutDialog.tsx 的样式（块 tm-pkeys）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* fixed inset-0 z-[var(--tm-z-top)] flex items-center justify-center bg-ink/50 px-4 py-6 backdrop-blur-sm */
+.tm-pkeys-div-1 {
+  position: fixed;
+  inset: 0px;
+  z-index: var(--tm-z-top);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(var(--tm-ink-rgb) / 0.5);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  --tw-backdrop-blur: blur(4px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+    var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+    var(--tw-backdrop-sepia);
+}
+
+/* relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-fg shadow-2xl shadow-ink/20 shadow-ink/40 */
+.tm-pkeys-div-2 {
+  position: relative;
+  width: 100%;
+  max-width: 32rem;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface);
+  color: var(--tm-text);
+  --tw-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --tw-shadow-colored: 0 25px 50px -12px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+  --tw-shadow-color: rgb(var(--tm-ink-rgb) / 0.2);
+  --tw-shadow: var(--tw-shadow-colored);
+  --tw-shadow-color: rgb(var(--tm-ink-rgb) / 0.4);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
+/* absolute inset-x-0 top-0 h-24 bg-surface to-transparent pointer-events-none */
+.tm-pkeys-div-3 {
+  pointer-events: none;
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  height: 6rem;
+  background-color: var(--tm-surface);
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+}
+
+/* relative flex items-start justify-between gap-4 border-b border-line px-5 py-4 */
+.tm-pkeys-div-4 {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom-width: 1px;
+  border-color: var(--tm-line);
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* flex items-center gap-3 */
+.tm-pkeys-div-5 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-raised text-fg */
+.tm-pkeys-div-6 {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+
+/* h-5 w-5 */
+.tm-pkeys-keyboard-1 {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+/* text-base font-medium text-fg */
+.tm-pkeys-h2-1 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* rounded-lg p-2 text-muted transition-colors duration-200 hover:bg-line hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fg cursor-pointer min-h-[44px] */
+.tm-pkeys-button-1 {
+  min-height: 44px;
+  cursor: pointer;
+  border-radius: var(--tm-radius-md);
+  padding: 0.5rem;
+  color: var(--tm-muted);
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pkeys-button-1:hover {
+  background-color: var(--tm-line);
+  color: var(--tm-text);
+}
+.tm-pkeys-button-1:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.tm-pkeys-button-1:focus-visible {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0
+    var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0
+    calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+    var(--tw-shadow, 0 0 transparent);
+  --tw-ring-color: var(--tm-text);
+}
+
+/* relative max-h-[70vh] overflow-y-auto px-5 py-4 */
+.tm-pkeys-div-7 {
+  position: relative;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* grid gap-3 */
+.tm-pkeys-div-8 {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* rounded-xl border border-line bg-raised p-3 */
+.tm-pkeys-section-1 {
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface-raised);
+  padding: 0.75rem;
+}
+
+/* mb-3 text-sm font-medium text-fg */
+.tm-pkeys-h3-1 {
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* space-y-2 */
+.tm-pkeys-div-9 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+
+/* flex items-center justify-between gap-4 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-line */
+.tm-pkeys-div-10 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: var(--tm-radius-md);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+}
+.tm-pkeys-div-10:hover {
+  background-color: var(--tm-line);
+}
+
+/* flex flex-wrap items-center gap-1.5 */
+.tm-pkeys-div-11 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* flex items-center gap-1.5 */
+.tm-pkeys-span-1 {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* text-[13px] text-muted */
+.tm-pkeys-span-2 {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* min-w-7 rounded-md border border-line bg-surface px-2 py-1 text-center text-[13px] font-medium text-fg shadow-sm dark:shadow-inner shadow-ink/5 */
+.tm-pkeys-kbd-1 {
+  min-width: 1.75rem;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tm-text);
+  --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+  --tw-shadow-color: rgb(var(--tm-ink-rgb) / 0.05);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+.tm-pkeys-kbd-1:is(.dark *) {
+  --tw-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --tw-shadow-colored: inset 0 2px 4px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+}
+
+/* text-right text-[13px] text-muted */
+.tm-pkeys-span-3 {
+  text-align: right;
+  font-size: 13px;
+  color: var(--tm-muted);
+}

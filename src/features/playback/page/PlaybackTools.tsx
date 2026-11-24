@@ -2,6 +2,8 @@
 
 import { Keyboard, Router, Users, X } from 'lucide-react';
 
+import './PlaybackTools.css';
+
 import BusyDots from '@/components/feedback/BusyDots';
 import ProxyImage from '@/components/ProxyImage';
 
@@ -86,7 +88,7 @@ export default function PlaybackTools({
   const isHls = isHlsPlaybackUrl(videoUrl);
   return (
     <div
-      className='mt-3 px-2 wide:flex-shrink-0 tm-solo-tools tm-solo-sheet'
+      className='tm-ptools-div-1 tm-solo-tools tm-solo-sheet'
       data-tm-sheet={open ? 'open' : undefined}
       role={open ? 'dialog' : undefined}
       aria-label={open ? '工具' : undefined}
@@ -94,23 +96,23 @@ export default function PlaybackTools({
       <div className='tm-solo-sheet-head'>
         <h2>工具</h2>
         <button type='button' onClick={onClose} aria-label='关闭'>
-          <X className='h-5 w-5' />
+          <X className='tm-ptools-x-1' />
         </button>
       </div>
-      <div className='bg-raised backdrop-blur-sm rounded-lg p-2 border border-line w-full wide:w-auto overflow-x-auto'>
-        <div className='flex gap-1.5 flex-nowrap wide:flex-wrap items-center'>
-          <div className='flex gap-1.5 flex-wrap wide:justify-end wide:flex-1'>
+      <div className='tm-ptools-div-2'>
+        <div className='tm-ptools-div-3'>
+          <div className='tm-ptools-div-4'>
             {/* 下载按钮 */}
             <button
               onClick={(e) => {
                 e.preventDefault();
                 onDownload();
               }}
-              className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-surface text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+              className='tm-ptools-group tm-ptools-button-1 tm-press'
               title='下载视频'
             >
               <svg
-                className='w-4 h-4 flex-shrink-0 text-fg'
+                className='tm-ptools-svg-1'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -122,9 +124,7 @@ export default function PlaybackTools({
                   d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'
                 />
               </svg>
-              <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                下载
-              </span>
+              <span className='tm-ptools-span-1'>下载</span>
             </button>
 
             {/* 复制视频链接按钮 */}
@@ -133,11 +133,11 @@ export default function PlaybackTools({
                 e.preventDefault();
                 copyLink();
               }}
-              className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-fg hover:opacity-90 text-inverse text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+              className='tm-ptools-group tm-ptools-button-2 tm-press'
               title='复制视频链接'
             >
               <svg
-                className='w-4 h-4 flex-shrink-0 text-inverse'
+                className='tm-ptools-svg-2'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -149,9 +149,7 @@ export default function PlaybackTools({
                   d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
                 />
               </svg>
-              <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
-                复制链接
-              </span>
+              <span className='tm-ptools-span-2'>复制链接</span>
             </button>
 
             {/* 已在房间时只返回；无房间时创建并共享当前影片。 */}
@@ -163,15 +161,15 @@ export default function PlaybackTools({
                 }}
                 disabled={creatingRoom}
                 aria-busy={creatingRoom || undefined}
-                className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-fg hover:opacity-90 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 disabled:opacity-60 disabled:cursor-wait text-inverse min-h-[44px] tm-press'
+                className='tm-ptools-group tm-ptools-button-3 tm-press'
                 title={roomEntry === 'return' ? '返回房间' : '创建观影室'}
               >
                 {creatingRoom ? (
-                  <BusyDots className='flex-shrink-0' />
+                  <BusyDots className='tm-ptools-busydots-1' />
                 ) : (
-                  <Users className='w-4 h-4 flex-shrink-0 text-inverse' />
+                  <Users className='tm-ptools-svg-2' />
                 )}
-                <span className='hidden wide:inline max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
+                <span className='tm-ptools-span-3'>
                   {creatingRoom
                     ? '创建中'
                     : roomEntry === 'return'
@@ -189,19 +187,19 @@ export default function PlaybackTools({
                 }}
                 disabled={transcoding}
                 aria-busy={transcoding || undefined}
-                className={`group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden border flex-shrink-0 ${
+                className={`tm-ptools-group tm-ptools-button-4 ${
                   transcoding
-                    ? 'bg-raised text-fg border-line cursor-wait min-h-[44px] tm-press'
-                    : 'bg-raised hover:bg-line text-fg border-line cursor-pointer min-h-[44px] tm-press'
+                    ? 'tm-ptools-button-5 tm-press'
+                    : 'tm-ptools-button-6 tm-press'
                 }`}
                 title='转码播放'
               >
                 {transcoding ? (
-                  <BusyDots className='flex-shrink-0' />
+                  <BusyDots className='tm-ptools-busydots-1' />
                 ) : (
-                  <Router className='w-4 h-4 flex-shrink-0 text-fg' />
+                  <Router className='tm-ptools-svg-1' />
                 )}
-                <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                <span className='tm-ptools-span-1'>
                   {transcoding ? '转码中' : '转码'}
                 </span>
               </button>
@@ -213,14 +211,12 @@ export default function PlaybackTools({
                 e.preventDefault();
                 onShowShortcuts();
               }}
-              className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-fg min-h-[44px] tm-press'
+              className='tm-ptools-group tm-ptools-button-7 tm-press'
               title='快捷键说明'
               aria-label='查看播放快捷键说明'
             >
-              <Keyboard className='w-4 h-4 flex-shrink-0 text-fg' />
-              <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                快捷键
-              </span>
+              <Keyboard className='tm-ptools-svg-1' />
+              <span className='tm-ptools-span-1'>快捷键</span>
             </button>
 
             {/* 外部播放器 */}
@@ -231,19 +227,17 @@ export default function PlaybackTools({
                   e.preventDefault();
                   window.open(player.link(externalUrl(), videoTitle), '_blank');
                 }}
-                className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                className='tm-ptools-group tm-ptools-button-8 tm-press'
                 title={player.name}
               >
                 <ProxyImage
                   originalSrc={player.icon}
                   alt={player.name}
-                  className='w-4 h-4 flex-shrink-0'
+                  className='tm-ptools-proxyimage-1'
                   proxy={false}
                   loading='eager'
                 />
-                <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                  {player.name}
-                </span>
+                <span className='tm-ptools-span-1'>{player.name}</span>
               </button>
             ))}
           </div>
@@ -251,15 +245,15 @@ export default function PlaybackTools({
           {/* 去广告开关 */}
           <button
             onClick={onToggleAdBlock}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${
+            className={`tm-ptools-button-9 ${
               externalPlayerAdBlock
-                ? 'bg-surface text-fg border-line min-h-[44px] tm-press'
-                : 'bg-raised hover:bg-line text-fg border-line min-h-[44px] tm-press'
+                ? 'tm-ptools-button-10 tm-press'
+                : 'tm-ptools-button-11 tm-press'
             }`}
             title={externalPlayerAdBlock ? '去广告已开启' : '去广告已关闭'}
           >
             <svg
-              className='w-4 h-4 flex-shrink-0'
+              className='tm-ptools-proxyimage-1'
               fill='none'
               stroke='currentColor'
               viewBox='0 0 24 24'
@@ -280,7 +274,7 @@ export default function PlaybackTools({
                 />
               )}
             </svg>
-            <span className='whitespace-nowrap'>
+            <span className='tm-ptools-span-4'>
               {externalPlayerAdBlock ? '去广告' : '去广告'}
             </span>
           </button>
@@ -293,10 +287,10 @@ export default function PlaybackTools({
                 onHarmonyMode(harmonyMode === 'hlsjs' ? 'native' : 'hlsjs')
               }
               aria-pressed={harmonyMode === 'hlsjs'}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${
+              className={`tm-ptools-button-9 ${
                 harmonyMode === 'hlsjs'
-                  ? 'bg-surface text-fg border-line min-h-[44px] tm-press'
-                  : 'bg-raised hover:bg-line text-fg border-line min-h-[44px] tm-press'
+                  ? 'tm-ptools-button-10 tm-press'
+                  : 'tm-ptools-button-11 tm-press'
               }`}
               title={
                 harmonyMode === 'hlsjs'
@@ -305,7 +299,7 @@ export default function PlaybackTools({
               }
             >
               <svg
-                className='w-4 h-4 flex-shrink-0'
+                className='tm-ptools-proxyimage-1'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -326,7 +320,7 @@ export default function PlaybackTools({
                   />
                 )}
               </svg>
-              <span className='whitespace-nowrap'>HLS.js</span>
+              <span className='tm-ptools-span-4'>HLS.js</span>
             </button>
           )}
 
@@ -338,10 +332,10 @@ export default function PlaybackTools({
                 onNetdiskMode(netdiskMode === 'native' ? 'hlsjs' : 'native')
               }
               aria-pressed={netdiskMode === 'native'}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${
+              className={`tm-ptools-button-9 ${
                 netdiskMode === 'native'
-                  ? 'bg-surface text-fg border-line min-h-[44px] tm-press'
-                  : 'bg-raised hover:bg-line text-fg border-line min-h-[44px] tm-press'
+                  ? 'tm-ptools-button-10 tm-press'
+                  : 'tm-ptools-button-11 tm-press'
               }`}
               title={
                 netdiskMode === 'native'
@@ -350,7 +344,7 @@ export default function PlaybackTools({
               }
             >
               <svg
-                className='w-4 h-4 flex-shrink-0'
+                className='tm-ptools-proxyimage-1'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -371,7 +365,7 @@ export default function PlaybackTools({
                   />
                 )}
               </svg>
-              <span className='whitespace-nowrap'>原生HLS</span>
+              <span className='tm-ptools-span-4'>原生HLS</span>
             </button>
           )}
         </div>

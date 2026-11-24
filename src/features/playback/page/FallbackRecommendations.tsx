@@ -3,6 +3,8 @@
 import { Sparkles } from 'lucide-react';
 import { type MouseEvent, type WheelEvent, useRef } from 'react';
 
+import './FallbackRecommendations.css';
+
 import VideoCard from '@/components/VideoCard';
 
 import type { FallbackRecommendation } from './types';
@@ -57,26 +59,23 @@ export default function FallbackRecommendations({
   };
 
   return (
-    <div className='mt-4 w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-raised p-3 text-left sm:max-w-3xl lg:max-w-5xl'>
-      <div className='mb-3 flex items-center gap-2'>
-        <Sparkles className='h-4 w-4 flex-shrink-0 text-fg' />
-        <h3 className='text-sm font-medium text-fg'>也许你想看</h3>
+    <div className='tm-precs-div-1'>
+      <div className='tm-precs-div-2'>
+        <Sparkles className='tm-precs-sparkles-1' />
+        <h3 className='tm-precs-h3-1'>也许你想看</h3>
       </div>
       <div
         ref={rowRef}
-        className='w-full overflow-x-auto overflow-y-hidden pb-1 cursor-grab active:cursor-grabbing'
+        className='tm-precs-div-3'
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={stopDragging}
         onMouseLeave={stopDragging}
       >
-        <div className='inline-flex gap-2.5 sm:gap-3'>
+        <div className='tm-precs-div-4'>
           {items.map((recommendation) => (
-            <div
-              key={recommendation.key}
-              className='w-[118px] min-w-[118px] flex-shrink-0 sm:w-[150px] sm:min-w-[150px]'
-            >
+            <div key={recommendation.key} className='tm-precs-div-5'>
               <VideoCard
                 title={recommendation.item.title}
                 query={query}

@@ -1,5 +1,7 @@
 'use client';
 
+import './PlaybackComments.css';
+
 import AIComments from '@/components/AIComments';
 import DoubanComments from '@/components/DoubanComments';
 
@@ -22,13 +24,13 @@ export default function PlaybackComments({
     <>
       {/* 豆瓣评论区域 */}
       {videoDoubanId !== 0 && enableComments && (
-        <div className='mt-6 -mx-3 md:mx-0 md:px-4'>
-          <div className='bg-raised backdrop-blur-sm rounded-xl border border-line overflow-hidden'>
+        <div className='tm-pcomments-div-1'>
+          <div className='tm-pcomments-div-2'>
             {/* 标题 */}
-            <div className='px-3 md:px-6 py-4 border-b border-line'>
-              <h3 className='text-lg font-medium text-fg flex items-center gap-2'>
+            <div className='tm-pcomments-div-3'>
+              <h3 className='tm-pcomments-h3-1'>
                 <svg
-                  className='w-5 h-5'
+                  className='tm-pcomments-svg-1'
                   fill='currentColor'
                   viewBox='0 0 24 24'
                 >
@@ -39,7 +41,7 @@ export default function PlaybackComments({
             </div>
 
             {/* 评论内容 */}
-            <div className='p-3 md:p-6'>
+            <div className='tm-pcomments-div-4'>
               <DoubanComments doubanId={videoDoubanId} />
             </div>
           </div>
@@ -48,13 +50,13 @@ export default function PlaybackComments({
 
       {/* AI评论区域 */}
       {videoTitle && enableAIComments && (
-        <div className='mt-6 -mx-3 md:mx-0 md:px-4'>
-          <div className='bg-raised backdrop-blur-sm rounded-xl border border-line overflow-hidden'>
+        <div className='tm-pcomments-div-1'>
+          <div className='tm-pcomments-div-2'>
             {/* 标题 */}
-            <div className='px-3 md:px-6 py-4 border-b border-line'>
-              <h3 className='text-lg font-medium text-fg flex items-center gap-2'>
+            <div className='tm-pcomments-div-3'>
+              <h3 className='tm-pcomments-h3-1'>
                 <svg
-                  className='w-5 h-5 text-fg'
+                  className='tm-pcomments-svg-2'
                   fill='currentColor'
                   viewBox='0 0 24 24'
                 >
@@ -65,7 +67,7 @@ export default function PlaybackComments({
             </div>
 
             {/* 评论内容 */}
-            <div className='p-3 md:p-6'>
+            <div className='tm-pcomments-div-4'>
               <AIComments movieName={videoTitle} />
             </div>
           </div>
