@@ -3,6 +3,7 @@
 
 import {
   Lightbulb,
+  MessageSquare,
   Plus,
   Repeat,
   ToggleLeft,
@@ -394,7 +395,23 @@ export default function EpisodeFilterSettings({
                           {rule.keyword}
                         </span>
                         <span className='inline-flex items-center self-start text-[13px] px-2.5 py-1 rounded-full font-medium bg-raised text-fg'>
-                          {rule.type === 'regex' ? '🔧 正则' : '💬 普通'}
+                          {rule.type === 'regex' ? (
+                            <>
+                              <Wrench
+                                className='mr-1 inline-block h-3 w-3'
+                                aria-hidden='true'
+                              />
+                              正则
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare
+                                className='mr-1 inline-block h-3 w-3'
+                                aria-hidden='true'
+                              />
+                              普通
+                            </>
+                          )}
                         </span>
                       </div>
                     </div>

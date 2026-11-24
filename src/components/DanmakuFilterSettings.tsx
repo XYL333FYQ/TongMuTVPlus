@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { Plus, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
+import {
+  Lightbulb,
+  MessageSquare,
+  Plus,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -237,9 +246,17 @@ export default function DanmakuFilterSettings({
               </div>
             </div>
             <p className='text-[13px] text-muted leading-relaxed'>
-              💡 普通模式：包含关键字即屏蔽
+              <Lightbulb
+                className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                aria-hidden='true'
+              />
+              普通模式：包含关键字即屏蔽
               <br />
-              🔧 正则模式：支持正则表达式匹配
+              <Wrench
+                className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                aria-hidden='true'
+              />
+              正则模式：支持正则表达式匹配
             </p>
           </div>
 
@@ -307,7 +324,23 @@ export default function DanmakuFilterSettings({
                           {rule.keyword}
                         </span>
                         <span className='inline-flex items-center self-start text-[13px] px-2.5 py-1 rounded-full font-medium bg-raised text-fg'>
-                          {rule.type === 'regex' ? '🔧 正则' : '💬 普通'}
+                          {rule.type === 'regex' ? (
+                            <>
+                              <Wrench
+                                className='mr-1 inline-block h-3 w-3'
+                                aria-hidden='true'
+                              />
+                              正则
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare
+                                className='mr-1 inline-block h-3 w-3'
+                                aria-hidden='true'
+                              />
+                              普通
+                            </>
+                          )}
                         </span>
                       </div>
                     </div>

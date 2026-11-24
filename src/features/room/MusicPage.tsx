@@ -910,7 +910,14 @@ export default function MusicPage() {
                                   : lyricIdleClass
                               }`}
                             >
-                              <div>{line.text || '♪'}</div>
+                              <div>
+                                {line.text || (
+                                  <Music2
+                                    className='mx-auto h-4 w-4'
+                                    aria-label='间奏'
+                                  />
+                                )}
+                              </div>
                               {line.translation && (
                                 <div className='mt-1 text-sm font-normal text-muted'>
                                   {line.translation}
@@ -1079,7 +1086,14 @@ export default function MusicPage() {
                             : lyricIdleClass
                         }`}
                       >
-                        <div>{line.text || '♪'}</div>
+                        <div>
+                          {line.text || (
+                            <Music2
+                              className='mx-auto h-4 w-4'
+                              aria-label='间奏'
+                            />
+                          )}
+                        </div>
                         {line.translation && (
                           <div className='mt-1 text-sm font-normal text-muted'>
                             {line.translation}

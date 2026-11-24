@@ -1,5 +1,6 @@
 'use client';
 
+import { CircleX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useEnableComments } from '@/hooks/useEnableComments';
@@ -206,7 +207,9 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (error && comments.length === 0) {
     return (
       <div className='text-center py-12'>
-        <div className='text-fg mb-2'>❌</div>
+        <div className='mb-2 text-fg'>
+          <CircleX className='mx-auto h-6 w-6 text-fg' aria-hidden='true' />
+        </div>
         <p className='text-muted'>{error}</p>
         <button
           onClick={startLoading}

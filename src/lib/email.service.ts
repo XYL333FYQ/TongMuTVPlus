@@ -166,7 +166,7 @@ export class EmailService {
         <body>
           <div class="container">
             <div class="header">
-              <h1>📧 测试邮件</h1>
+              <h1>测试邮件</h1>
             </div>
             <div class="content">
               <p>这是一封来自 ${displayName} 的测试邮件。</p>

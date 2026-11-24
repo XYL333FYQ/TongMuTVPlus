@@ -369,7 +369,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📨 收到AI聊天请求:', {
+    console.log('收到AI聊天请求:', {
       message: message.slice(0, 50),
       context,
       historyLength: history.length,
@@ -395,7 +395,7 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(
-      '🎯 数据协调完成, systemPrompt长度:',
+      '数据协调完成, systemPrompt长度:',
       orchestrationResult.systemPrompt.length
     );
 
@@ -459,7 +459,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ content });
     }
   } catch (error) {
-    console.error('❌ AI聊天API错误:', error);
+    console.error('AI聊天API错误:', error);
     return NextResponse.json(
       {
         error: 'AI聊天请求失败',

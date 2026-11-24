@@ -4,8 +4,11 @@ import {
   LayoutGrid,
   Link as LinkIcon,
   List as ListIcon,
+  Lock,
   MoreVertical,
   Settings,
+  TriangleAlert,
+  Tv,
   Wand2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -1122,7 +1125,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             `.trim()}
           >
             选集
-            {isRoomMember && <span className='ml-1 text-[13px]'>🔒</span>}
+            {isRoomMember && (
+              <Lock
+                className='ml-1 inline-block h-3 w-3'
+                aria-label='房间里不能换'
+              />
+            )}
           </div>
         )}
 
@@ -1136,7 +1144,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           `.trim()}
         >
           换源
-          {isRoomMember && <span className='ml-1 text-[13px]'>🔒</span>}
+          {isRoomMember && (
+            <Lock
+              className='ml-1 inline-block h-3 w-3'
+              aria-label='房间里不能换'
+            />
+          )}
         </div>
 
         {/* 弹幕选项卡 */}
@@ -1390,7 +1403,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           {sourceSearchError && (
             <div className='flex items-center justify-center py-8'>
               <div className='text-center'>
-                <div className='text-fg text-2xl mb-2'>⚠️</div>
+                <div className='mb-2 text-fg'>
+                  <TriangleAlert
+                    className='mx-auto h-6 w-6 text-fg'
+                    aria-hidden='true'
+                  />
+                </div>
                 <p className='text-sm text-fg'>{sourceSearchError}</p>
               </div>
             </div>
@@ -1401,7 +1419,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             availableSources.length === 0 && (
               <div className='flex items-center justify-center py-8'>
                 <div className='text-center'>
-                  <div className='text-muted text-2xl mb-2'>📺</div>
+                  <div className='mb-2 text-muted'>
+                    <Tv className='mx-auto h-6 w-6' aria-hidden='true' />
+                  </div>
                   <p className={`text-sm ${mutedTextClass}`}>暂无可用的换源</p>
                 </div>
               </div>

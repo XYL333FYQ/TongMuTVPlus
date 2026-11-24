@@ -17,6 +17,7 @@ import {
   Gauge,
   Globe,
   Home,
+  Lightbulb,
   MessageSquare,
   MoveDown,
   MoveUp,
@@ -2424,7 +2425,10 @@ export default function UserMenuSettingsPanel(
                 {/* 提示信息 */}
                 <div className='text-[13px] text-muted p-3 bg-raised border border-line rounded-lg'>
                   <p>
-                    💡
+                    <Lightbulb
+                      className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                      aria-hidden='true'
+                    />
                     提示：点击眼睛图标可显示/隐藏模块，使用箭头按钮调整模块顺序
                   </p>
                 </div>

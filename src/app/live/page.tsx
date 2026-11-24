@@ -4,11 +4,13 @@
 
 import {
   Download,
+  Frown,
   GitBranch,
   Heart,
   Play,
   Radio,
   RefreshCw,
+  TriangleAlert,
   Tv,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -545,7 +547,7 @@ function LivePageClient() {
       }
 
       setLoadingStage('ready');
-      setLoadingMessage('✨ 准备就绪...');
+      setLoadingMessage('准备就绪...');
 
       setTimeout(() => {
         setLoading(false);
@@ -1959,7 +1961,7 @@ function LivePageClient() {
         }
 
         setWebGPUSupported(true);
-        console.log('WebGPU支持检测：✅ 支持');
+        console.log('WebGPU支持检测：支持');
       } catch (err) {
         setWebGPUSupported(false);
         console.log('WebGPU不支持：', err);
@@ -2526,7 +2528,10 @@ function LivePageClient() {
                   {/* 动画直播图标 */}
                   <div className='relative mb-8'>
                     <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                      <div className='text-fg text-4xl'>📺</div>
+                      <Tv
+                        className='mx-auto h-10 w-10 text-fg'
+                        aria-hidden='true'
+                      />
                     </div>
 
                     {/* 浮动粒子效果 */}
@@ -2615,7 +2620,10 @@ function LivePageClient() {
                 legacy={
                   <>
                     <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                      <div className='text-fg text-4xl'>😵</div>
+                      <Frown
+                        className='mx-auto h-10 w-10 text-fg'
+                        aria-hidden='true'
+                      />
                       {/* 脉冲效果 */}
                       <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 tm-skeleton'></div>
                     </div>
@@ -2754,7 +2762,10 @@ function LivePageClient() {
                     <div className='text-center max-w-md mx-auto px-6'>
                       <div className='relative mb-8'>
                         <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                          <div className='text-fg text-4xl'>⚠️</div>
+                          <TriangleAlert
+                            className='mx-auto h-10 w-10 text-fg'
+                            aria-hidden='true'
+                          />
                           <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 tm-skeleton'></div>
                         </div>
                       </div>
@@ -2793,12 +2804,15 @@ function LivePageClient() {
                           <>
                             <div className='relative mb-8'>
                               <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                                <div className='text-fg text-4xl'>📺</div>
+                                <Tv
+                                  className='mx-auto h-10 w-10 text-fg'
+                                  aria-hidden='true'
+                                />
                               </div>
                             </div>
                             <div className='space-y-2'>
                               <p className='text-xl font-medium text-fg tm-skeleton'>
-                                🔄 IPTV 加载中...
+                                IPTV 加载中...
                               </p>
                             </div>
                           </>

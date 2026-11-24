@@ -4,7 +4,16 @@
 // 由 UserMenu 拆出（按需加载）：账号菜单打开某个面板时才下载这部分代码。
 // 面板用到的状态与处理函数全部仍由 UserMenu 持有，这里只负责渲染，行为与拆分前一致。
 
-import { Copy, Monitor, Rss, Sliders, Smartphone, X } from 'lucide-react';
+import {
+  Copy,
+  Lightbulb,
+  Monitor,
+  Rss,
+  Sliders,
+  Smartphone,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 export interface UserMenuSubscribePanelProps {
@@ -290,7 +299,10 @@ export default function UserMenuSubscribePanel(
                       {(subscribeAdFilterEnabled ||
                         subscribeYellowFilterEnabled) && (
                         <p className='mt-2 rounded-xl border border-line bg-raised px-3 py-2 text-[13px] font-medium text-fg'>
-                          💡
+                          <Lightbulb
+                            className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                            aria-hidden='true'
+                          />
                           代理模式已开启，某些源可能因为区域或兼容问题无法播放
                         </p>
                       )}
@@ -305,7 +317,11 @@ export default function UserMenuSubscribePanel(
                         {isResettingToken ? '重置中...' : '重置订阅Token'}
                       </button>
                       <p className='mt-2 text-center text-[13px] text-muted'>
-                        ⚠️ 重置后旧链接将失效
+                        <TriangleAlert
+                          className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                          aria-hidden='true'
+                        />
+                        重置后旧链接将失效
                       </p>
                       <p
                         id='tvbox-token-message'

@@ -33,6 +33,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  CircleCheck,
   Cloud,
   Copy,
   Database,
@@ -41,16 +42,19 @@ import {
   FolderOpen,
   Globe,
   Inbox,
+  Lightbulb,
   Mail,
   Monitor,
   Palette,
   Plus,
+  RefreshCw,
   Search,
   Send,
   Settings,
   ShieldCheck,
   Smartphone,
   Tablet,
+  TriangleAlert,
   Tv,
   UserPlus,
   Users,
@@ -3180,7 +3184,11 @@ const UserConfig = ({
                           />
                         </svg>
                         <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                          ⚠️ 将影响 {deletingUserGroup.affectedUsers.length}{' '}
+                          <TriangleAlert
+                            className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                            aria-hidden='true'
+                          />
+                          将影响 {deletingUserGroup.affectedUsers.length}{' '}
                           个用户：
                         </span>
                       </div>
@@ -3215,7 +3223,11 @@ const UserConfig = ({
                           />
                         </svg>
                         <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                          ✅ 当前没有用户使用此用户组
+                          <CircleCheck
+                            className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                            aria-hidden='true'
+                          />
+                          当前没有用户使用此用户组
                         </span>
                       </div>
                     </div>
@@ -7378,7 +7390,9 @@ const VideoSourceConfig = ({
           text: '检测中',
           className:
             'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-          icon: '⟳',
+          icon: (
+            <RefreshCw className='inline-block h-3 w-3' aria-hidden='true' />
+          ),
           message: result.message,
         };
       case 'valid':
@@ -7386,7 +7400,7 @@ const VideoSourceConfig = ({
           text: '有效',
           className:
             'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-          icon: '✓',
+          icon: <Check className='inline-block h-3 w-3' aria-hidden='true' />,
           message: result.message,
         };
       case 'no_results':
@@ -7394,7 +7408,12 @@ const VideoSourceConfig = ({
           text: '无法搜索',
           className:
             'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-          icon: '⚠',
+          icon: (
+            <TriangleAlert
+              className='inline-block h-3 w-3'
+              aria-hidden='true'
+            />
+          ),
           message: result.message,
         };
       case 'invalid':
@@ -7402,7 +7421,7 @@ const VideoSourceConfig = ({
           text: '无效',
           className:
             'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-          icon: '✗',
+          icon: <X className='inline-block h-3 w-3' aria-hidden='true' />,
           message: result.message,
         };
       default:
@@ -8310,7 +8329,11 @@ const VideoSourceConfig = ({
                     客户端去广告配置
                   </h3>
                   <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
-                    ⚠️客户端已具备本地去广告功能，该功能可能在未来移除
+                    <TriangleAlert
+                      className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                      aria-hidden='true'
+                    />
+                    客户端已具备本地去广告功能，该功能可能在未来移除
                   </p>
                 </div>
                 <button
@@ -11916,7 +11939,10 @@ const SiteConfigComponent = ({
 
           {siteSettings.DanmakuSourceType !== 'custom' && (
             <p className='text-[13px] text-[color:var(--tm-text)]'>
-              ⚠️
+              <TriangleAlert
+                className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                aria-hidden='true'
+              />
               内置弹幕源为多人共享服务，稳定性可能受使用高峰影响，建议自行部署后使用自定义源。
             </p>
           )}
@@ -16817,7 +16843,11 @@ const AIConfigComponent = ({
 
             <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-3'>
               <p className='text-[13px] text-[color:var(--tm-text)]'>
-                💡 <strong>提示:</strong>{' '}
+                <Lightbulb
+                  className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                  aria-hidden='true'
+                />
+                <strong>提示:</strong>{' '}
                 决策模型用于智能判断是否需要调用各个数据源,建议使用成本较低的小模型(如
                 gpt-4o-mini)。会复用主模型的API Key和Base URL配置。
               </p>
@@ -16989,7 +17019,11 @@ const AIConfigComponent = ({
 
           <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-3'>
             <p className='text-[13px] text-[color:var(--tm-text)]'>
-              💡 <strong>提示:</strong> 由模型自主决定是否调用相关工具。
+              <Lightbulb
+                className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                aria-hidden='true'
+              />
+              <strong>提示:</strong> 由模型自主决定是否调用相关工具。
               需在站点设置中配置 TMDB API Key（TMDB 工具）、
               在下方「启用联网搜索」中配置对应搜索服务 API
               Key（联网搜索工具）。豆瓣工具始终可用。
@@ -18238,7 +18272,7 @@ const LiveSourceConfig = ({
               onClick={handleCancelEdit}
               className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
             >
-              ✕
+              <X className='h-4 w-4' aria-hidden='true' />
             </button>
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -18735,7 +18769,7 @@ const WebLiveConfig = ({
               onClick={() => setEditingSource(null)}
               className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
             >
-              ✕
+              <X className='h-4 w-4' aria-hidden='true' />
             </button>
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -20265,7 +20299,11 @@ function AdminPageClient() {
                         />
                       </svg>
                       <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        ⚠️ 危险操作警告
+                        <TriangleAlert
+                          className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                          aria-hidden='true'
+                        />
+                        危险操作警告
                       </span>
                     </div>
                     <p className='text-sm text-[color:var(--tm-text)]'>

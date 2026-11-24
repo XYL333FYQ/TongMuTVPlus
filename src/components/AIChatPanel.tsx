@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { Bot, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { Bot, Check, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -178,7 +178,7 @@ const transformTaskList = (line: string): string => {
   return line.replace(
     /^(\s*[-*+]\s+)\[(x|X| )\]\s+/g,
     (_match, prefix: string, checked: string) => {
-      return `${prefix}${checked.trim() ? '☑' : '☐'} `;
+      return `${prefix}${checked.trim() ? '■' : '□'} `;
     }
   );
 };
@@ -387,7 +387,11 @@ export default function AIChatPanel({
                 <span
                   className={status === 'failed' ? 'text-danger' : 'text-fg'}
                 >
-                  {status === 'failed' ? '✕' : '✓'}
+                  {status === 'failed' ? (
+                    <X className='h-3.5 w-3.5' aria-hidden='true' />
+                  ) : (
+                    <Check className='h-3.5 w-3.5' aria-hidden='true' />
+                  )}
                 </span>
               )}
               <span className='flex-1 whitespace-nowrap'>{label}</span>
@@ -860,7 +864,7 @@ export default function AIChatPanel({
         const newMessages = [...prev];
         newMessages[newMessages.length - 1] = {
           role: 'assistant',
-          content: `❌ 抱歉，出现了错误：\n\n${(error as Error).message}`,
+          content: `抱歉，出现了错误：\n\n${(error as Error).message}`,
           error: true,
           retryMessage: userMessage,
         };

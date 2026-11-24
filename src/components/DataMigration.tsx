@@ -8,6 +8,7 @@ import {
   Download,
   FileCheck,
   Lock,
+  TriangleAlert,
   Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -549,7 +550,13 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
               </div>
               <div>
                 <h3 className='font-medium text-fg'>数据导入</h3>
-                <p className='text-sm text-fg'>⚠️ 将清空现有数据</p>
+                <p className='text-sm text-fg'>
+                  <TriangleAlert
+                    className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                    aria-hidden='true'
+                  />
+                  将清空现有数据
+                </p>
               </div>
             </div>
 

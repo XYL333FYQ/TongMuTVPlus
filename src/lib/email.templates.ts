@@ -117,7 +117,7 @@ export function getFavoriteUpdateEmailTemplate(
     <body>
       <div class="container">
         <div class="header">
-          <h1>📺 收藏更新通知</h1>
+          <h1>收藏更新通知</h1>
         </div>
         <div class="content">
           <div class="greeting">
@@ -272,7 +272,7 @@ export function getBatchFavoriteUpdateEmailTemplate(
     <body>
       <div class="container">
         <div class="header">
-          <h1>📺 收藏更新汇总</h1>
+          <h1>收藏更新汇总</h1>
           <div class="stats">
             ${totalUpdates} 部影片更新 · 共 ${totalNewEpisodes} 集新内容
           </div>

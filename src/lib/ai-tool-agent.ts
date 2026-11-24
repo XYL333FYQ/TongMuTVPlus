@@ -639,7 +639,7 @@ async function dispatchTool(
 
     return { name, ok: false, text: `未知工具: ${name}` };
   } catch (error) {
-    console.error(`❌ 工具 ${name} 执行失败:`, error);
+    console.error(`工具 ${name} 执行失败:`, error);
     return {
       name,
       ok: false,
@@ -673,10 +673,7 @@ function parseToolArgs(rawArgs: any, fallbackName: string): any {
         /* fall through */
       }
     }
-    console.warn(
-      `⚠️ 工具参数解析失败（${fallbackName}）:`,
-      source.slice(0, 100)
-    );
+    console.warn(`工具参数解析失败（${fallbackName}）:`, source.slice(0, 100));
     return {};
   }
 }
@@ -1790,7 +1787,7 @@ async function compressTranscript(
     try {
       summary = await summarizeWithProvider(providerOpts, rawText);
     } catch (e) {
-      console.error('❌ 上下文摘要失败，降级为直接丢弃工具消息:', e);
+      console.error('上下文摘要失败，降级为直接丢弃工具消息:', e);
     }
   }
   summary = (summary || '').trim();
@@ -2037,7 +2034,7 @@ export async function runToolAgent(
         }
         send('[DONE]');
       } catch (error) {
-        console.error('❌ AI agent 流式错误:', error);
+        console.error('AI agent 流式错误:', error);
         if (!closed) {
           const msg =
             error instanceof DOMException && error.name === 'AbortError'

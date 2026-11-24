@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import { Music2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -199,15 +200,20 @@ const PiPLyricsContent = ({
             lineHeight: 1.5,
           }}
         >
-          {lyrics.length > 0 && currentLyricIndex >= 0
-            ? lyrics[currentLyricIndex]?.translation
-              ? `${lyrics[currentLyricIndex]?.text || '♪'}\n${
-                  lyrics[currentLyricIndex]?.translation
-                }`
-              : lyrics[currentLyricIndex]?.text || '♪'
-            : currentSong
-            ? '暂无歌词'
-            : '请播放歌曲'}
+          {lyrics.length > 0 && currentLyricIndex >= 0 ? (
+            <>
+              {lyrics[currentLyricIndex]?.text || (
+                <Music2 size={18} aria-label='间奏' />
+              )}
+              {lyrics[currentLyricIndex]?.translation
+                ? `\n${lyrics[currentLyricIndex]?.translation}`
+                : null}
+            </>
+          ) : currentSong ? (
+            '暂无歌词'
+          ) : (
+            '请播放歌曲'
+          )}
         </div>
       ) : (
         // 完整模式：显示所有歌词

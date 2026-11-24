@@ -1,5 +1,6 @@
 'use client';
 
+import { CircleX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import BusyDots from '@/components/feedback/BusyDots';
@@ -162,7 +163,9 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   if (error && comments.length === 0) {
     return (
       <div className='text-center py-12'>
-        <div className='text-fg mb-2'>❌</div>
+        <div className='mb-2 text-fg'>
+          <CircleX className='mx-auto h-6 w-6 text-fg' aria-hidden='true' />
+        </div>
         <p className='text-muted mb-1'>{error}</p>
         <p className='text-[13px] text-muted mb-4'>
           请检查管理面板的AI配置是否正确

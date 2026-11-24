@@ -692,7 +692,7 @@ async function refreshRecordAndFavorites() {
 
                   await EmailService.send(emailConfig, {
                     to: userEmail,
-                    subject: `📺 收藏更新汇总 - ${userUpdates.length} 部影片有更新`,
+                    subject: `收藏更新汇总 - ${userUpdates.length} 部影片有更新`,
                     html: getBatchFavoriteUpdateEmailTemplate(
                       user,
                       userUpdates,

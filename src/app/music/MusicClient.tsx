@@ -4027,7 +4027,7 @@ export default function MusicClient({
                   onClick={() => setShowAudioEffectsMenu(false)}
                   className='w-8 h-8 rounded-lg text-muted hover:text-fg hover:bg-line min-h-[44px] tm-press'
                 >
-                  ✕
+                  <X className='h-4 w-4' aria-hidden='true' />
                 </button>
               </div>
               <div className='p-5 overflow-y-auto max-h-[calc(90vh-80px)]'>
