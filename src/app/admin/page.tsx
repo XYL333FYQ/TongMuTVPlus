@@ -93,6 +93,7 @@ import { askConfirm } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import PageLayout from '@/components/PageLayout';
+import FilmPoster from '@/components/poster/FilmPoster';
 import Select from '@/components/ui/Select';
 import Switch from '@/components/ui/Switch';
 
@@ -16149,10 +16150,11 @@ const MovieRequestsComponent = ({
               >
                 <div className='flex gap-4'>
                   {req.poster && (
-                    <img
+                    <FilmPoster
                       src={req.poster}
+                      title={req.title}
                       alt={req.title}
-                      className='w-16 h-24 object-cover rounded'
+                      className='flex-shrink-0 w-16 h-24 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
                     />
                   )}
                   <div className='flex-1'>

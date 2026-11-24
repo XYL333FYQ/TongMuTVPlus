@@ -19,7 +19,7 @@ import {
 import { posterTiltHandlers, useReducedMotionSetting } from '@/lib/motion';
 
 import { useHeroAutoplay } from '@/components/catalog/useHeroAutoplay';
-import ProxyImage from '@/components/ProxyImage';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 export interface HeroDeckItem {
   id: string;
@@ -545,28 +545,16 @@ export default function HomeHero({
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration }}
-                            onLoadCapture={(event) => {
-                              if (event.target instanceof HTMLImageElement)
-                                event.currentTarget.dataset.loaded = 'true';
-                            }}
-                            onErrorCapture={(event) => {
-                              if (event.target instanceof HTMLImageElement)
-                                event.currentTarget.dataset.loaded = 'false';
-                            }}
                           >
-                            <span
-                              className='tm-home-hero-poster-fallback'
-                              aria-hidden='true'
-                            >
-                              {Array.from(item.title)[0] || '影'}
-                            </span>
                             {renderPoster ? (
                               renderPoster(item)
                             ) : (
-                              <ProxyImage
-                                originalSrc={item.src}
-                                alt=''
-                                loading='eager'
+                              <FilmPoster
+                                src={item.src}
+                                title={item.title}
+                                fit='contain'
+                                eager
+                                className='tm-home-hero-deck-art'
                               />
                             )}
                           </motion.span>
@@ -599,10 +587,10 @@ export default function HomeHero({
                       {renderPoster ? (
                         renderPoster(item)
                       ) : (
-                        <ProxyImage
-                          originalSrc={item.src}
-                          alt=''
-                          loading='lazy'
+                        <FilmPoster
+                          src={item.src}
+                          title={item.title}
+                          className='tm-home-hero-deck-art'
                         />
                       )}
                       {target === index && !reduced && (

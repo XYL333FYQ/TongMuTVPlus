@@ -2,6 +2,8 @@
 
 import type { DanmakuAnime } from '@/lib/danmaku/types';
 
+import FilmPoster from '@/components/poster/FilmPoster';
+
 interface DanmakuSourceDialogProps {
   matches: DanmakuAnime[];
   onSelect: (anime: DanmakuAnime, index: number) => void;
@@ -82,19 +84,12 @@ export default function DanmakuSourceDialog({
                 {/* 主体内容 */}
                 <div className='flex gap-4'>
                   {/* 封面 */}
-                  {anime.imageUrl && (
-                    <div className='flex-shrink-0 w-20 h-28 rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-shadow duration-200'>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- 弹幕源封面是外站图片，加载失败要隐藏 */}
-                      <img
-                        src={anime.imageUrl}
-                        alt={anime.animeTitle}
-                        className='w-full h-full object-cover'
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
+                  <FilmPoster
+                    src={anime.imageUrl}
+                    title={anime.animeTitle}
+                    alt={anime.animeTitle}
+                    className='flex-shrink-0 w-20 h-28'
+                  />
 
                   {/* 详细信息 */}
                   <div className='flex-1 space-y-2'>

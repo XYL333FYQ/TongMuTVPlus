@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 interface OfflineDownloadTask {
   id: string;
@@ -279,13 +280,12 @@ export function OfflineDownloadPanel({
                   <div className='flex gap-4'>
                     {/* 封面图 */}
                     {video.metadata?.cover && (
-                      <div className='flex-shrink-0'>
-                        <img
-                          src={video.metadata.cover}
-                          alt={video.metadata.videoTitle || video.title}
-                          className='w-32 h-48 object-cover rounded'
-                        />
-                      </div>
+                      <FilmPoster
+                        src={video.metadata.cover}
+                        title={video.metadata.videoTitle || video.title}
+                        alt={video.metadata.videoTitle || video.title}
+                        className='flex-shrink-0 w-32 h-48 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+                      />
                     )}
                     {/* 视频信息 */}
                     <div className='flex-1 min-w-0'>

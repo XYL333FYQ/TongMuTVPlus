@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 
 import './tv-surfaces.css';
 
+import FilmPoster from '@/components/poster/FilmPoster';
+
 import TVLayout from './TVLayout';
 import TVRow from './TVRow';
 import { TVItem, TVSection } from './types';
@@ -83,19 +85,12 @@ export default function TVBrowsePage({
     <TVLayout>
       <section className='tm-tv-browse-hero relative overflow-hidden rounded-md border border-line bg-surface p-4 md:p-8'>
         <div className='tm-tv-browse-backdrop absolute inset-0'>
-          {hero?.poster ? (
-            <img
-              src={hero.poster}
-              alt=''
-              className='h-full w-full object-cover'
-            />
-          ) : (
-            <img
-              src={fallbackPosters[0]}
-              alt=''
-              className='h-full w-full object-cover'
-            />
-          )}
+          <FilmPoster
+            src={hero?.poster || fallbackPosters[0]}
+            title={hero?.title}
+            eager
+            className='h-full w-full [--tm-art-radius:0px] [--tm-art-shadow:none]'
+          />
           <div className='absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-surface)_80%,transparent)]' />
         </div>
         <div className='relative max-w-4xl py-6 md:py-10'>

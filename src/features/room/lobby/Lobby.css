@@ -47,14 +47,7 @@
   text-align: left;
 }
 .tm-room-lobby-card-art {
-  position: relative;
-  display: grid;
-  place-items: center;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-surface-raised);
-  box-shadow: 0 18px 32px -16px rgb(var(--tm-ink-rgb) / 0.55);
+  --tm-poster-initial-size: 40px;
   transition: transform var(--tm-d-hover) var(--tm-ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -64,16 +57,6 @@
 }
 .tm-room-lobby-card:active .tm-room-lobby-card-art {
   transform: scale(0.97);
-}
-.tm-room-lobby-card-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.tm-room-lobby-card-glyph {
-  color: var(--tm-muted);
-  font-size: 40px;
-  font-weight: 700;
 }
 .tm-room-lobby-card-now {
   position: absolute;

@@ -564,22 +564,13 @@ html[data-tm-reduced-motion='true'] .tm-room-dialog {
     transform: translateY(12px) scale(0.98);
   }
 }
-@keyframes tm-room-shine {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: -100% 0;
-  }
-}
 html[data-tm-reduced-motion='true']
   :is(
     .tm-room-chat-message,
     .tm-room-chat-emojis,
     .tm-room-dock-pill,
     .tm-room-dock,
-    .tm-room-view-now-label::before,
-    .tm-room-recs-skeleton .tm-room-recs-poster
+    .tm-room-view-now-label::before
   ) {
   animation: none;
 }
@@ -589,8 +580,7 @@ html[data-tm-reduced-motion='true']
       .tm-room-chat-emojis,
       .tm-room-dock-pill,
       .tm-room-dock,
-      .tm-room-view-now-label::before,
-      .tm-room-recs-skeleton .tm-room-recs-poster
+      .tm-room-view-now-label::before
     ) {
     animation: none;
   }

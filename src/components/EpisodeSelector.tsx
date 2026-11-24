@@ -46,7 +46,7 @@ import EpisodeFilterSettings from '@/components/EpisodeFilterSettings';
 import EpisodeTitleCorrectDialog from '@/components/EpisodeTitleCorrectDialog';
 import BusyDots from '@/components/feedback/BusyDots';
 import Popover from '@/components/feedback/Popover';
-import ProxyImage from '@/components/ProxyImage';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 /** 选集按钮上显示的短标签（数字等）；全名仍保留在 originalTitle 供长按查看 */
 function getEpisodeDisplayLabel(
@@ -1483,22 +1483,18 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                       }`.trim()}
                       >
                         {/* 封面 */}
-                        <div className='flex-shrink-0 w-12 h-20 bg-surface rounded overflow-hidden flex items-center justify-center'>
-                          {source.source === 'directplay' ? (
+                        {source.source === 'directplay' ? (
+                          <div className='flex-shrink-0 w-12 h-20 bg-surface rounded overflow-hidden flex items-center justify-center'>
                             <LinkIcon className='w-6 h-6 text-fg' />
-                          ) : source.poster ? (
-                            <ProxyImage
-                              originalSrc={source.poster}
-                              alt={source.title}
-                              className='w-full h-full object-cover'
-                              retryOnError={false}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          ) : null}
-                        </div>
+                          </div>
+                        ) : (
+                          <FilmPoster
+                            src={source.poster}
+                            title={source.title}
+                            alt={source.title}
+                            className='flex-shrink-0 w-12 h-20 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+                          />
+                        )}
 
                         {/* 信息区域 */}
                         <div className='flex-1 min-w-0 flex flex-col justify-between gap-1.5 min-h-20'>

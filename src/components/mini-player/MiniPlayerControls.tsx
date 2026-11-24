@@ -8,7 +8,6 @@
  */
 
 import {
-  Film,
   Maximize2,
   MessageCircle,
   Minus,
@@ -18,7 +17,6 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   type FocusEvent,
@@ -31,6 +29,8 @@ import {
   useRef,
   useState,
 } from 'react';
+
+import FilmPoster from '@/components/poster/FilmPoster';
 
 export interface MiniAction {
   label: string;
@@ -269,13 +269,12 @@ export default function MiniPlayerControls({
           slot='title'
           className='tm-mini-title'
         >
-          <span className='tm-mini-thumb' aria-hidden='true'>
-            {poster ? (
-              <Image src={poster} alt='' fill sizes='56px' unoptimized />
-            ) : (
-              <Film size={18} />
-            )}
-          </span>
+          <FilmPoster
+            src={poster}
+            title={title}
+            ratio='landscape'
+            className='tm-mini-thumb'
+          />
           <span className='tm-mini-copy'>
             <strong>{title}</strong>
             {hint && <small>{hint}</small>}

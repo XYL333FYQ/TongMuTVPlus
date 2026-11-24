@@ -178,24 +178,19 @@
   margin-top: -90px;
 }
 .tm-detail-poster {
+  display: block;
   flex: 0 0 200px;
   width: 200px;
   height: 300px;
+  padding: 0;
   border: 0;
   border-radius: var(--tm-radius-md);
-  overflow: hidden;
-  background: var(--tm-detail-poster-placeholder);
-  color: var(--tm-muted);
+  background: none;
 }
-.tm-detail-poster img {
+.tm-detail-poster-art {
+  --tm-art-bg: var(--tm-detail-poster-placeholder);
   width: 100%;
   height: 100%;
-  object-fit: contain;
-}
-.tm-detail-poster-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .tm-detail-summary-copy {
   padding-top: 100px;
@@ -478,8 +473,6 @@ html:where([data-tm-device='phone']).light .tm-detail-icon {
   width: 112px;
   height: 168px;
   flex-basis: 112px;
-  border-radius: var(--tm-radius-md);
-  border-width: 0;
 }
 :where(html[data-tm-device='phone']) .tm-detail-summary-copy {
   padding: 4px 0 0;

@@ -10,6 +10,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import './Lobby.css';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 import { roomCoverSource } from '../lib/room-cover';
 import { displayRoomName } from '../lib/room-presentation';
@@ -19,26 +20,16 @@ import type { Room } from '@/types/watch-room';
 type Directory = 'mine' | 'public';
 
 export function RoomCard({ room, onOpen }: { room: Room; onOpen(): void }) {
-  const [broken, setBroken] = useState(false);
-  const cover = broken ? '' : roomCoverSource(room);
+  const cover = roomCoverSource(room);
   const playing = room.nowPlaying;
   return (
     <button type='button' className='tm-room-lobby-card' onClick={onOpen}>
-      <span className='tm-room-lobby-card-art'>
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={cover}
-            alt=''
-            loading='lazy'
-            referrerPolicy='no-referrer'
-            onError={() => setBroken(true)}
-          />
-        ) : (
-          <span className='tm-room-lobby-card-glyph' aria-hidden='true'>
-            {displayRoomName(room).slice(0, 1)}
-          </span>
-        )}
+      <FilmPoster
+        src={cover}
+        title={displayRoomName(room)}
+        ratio='landscape'
+        className='tm-room-lobby-card-art'
+      >
         {playing && (
           <span className='tm-room-lobby-card-now'>
             <span
@@ -48,7 +39,7 @@ export function RoomCard({ room, onOpen }: { room: Room; onOpen(): void }) {
             {playing.isPlaying ? '正在放映' : '已暂停'}
           </span>
         )}
-      </span>
+      </FilmPoster>
       <span className='tm-room-lobby-card-body'>
         <span className='tm-room-lobby-card-title'>
           {displayRoomName(room)}

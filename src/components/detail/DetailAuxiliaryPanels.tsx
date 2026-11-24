@@ -1,9 +1,9 @@
 'use client';
-import { Film } from 'lucide-react';
 import React from 'react';
 
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
+import FilmPoster from '@/components/poster/FilmPoster';
 import ProxyImage from '@/components/ProxyImage';
 
 import DetailError from './DetailError';
@@ -245,20 +245,12 @@ export function CorrectionContent({
                 }
               }}
             >
-              <div className='relative w-12 h-16 rounded overflow-hidden bg-raised flex-shrink-0'>
-                {resultPoster ? (
-                  <ProxyImage
-                    originalSrc={resultPoster}
-                    alt={resultTitle}
-                    className='absolute inset-0 w-full h-full object-cover'
-                    draggable={false}
-                  />
-                ) : (
-                  <div className='w-full h-full flex items-center justify-center'>
-                    <Film size={20} className='text-muted' />
-                  </div>
-                )}
-              </div>
+              <FilmPoster
+                src={resultPoster}
+                title={resultTitle}
+                alt={resultTitle}
+                className='w-12 h-16 flex-shrink-0 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+              />
               <div className='flex-1 min-w-0'>
                 <div className='flex items-center gap-2'>
                   <p className='text-sm font-medium text-muted truncate'>

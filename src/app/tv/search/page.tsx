@@ -1,14 +1,14 @@
 'use client';
 
-import { Film, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { addSearchHistory, getSearchHistory } from '@/lib/db.client';
 import { type SettingKey, writeSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
-import { processImageUrl } from '@/lib/utils';
 
+import FilmPoster from '@/components/poster/FilmPoster';
 import TVLayout from '@/components/tv/TVLayout';
 
 const hot = [
@@ -252,19 +252,11 @@ export default function TVSearchPage() {
                     onClick={() => router.push(getTVDetailUrl(item))}
                     className='tv-focusable cursor-pointer overflow-hidden rounded-3xl border border-line bg-raised text-left outline-none transition hover:bg-line min-h-[44px] tm-press'
                   >
-                    <div className='aspect-[2/3] bg-surface'>
-                      {item.poster ? (
-                        <img
-                          src={processImageUrl(item.poster)}
-                          alt=''
-                          className='h-full w-full object-cover'
-                        />
-                      ) : (
-                        <div className='flex h-full items-center justify-center'>
-                          <Film className='h-16 w-16 text-muted' />
-                        </div>
-                      )}
-                    </div>
+                    <FilmPoster
+                      src={item.poster}
+                      title={item.title}
+                      className='tm-tv-search-poster'
+                    />
                     <div className='p-5'>
                       <div className='line-clamp-1 text-base font-medium text-fg'>
                         {item.title}

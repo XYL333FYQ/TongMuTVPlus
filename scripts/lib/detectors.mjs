@@ -45,6 +45,12 @@ export const DETECTORS = {
     pattern: /\brole=\{?['"]switch['"]|\btm-switch-(?:btn|track|thumb)\b/g,
     label: '自己画开关',
   },
+  // 影片海报：直接用 <img> / <Image> 画海报，或者自己套 tm-poster 类
+  poster: {
+    pattern:
+      /<(?:img|Image)\b(?:[^>]|=>)*?\bsrc=\{[^}]*[Pp]oster[^}]*\}|\btm-poster(?![-\w])/g,
+    label: '自己画海报',
+  },
   // 不属于哪个零件：行内跳过代码检查的注释（S8），全部 src 都统计
   eslintDisableInline: {
     pattern: /eslint-disable-(?:next-)?line\b/g,

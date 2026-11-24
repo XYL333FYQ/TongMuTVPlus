@@ -13,6 +13,7 @@ import ModalLayer from '@/components/feedback/ModalLayer';
 import RetryNotice from '@/components/feedback/RetryNotice';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import FilmPoster, { PosterSkeleton } from '@/components/poster/FilmPoster';
 import PageHeader from '@/components/shell/PageHeader';
 
 interface TMDBResult {
@@ -345,7 +346,7 @@ export default function MovieRequestPage() {
             {loadingMyRequests ? (
               <div className='tm-poster-grid' aria-label='正在加载'>
                 {Array.from({ length: 6 }, (_, index) => (
-                  <div key={index} className='tm-poster tm-skeleton' />
+                  <PosterSkeleton key={index} />
                 ))}
               </div>
             ) : myRequestsError && myRequests.length === 0 ? (
@@ -361,17 +362,11 @@ export default function MovieRequestPage() {
               <div className='tm-poster-grid'>
                 {myRequests.map((request) => (
                   <div key={request.id} className='flex flex-col gap-2'>
-                    {request.poster ? (
-                      <img
-                        src={request.poster}
-                        alt={request.title}
-                        className='tm-poster object-cover'
-                      />
-                    ) : (
-                      <div className='tm-poster flex items-center justify-center'>
-                        <span className='text-[13px] text-muted'>暂无海报</span>
-                      </div>
-                    )}
+                    <FilmPoster
+                      src={request.poster}
+                      title={request.title}
+                      alt={request.title}
+                    />
                     <div className='min-w-0'>
                       <h3
                         className='tm-poster-title line-clamp-2 whitespace-normal break-words'
@@ -398,19 +393,15 @@ export default function MovieRequestPage() {
           <div className='tm-poster-grid'>
             {searchResults.map((item) => (
               <div key={item.id} className='flex flex-col gap-2'>
-                {item.poster_path ? (
-                  <img
-                    src={processImageUrl(
-                      getTMDBImageUrl(item.poster_path, 'w500')
-                    )}
-                    alt={item.title || item.name}
-                    className='tm-poster object-cover'
-                  />
-                ) : (
-                  <div className='tm-poster flex items-center justify-center'>
-                    <span className='text-[13px] text-muted'>暂无海报</span>
-                  </div>
-                )}
+                <FilmPoster
+                  src={
+                    item.poster_path
+                      ? getTMDBImageUrl(item.poster_path, 'w500')
+                      : ''
+                  }
+                  title={item.title || item.name}
+                  alt={item.title || item.name}
+                />
                 <div className='min-w-0'>
                   <h3
                     className='tm-poster-title line-clamp-2 whitespace-normal break-words'

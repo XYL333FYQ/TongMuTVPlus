@@ -13,8 +13,8 @@ import {
 
 import { getVideoResolutionFromM3u8 } from '@/lib/media-engines';
 import { SearchResult } from '@/lib/types';
-import { processImageUrl } from '@/lib/utils';
 
+import FilmPoster from '@/components/poster/FilmPoster';
 import {
   fetchTVDetail,
   resolveTVEpisodeUrl,
@@ -129,11 +129,6 @@ function TVDetailClient() {
       alive = false;
     };
   }, [source, id, title, fileName]);
-
-  const poster = useMemo(
-    () => (detail?.poster ? processImageUrl(detail.poster) : ''),
-    [detail?.poster]
-  );
 
   useEffect(() => {
     sourceTestsRef.current = sourceTests;
@@ -399,19 +394,13 @@ function TVDetailClient() {
   return (
     <TVLayout>
       <section className='relative overflow-hidden rounded-md border border-line bg-surface p-4 shadow-2xl md:p-6 shadow-ink/70'>
-        {poster && <img src={poster} alt='' className='hidden' />}
         <div className='relative grid grid-cols-1 gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:gap-8'>
-          <div className='overflow-hidden rounded-md bg-surface shadow-2xl shadow-ink/70'>
-            {poster ? (
-              <img
-                src={poster}
-                alt={detail.title}
-                className='aspect-[2/3] w-full object-cover'
-              />
-            ) : (
-              <div className='aspect-[2/3]' />
-            )}
-          </div>
+          <FilmPoster
+            src={detail.poster}
+            title={detail.title}
+            alt={detail.title}
+            eager
+          />
           <div className='py-2'>
             <button
               onClick={() => router.back()}

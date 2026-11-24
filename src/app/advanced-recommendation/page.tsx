@@ -12,6 +12,7 @@ import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import EmptyState from '@/components/media/EmptyState';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import { PosterSkeleton } from '@/components/poster/FilmPoster';
 import PageHeader from '@/components/shell/PageHeader';
 import VideoCard from '@/components/VideoCard';
 
@@ -244,7 +245,7 @@ export default function AdvancedRecommendationPage() {
                   className='tm-poster-grid'
                 >
                   {Array.from({ length: 6 }, (_, index) => (
-                    <div key={index} className='tm-poster tm-skeleton' />
+                    <PosterSkeleton key={index} />
                   ))}
                 </div>
               )}

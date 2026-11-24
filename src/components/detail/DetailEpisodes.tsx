@@ -3,6 +3,7 @@ import React from 'react';
 
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
+import FilmPoster from '@/components/poster/FilmPoster';
 import ProxyImage from '@/components/ProxyImage';
 
 import type { DetailData, Episode } from './types';
@@ -112,14 +113,11 @@ export default function DetailEpisodes({
                               }
                             }}
                           >
-                            <ProxyImage
-                              originalSrc={getTMDBImageUrl(
-                                season.poster_path,
-                                'w92'
-                              )}
+                            <FilmPoster
+                              src={getTMDBImageUrl(season.poster_path, 'w92')}
+                              title={season.name}
                               alt={season.name}
-                              className='absolute inset-0 w-full h-full object-cover'
-                              draggable={false}
+                              className='w-full h-full [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
                             />
                           </div>
                         )}

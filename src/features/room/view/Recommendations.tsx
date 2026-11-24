@@ -12,9 +12,9 @@ import './Recommendations.css';
 
 import { getDoubanCategories } from '@/lib/douban.client';
 import type { DoubanItem } from '@/lib/types';
-import { processImageUrl } from '@/lib/utils';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import FilmPoster, { PosterSkeleton } from '@/components/poster/FilmPoster';
 
 const KINDS = [
   {
@@ -190,23 +190,18 @@ export default function Recommendations(props: {
                   onClick={() => props.onChoose(item.title)}
                   title={`选这部：${item.title}`}
                 >
-                  <span className='tm-room-recs-poster'>
-                    {item.poster && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={processImageUrl(item.poster)}
-                        alt=''
-                        loading='lazy'
-                        referrerPolicy='no-referrer'
-                      />
-                    )}
+                  <FilmPoster
+                    src={item.poster}
+                    title={item.title}
+                    className='tm-room-recs-poster'
+                  >
                     {item.rate && Number(item.rate) > 0 && (
                       <span className='tm-room-recs-rate'>
                         <Star size={11} aria-hidden='true' />
                         {item.rate}
                       </span>
                     )}
-                  </span>
+                  </FilmPoster>
                   <span className='tm-room-recs-name'>{item.title}</span>
                   {item.year && (
                     <span className='tm-room-recs-year'>{item.year}</span>
@@ -216,7 +211,7 @@ export default function Recommendations(props: {
             ) : (
               <li key={`skeleton-${index}`} aria-hidden='true'>
                 <span className='tm-room-recs-item tm-room-recs-skeleton'>
-                  <span className='tm-room-recs-poster' />
+                  <PosterSkeleton className='tm-room-recs-poster' />
                   <span className='tm-room-recs-name'>&nbsp;</span>
                 </span>
               </li>

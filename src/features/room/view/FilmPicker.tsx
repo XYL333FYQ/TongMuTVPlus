@@ -4,7 +4,7 @@
  * 选片：搜影片，选一个片源后“现在一起看”或“加入片单”。
  */
 
-import { Film, ListPlus, Play, Search } from 'lucide-react';
+import { ListPlus, Play, Search } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 import './FilmPicker.css';
@@ -12,6 +12,7 @@ import './FilmPicker.css';
 import type { SearchResult } from '@/lib/types';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 import {
   normalizeTitle,
@@ -163,19 +164,11 @@ export default function FilmPicker(props: {
                 setSelected(selected === item.key ? null : item.key)
               }
             >
-              <span className='tm-room-picker-result-poster'>
-                {item.poster ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.poster}
-                    alt=''
-                    loading='lazy'
-                    referrerPolicy='no-referrer'
-                  />
-                ) : (
-                  <Film size={20} />
-                )}
-              </span>
+              <FilmPoster
+                src={item.poster}
+                title={item.title}
+                className='tm-room-picker-result-poster'
+              />
               <span className='tm-room-picker-result-text'>
                 <strong>{item.title}</strong>
                 <small>

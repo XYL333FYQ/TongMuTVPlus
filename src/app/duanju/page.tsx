@@ -28,6 +28,7 @@ import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import RetryNotice from '@/components/feedback/RetryNotice';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import { PosterSkeleton } from '@/components/poster/FilmPoster';
 import BackToTop from '@/components/shell/BackToTop';
 import PageHeader from '@/components/shell/PageHeader';
 import VideoCard from '@/components/VideoCard';
@@ -590,7 +591,7 @@ function DuanjuPageClient() {
             {isLoadingVideos && currentPage === 1 ? (
               <div className='tm-poster-grid' aria-label='正在加载'>
                 {Array.from({ length: 12 }, (_, index) => (
-                  <div key={index} className='tm-poster tm-skeleton' />
+                  <PosterSkeleton key={index} />
                 ))}
               </div>
             ) : videosError && videos.length === 0 ? (

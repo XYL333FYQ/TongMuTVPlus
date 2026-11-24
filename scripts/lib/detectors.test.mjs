@@ -44,6 +44,20 @@ test('counts each ingredient', () => {
     3
   );
   assert.equal(countMatches("getByRole('switch')", 'switch'), 0);
+  assert.equal(
+    countMatches(
+      "<img src={item.poster} alt='' /><Image fill src={displayPoster} /><div className='tm-poster' />",
+      'poster'
+    ),
+    3
+  );
+  assert.equal(
+    countMatches(
+      "<img onLoad={() => x} src={item.poster} /> <div className='tm-poster-grid' />",
+      'poster'
+    ),
+    1
+  );
 });
 
 test('CRLF and LF count the same', () => {

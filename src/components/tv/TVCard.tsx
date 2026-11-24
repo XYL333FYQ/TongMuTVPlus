@@ -1,11 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { useReducedMotionSetting } from '@/lib/motion';
-import { processImageUrl } from '@/lib/utils';
+
+import FilmPoster from '@/components/poster/FilmPoster';
 
 import { TVItem } from './types';
 
@@ -18,7 +18,6 @@ export default function TVCard({
 }) {
   const router = useRouter();
   const reduced = useReducedMotionSetting();
-  const poster = item.poster ? processImageUrl(item.poster) : '';
   const playUrl =
     item.href ||
     `/tv/detail?title=${encodeURIComponent(item.title)}${
@@ -44,29 +43,16 @@ export default function TVCard({
         ease: [0.22, 1, 0.36, 1],
       }}
     >
-      <div className='tm-tv-card-poster'>
-        {poster ? (
-          <img
-            src={poster}
-            alt={item.title}
-            className='tm-tv-card-image'
-            ref={(node) => {
-              if (node?.complete && node.naturalWidth > 0)
-                node.dataset.loaded = 'true';
-            }}
-            onLoad={(event) => {
-              event.currentTarget.dataset.loaded = 'true';
-            }}
-          />
-        ) : (
-          <div className='flex h-full w-full items-center justify-center bg-surface text-muted'>
-            <Play className='h-14 w-14' />
-          </div>
-        )}
-        <div className='tm-tv-card-rating-slot'>
+      <FilmPoster
+        src={item.poster}
+        title={item.title}
+        alt={item.title}
+        className='tm-tv-card-poster'
+      >
+        <span className='tm-tv-card-rating-slot'>
           {item.rate && <span className='tm-tv-card-rating'>{item.rate}</span>}
-        </div>
-      </div>
+        </span>
+      </FilmPoster>
       <h3 className='tm-tv-card-title'>{item.title}</h3>
       <p className='tm-tv-card-meta'>{item.year || ''}</p>
     </motion.button>

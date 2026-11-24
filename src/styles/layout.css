@@ -213,14 +213,16 @@ body:has(.tm-playback-host[data-presentation='folded']) .tm-back-to-top {
     grid-column: span 2;
   }
 }
-/* —— 海报 —— */
+/* —— 海报（components/poster/FilmPoster，和影片卡片同一套观感） ——
+ * 尺寸由使用方定；小缩略图用 --tm-art-radius 换小一档的圆角令牌 */
 .tm-poster {
   position: relative;
+  display: block;
   aspect-ratio: 2 / 3;
   overflow: hidden;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-surface-raised);
-  box-shadow: var(--tm-shadow-poster);
+  border-radius: var(--tm-art-radius, var(--tm-radius-md));
+  background: var(--tm-art-bg, var(--tm-surface-raised));
+  box-shadow: var(--tm-art-shadow, var(--tm-shadow-poster));
   transition: box-shadow var(--tm-d-hover) var(--tm-ease-out);
 }
 .tm-poster::after {
@@ -232,10 +234,21 @@ body:has(.tm-playback-host[data-presentation='folded']) .tm-back-to-top {
   box-shadow: none;
   pointer-events: none;
 }
+.tm-poster[data-ratio='landscape'] {
+  aspect-ratio: 16 / 9;
+}
 .tm-poster img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.tm-poster[data-fit='contain'] img {
+  object-fit: contain;
+}
+.tm-poster-initial {
+  position: absolute;
+  inset: 0;
+  font-size: var(--tm-poster-initial-size, 48px);
 }
 .tm-poster-title {
   display: block;

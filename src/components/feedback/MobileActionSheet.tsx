@@ -1,5 +1,4 @@
 import { Radio, X } from 'lucide-react';
-import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
@@ -8,6 +7,7 @@ import { useReducedMotionSetting } from '@/lib/motion';
 import { usePullDownClose } from '@/hooks/usePullDownClose';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 export interface ActionItem {
   id: string;
@@ -206,14 +206,12 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   onPosterClick?.();
                 }}
               >
-                <Image
+                <FilmPoster
                   src={poster}
+                  title={title}
                   alt={title}
-                  fill
-                  className={
-                    origin === 'live' ? 'object-contain' : 'object-cover'
-                  }
-                  loading='lazy'
+                  fit={origin === 'live' ? 'contain' : 'cover'}
+                  className='tm-action-sheet-poster'
                 />
               </button>
             )}

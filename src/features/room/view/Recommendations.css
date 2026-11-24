@@ -52,20 +52,9 @@
   text-align: left;
 }
 .tm-room-recs-poster {
-  position: relative;
-  display: block;
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-surface-raised);
-  box-shadow: var(--tm-shadow-poster);
+  --tm-poster-initial-size: 32px;
   transition: transform var(--tm-d-hover) var(--tm-ease-out),
     box-shadow var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-room-recs-poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 @media (hover: hover) and (pointer: fine) {
   .tm-room-recs-item:hover .tm-room-recs-poster {
@@ -103,18 +92,6 @@
   margin-top: -4px;
   color: var(--tm-muted);
   font-size: 12px;
-}
-.tm-room-recs-skeleton .tm-room-recs-poster {
-  box-shadow: none;
-  background: linear-gradient(
-      100deg,
-      transparent 30%,
-      var(--tm-skeleton-shine) 50%,
-      transparent 70%
-    )
-    var(--tm-surface-raised);
-  background-size: 200% 100%;
-  animation: tm-room-shine 1.4s linear infinite;
 }
 .tm-room-recs-skeleton .tm-room-recs-name {
   width: 70%;

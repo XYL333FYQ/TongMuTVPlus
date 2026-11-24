@@ -11,25 +11,17 @@
   font-weight: 500;
 }
 .tm-room-playlist-poster {
-  display: grid;
+  --tm-art-radius: var(--tm-radius-sm);
+  --tm-art-shadow: none;
+  --tm-poster-initial-size: 18px;
   flex: none;
-  place-items: center;
-  overflow: hidden;
   width: 40px;
   height: 56px;
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-surface-raised);
-  color: var(--tm-muted);
 }
-.tm-room-playlist-poster[data-size='lg'] {
+.tm-room-playlist-poster-lg {
+  --tm-poster-initial-size: 28px;
   width: 64px;
   height: 92px;
-  border-radius: var(--tm-radius-sm);
-}
-.tm-room-playlist-poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 /* 正在放映 */
 .tm-room-playlist-now {
@@ -39,9 +31,6 @@
   padding: 16px;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface-raised);
-}
-.tm-room-playlist-now .tm-room-playlist-poster {
-  background: var(--tm-line);
 }
 .tm-room-playlist-now-main {
   display: flex;

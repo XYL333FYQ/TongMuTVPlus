@@ -27,6 +27,7 @@ import PublicPoster from '@/components/catalog/PublicPoster';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 function usePublicCatalog(
   type: PublicCatalogCategory,
@@ -132,21 +133,19 @@ function CatalogCard({
       onClick={() => onSelect(item)}
       aria-label={'查看影片介绍：' + item.title}
     >
-      <div className='tm-poster tm-video-card-art'>
-        {item.poster ? (
-          <PublicPoster src={item.poster} alt='' className='tm-fade-image' />
-        ) : (
-          <span className='tm-public-image-missing'>
-            <Film size={32} aria-hidden />
-          </span>
-        )}
+      <FilmPoster
+        guest
+        src={item.poster}
+        title={item.title}
+        className='tm-video-card-art'
+      >
         {item.rate && Number(item.rate) > 0 && (
           <span className='mtv-rate'>
             <Star size={11} aria-hidden />
             {Number(item.rate).toFixed(1)}
           </span>
         )}
-      </div>
+      </FilmPoster>
       <span className='tm-poster-title'>{item.title}</span>
       {meta && <span className='tm-poster-meta'>{meta}</span>}
     </button>
@@ -377,11 +376,13 @@ export default function PublicCatalogPage({
                 src: heroImage(item.poster),
               }))}
               renderPoster={(item) => (
-                <PublicPoster
+                <FilmPoster
                   key={item.id}
+                  guest
                   src={item.src}
-                  alt=''
-                  className='tm-home-hero-side-image'
+                  title={item.title}
+                  fit='contain'
+                  className='tm-home-hero-deck-art'
                 />
               )}
               titles={recommendations.map((item) => item.title)}

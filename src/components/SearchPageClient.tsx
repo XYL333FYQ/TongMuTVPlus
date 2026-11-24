@@ -62,7 +62,6 @@ import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import AcgSearch from '@/components/AcgSearch';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
-import PublicPoster from '@/components/catalog/PublicPoster';
 import ContinueWatching from '@/components/ContinueWatching';
 import BusyDots from '@/components/feedback/BusyDots';
 import ImageViewer from '@/components/feedback/ImageViewer';
@@ -70,7 +69,7 @@ import Popover from '@/components/feedback/Popover';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import PansouSearch, { CLOUD_TYPE_NAMES } from '@/components/PansouSearch';
-import ProxyImage from '@/components/ProxyImage';
+import FilmPoster, { PosterSkeleton } from '@/components/poster/FilmPoster';
 import SearchResultFilter, {
   SearchFilterCategory,
 } from '@/components/SearchResultFilter';
@@ -1055,13 +1054,7 @@ export function SearchPageClient({
       onClick={() => router.push(getSearchResultUrl(item))}
       className='group block w-full text-left min-h-[44px] tm-press'
     >
-      <div className='aspect-[2/3] overflow-hidden rounded-xl bg-raised ring-1 ring-[color-mix(in_srgb,var(--tm-text)_10%,transparent)]'>
-        <PublicPoster
-          src={item.poster}
-          alt={item.title}
-          className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]'
-        />
-      </div>
+      <FilmPoster guest src={item.poster} title={item.title} alt={item.title} />
       <h3 className='mt-3 line-clamp-1 text-sm font-medium text-fg'>
         {item.title}
       </h3>
@@ -1127,29 +1120,26 @@ export function SearchPageClient({
         className='group w-full rounded-2xl border border-line bg-raised p-3 text-left shadow-sm transition-all hover:border-line hover:shadow-md min-h-[44px] tm-press'
       >
         <div className='flex items-start gap-4'>
-          <div className='relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-raised'>
-            {isGuest ? (
-              <PublicPoster
-                src={item.poster}
-                alt={item.title}
-                className='h-full w-full object-cover'
-              />
-            ) : (
-              <ProxyImage
-                originalSrc={item.poster}
-                alt={item.title}
-                className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]'
-                loading='lazy'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPreviewImage({
-                    url: processImageUrl(item.poster),
-                    alt: item.title,
-                  });
-                }}
-              />
-            )}
-          </div>
+          {/* 点海报看大图（访客页没有大图） */}
+          <span
+            className='shrink-0'
+            onClick={(e) => {
+              if (isGuest) return;
+              e.stopPropagation();
+              setPreviewImage({
+                url: processImageUrl(item.poster),
+                alt: item.title,
+              });
+            }}
+          >
+            <FilmPoster
+              guest={isGuest}
+              src={item.poster}
+              title={item.title}
+              alt={item.title}
+              className='h-32 w-24'
+            />
+          </span>
 
           <div className='min-w-0 flex-1'>
             <div className='flex items-start justify-between gap-3'>
@@ -2422,7 +2412,7 @@ export function SearchPageClient({
                     isLoading ? (
                       <div className='tm-poster-grid' aria-label='正在搜索'>
                         {Array.from({ length: 12 }, (_, index) => (
-                          <div key={index} className='tm-poster tm-skeleton' />
+                          <PosterSkeleton key={index} />
                         ))}
                       </div>
                     ) : noSearchSources ? (

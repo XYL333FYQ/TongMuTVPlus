@@ -51,6 +51,7 @@ import { useDeviceTier, usePageLayout } from '@/hooks/useDeviceTier';
 import { useImmersiveShell } from '@/hooks/useImmersiveShell';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import FilmPoster from '@/components/poster/FilmPoster';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
 import DanmakuSheet from './DanmakuSheet';
@@ -526,18 +527,12 @@ export default function RoomView({
           {/* 电脑上正在放映和选集是同一张卡；手机平板上这层不占位 */}
           <div className='tm-room-view-nowcard'>
             <section className='tm-room-view-now' aria-label='正在放映'>
-              <span className='tm-room-view-now-poster'>
-                {poster ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={processImageUrl(poster)}
-                    alt=''
-                    referrerPolicy='no-referrer'
-                  />
-                ) : (
-                  <Clapperboard size={20} aria-hidden='true' />
-                )}
-              </span>
+              <FilmPoster
+                src={poster}
+                title={state?.videoName || detail?.title}
+                eager
+                className='tm-room-view-now-poster'
+              />
               <div className='tm-room-view-now-text'>
                 <span
                   className='tm-room-view-now-label'

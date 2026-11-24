@@ -137,21 +137,12 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   box-shadow: none;
 }
 .tm-room-view-now-poster {
-  display: grid;
+  --tm-art-radius: var(--tm-radius-sm);
+  --tm-art-shadow: var(--tm-shadow-sm);
+  --tm-poster-initial-size: 22px;
   flex-shrink: 0;
-  place-items: center;
   width: 56px;
   height: 80px;
-  overflow: hidden;
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-surface-raised);
-  color: var(--tm-muted);
-  box-shadow: var(--tm-shadow-sm);
-}
-.tm-room-view-now-poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 .tm-room-view-now-text {
   display: flex;
@@ -517,9 +508,10 @@ html[data-tm-no-blur] .tm-room-view-ambient {
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-now
   .tm-room-view-now-poster {
+  --tm-art-radius: var(--tm-radius-xs);
+  --tm-poster-initial-size: 14px;
   width: 30px;
   height: 42px;
-  border-radius: 6px;
 }
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-now h2 {
   font-size: 14px;

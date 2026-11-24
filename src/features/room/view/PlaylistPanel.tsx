@@ -12,7 +12,6 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronRight,
-  Film,
   ListPlus,
   MoreHorizontal,
   Play,
@@ -27,20 +26,27 @@ import './PlaylistPanel.css';
 import type { SearchResult } from '@/lib/types';
 import { useDeviceTier } from '@/hooks/useDeviceTier';
 
+import FilmPoster from '@/components/poster/FilmPoster';
+
 import { episodeLabel } from '../lib/room-presentation';
 
 import type { RoomQueueItem } from '@/types/watch-room';
 
-function Poster({ src, size }: { src?: string; size: 'sm' | 'lg' }) {
+function Poster({
+  src,
+  title,
+  size,
+}: {
+  src?: string;
+  title?: string;
+  size: 'sm' | 'lg';
+}) {
   return (
-    <span className='tm-room-playlist-poster' data-size={size}>
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt='' loading='lazy' referrerPolicy='no-referrer' />
-      ) : (
-        <Film size={size === 'lg' ? 22 : 16} aria-hidden='true' />
-      )}
-    </span>
+    <FilmPoster
+      src={src}
+      title={title}
+      className={`tm-room-playlist-poster tm-room-playlist-poster-${size}`}
+    />
   );
 }
 
@@ -76,7 +82,11 @@ export default function PlaylistPanel(props: {
       {props.playing && detail && (
         <section className='tm-room-playlist-now' aria-label='正在放映'>
           <div className='tm-room-playlist-now-main'>
-            <Poster src={detail.poster} size={phone ? 'sm' : 'lg'} />
+            <Poster
+              src={detail.poster}
+              title={detail.title}
+              size={phone ? 'sm' : 'lg'}
+            />
             <div className='tm-room-playlist-now-text'>
               <span className='tm-room-playlist-label'>正在放映</span>
               <strong>{detail.title}</strong>
@@ -194,7 +204,7 @@ export default function PlaylistPanel(props: {
               return (
                 <li key={item.id} className='tm-room-playlist-item'>
                   <div className='tm-room-playlist-row'>
-                    <Poster src={item.poster} size='sm' />
+                    <Poster src={item.poster} title={item.title} size='sm' />
                     <span className='tm-room-playlist-text'>
                       <strong>{item.title}</strong>
                       <small>

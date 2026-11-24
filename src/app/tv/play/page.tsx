@@ -58,6 +58,7 @@ import { loadTVPlayerUpDownAction } from '@/lib/tv-preferences';
 import { SearchResult } from '@/lib/types';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import FilmPoster from '@/components/poster/FilmPoster';
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import {
   fetchTVDetail,
@@ -1915,10 +1916,10 @@ function TVPlayClient() {
               </button>
             </div>
             {detail.poster && (
-              <img
+              <FilmPoster
                 src={detail.poster}
-                alt=''
-                className='float-left mr-4 mb-4 h-36 w-24 md:mr-7 md:h-72 md:w-48 rounded-3xl object-cover shadow-xl shadow-ink/50'
+                title={detail.title}
+                className='float-left mr-4 mb-4 h-36 w-24 md:mr-7 md:h-72 md:w-48'
               />
             )}
             <p className='whitespace-pre-line text-sm md:text-2xl leading-relaxed text-fg'>

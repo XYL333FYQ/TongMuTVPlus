@@ -1,8 +1,8 @@
 'use client';
 
-import './BangumiScheduleTimeline.css';
-
 import { useEffect, useState } from 'react';
+
+import './BangumiScheduleTimeline.css';
 
 import {
   BangumiScheduleData,
@@ -10,7 +10,7 @@ import {
   GetBangumiScheduleData,
 } from '@/lib/bangumi.client';
 
-import { ImagePlaceholder } from '@/components/ImagePlaceholder';
+import { PosterSkeleton } from '@/components/poster/FilmPoster';
 import VideoCard from '@/components/VideoCard';
 
 /** 时刻表加载骨架：模拟时间轴结构（时间标签 + 节点 + 横向卡片条） */
@@ -46,7 +46,7 @@ function TimelineSkeleton() {
                 {Array.from({ length: SKELETON_ITEMS[i] }, (_, j) => (
                   <div key={j} className='tm-schedule-card'>
                     <div className='tm-schedule-skeleton-card'>
-                      <ImagePlaceholder aspectRatio='aspect-[2/3]' />
+                      <PosterSkeleton />
                       <div className='tm-schedule-skeleton-caption'>
                         <div className='tm-schedule-skeleton-caption-bar'></div>
                       </div>

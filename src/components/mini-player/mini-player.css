@@ -326,19 +326,12 @@
   background: var(--tm-surface-raised);
 }
 .tm-mini-thumb {
-  position: relative;
-  display: grid;
+  --tm-art-radius: var(--tm-radius-sm);
+  --tm-art-shadow: none;
+  --tm-poster-initial-size: 16px;
   flex: none;
-  place-items: center;
   width: 56px;
   height: 32px;
-  overflow: hidden;
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-surface-raised);
-  color: var(--tm-muted);
-}
-.tm-mini-thumb img {
-  object-fit: cover;
 }
 .tm-mini-copy {
   display: flex;

@@ -3,15 +3,14 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 import { type SettingKey, writeSetting } from '@/lib/settings';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
-import { processImageUrl } from '@/lib/utils';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
 import SideLayer from '@/components/feedback/SideLayer';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 interface TMDBResult {
   id: number;
@@ -740,23 +739,16 @@ export default function CorrectDialog({
                     className='flex gap-3 p-3 border border-line rounded-lg hover:bg-line transition-colors'
                   >
                     {/* 海报 */}
-                    <div className='flex-shrink-0 w-16 h-24 relative rounded overflow-hidden bg-raised'>
-                      {season.poster_path ? (
-                        <Image
-                          src={processImageUrl(
-                            getTMDBImageUrl(season.poster_path)
-                          )}
-                          alt={season.name}
-                          fill
-                          className='object-cover'
-                          referrerPolicy='no-referrer'
-                        />
-                      ) : (
-                        <div className='w-full h-full flex items-center justify-center text-muted text-[13px]'>
-                          无海报
-                        </div>
-                      )}
-                    </div>
+                    <FilmPoster
+                      src={
+                        season.poster_path
+                          ? getTMDBImageUrl(season.poster_path)
+                          : ''
+                      }
+                      title={season.name}
+                      alt={season.name}
+                      className='flex-shrink-0 w-16 h-24 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+                    />
 
                     {/* 信息 */}
                     <div className='flex-1 min-w-0'>
@@ -815,23 +807,16 @@ export default function CorrectDialog({
                   className='flex gap-3 p-3 border border-line rounded-lg hover:bg-line transition-colors'
                 >
                   {/* 海报 */}
-                  <div className='flex-shrink-0 w-16 h-24 relative rounded overflow-hidden bg-raised'>
-                    {result.poster_path ? (
-                      <Image
-                        src={processImageUrl(
-                          getTMDBImageUrl(result.poster_path)
-                        )}
-                        alt={result.title || result.name || ''}
-                        fill
-                        className='object-cover'
-                        referrerPolicy='no-referrer'
-                      />
-                    ) : (
-                      <div className='w-full h-full flex items-center justify-center text-muted text-[13px]'>
-                        无海报
-                      </div>
-                    )}
-                  </div>
+                  <FilmPoster
+                    src={
+                      result.poster_path
+                        ? getTMDBImageUrl(result.poster_path)
+                        : ''
+                    }
+                    title={result.title || result.name}
+                    alt={result.title || result.name || ''}
+                    className='flex-shrink-0 w-16 h-24 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+                  />
 
                   {/* 信息 */}
                   <div className='flex-1 min-w-0'>

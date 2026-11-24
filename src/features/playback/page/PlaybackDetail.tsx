@@ -2,10 +2,9 @@
 
 import { AlertCircle, Cloud, Heart, Sparkles } from 'lucide-react';
 
-import { isNetdiskSource } from '@/lib/netdisk/source';
 import type { SearchResult } from '@/lib/types';
 
-import ProxyImage from '@/components/ProxyImage';
+import FilmPoster from '@/components/poster/FilmPoster';
 
 import type { PlaybackDrawer } from './PlaybackDrawers';
 import type { SourceVideoInfo } from './types';
@@ -296,49 +295,38 @@ export default function PlaybackDetail({
       {/* 封面展示 */}
       <div className='hidden md:block md:col-span-1 md:order-first'>
         <div className='pl-0 py-4 pr-6 max-w-sm mx-auto'>
-          <div className='relative bg-surface aspect-[2/3] flex items-center justify-center rounded-xl overflow-hidden'>
-            {videoCover ? (
-              <>
-                <ProxyImage
-                  originalSrc={videoCover}
-                  alt={videoTitle}
-                  className='w-full h-full object-cover'
-                />
-
-                {/* 豆瓣链接按钮 */}
-                {videoDoubanId !== 0 && (
-                  <a
-                    href={`https://movie.douban.com/subject/${videoDoubanId.toString()}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='absolute top-3 left-3 min-h-[44px] inline-flex items-center tm-press'
+          <FilmPoster
+            src={videoCover}
+            title={videoTitle}
+            alt={videoTitle}
+            eager
+          >
+            {/* 豆瓣链接按钮 */}
+            {videoCover && videoDoubanId !== 0 && (
+              <a
+                href={`https://movie.douban.com/subject/${videoDoubanId.toString()}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='absolute top-3 left-3 min-h-[44px] inline-flex items-center tm-press'
+              >
+                <div className='bg-raised text-fg text-[13px] font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-line hover:scale-[1.1] transition-all duration-300 ease-out'>
+                  <svg
+                    width='16'
+                    height='16'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
                   >
-                    <div className='bg-raised text-fg text-[13px] font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-line hover:scale-[1.1] transition-all duration-300 ease-out'>
-                      <svg
-                        width='16'
-                        height='16'
-                        viewBox='0 0 24 24'
-                        fill='none'
-                        stroke='currentColor'
-                        strokeWidth='2'
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                      >
-                        <path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'></path>
-                        <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'></path>
-                      </svg>
-                    </div>
-                  </a>
-                )}
-              </>
-            ) : isNetdiskSource(detail?.source) ? (
-              <div className='flex flex-col items-center justify-center text-muted'>
-                <Cloud className='w-16 h-16 opacity-80' />
-              </div>
-            ) : (
-              <span className='text-muted'>封面图片</span>
+                    <path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'></path>
+                    <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'></path>
+                  </svg>
+                </div>
+              </a>
             )}
-          </div>
+          </FilmPoster>
         </div>
       </div>
     </div>

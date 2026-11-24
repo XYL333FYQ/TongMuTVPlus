@@ -477,16 +477,14 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   filter: none;
   transform: none;
 }
-.tm-home-hero-poster:is(.tm-home-hero-poster-left, .tm-home-hero-poster-right)
-  .tm-home-hero-poster-face
-  > img {
-  opacity: 0;
-  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-home-hero-poster:is(.tm-home-hero-poster-left, .tm-home-hero-poster-right)
-  .tm-home-hero-poster-face[data-loaded='true']
-  > img {
-  opacity: 1;
+/* 两侧和缩略图里的海报（FilmPoster）铺满外框，圆角、阴影交给外框 */
+.tm-home-hero-deck-art {
+  --tm-art-radius: 0px;
+  --tm-art-shadow: none;
+  --tm-poster-initial-size: 40px;
+  width: 100%;
+  height: 100%;
+  --tm-art-bg: var(--tm-hero-bg);
 }
 .tm-home-hero-poster-fallback {
   position: absolute;

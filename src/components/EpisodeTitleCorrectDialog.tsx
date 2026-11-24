@@ -3,7 +3,6 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 import {
@@ -12,9 +11,9 @@ import {
   setEpisodeTitleCorrection,
 } from '@/lib/episode-title-correction';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
-import { processImageUrl } from '@/lib/utils';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
+import FilmPoster from '@/components/poster/FilmPoster';
 import Switch from '@/components/ui/Switch';
 
 interface TMDBResult {
@@ -426,17 +425,12 @@ function TmdbSearchArea({
               disabled={loadingSeasons}
               className='w-full flex gap-3 p-2 rounded-lg border border-line hover:bg-line transition-colors text-left disabled:opacity-50 min-h-[44px] tm-press'
             >
-              <div className='flex-shrink-0 w-10 h-14 relative rounded overflow-hidden bg-raised'>
-                {r.poster_path && (
-                  <Image
-                    src={processImageUrl(getTMDBImageUrl(r.poster_path))}
-                    alt={r.title || r.name || ''}
-                    fill
-                    className='object-cover'
-                    referrerPolicy='no-referrer'
-                  />
-                )}
-              </div>
+              <FilmPoster
+                src={r.poster_path ? getTMDBImageUrl(r.poster_path) : ''}
+                title={r.title || r.name}
+                alt={r.title || r.name || ''}
+                className='flex-shrink-0 w-10 h-14 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+              />
               <div className='flex-1 min-w-0'>
                 <div className='text-sm font-medium text-fg truncate'>
                   {r.title || r.name}

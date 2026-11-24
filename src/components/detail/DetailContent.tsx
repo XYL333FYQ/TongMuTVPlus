@@ -1,9 +1,9 @@
 'use client';
 
-import { Film } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
 import PosterAmbient from '@/components/catalog/PosterAmbient';
+import FilmPoster from '@/components/poster/FilmPoster';
 import ProxyImage from '@/components/ProxyImage';
 
 import DetailError from './DetailError';
@@ -72,24 +72,26 @@ export default function DetailContent({
             aria-label='查看海报大图'
             onClick={() => onImageClick(poster)}
           >
-            <ProxyImage
-              originalSrc={poster}
+            <FilmPoster
+              src={poster}
+              title={data?.title || title}
               alt={data?.title || title}
-              loading='eager'
+              fit='contain'
+              eager
+              className='tm-detail-poster-art'
             />
           </button>
-        ) : poster ? (
-          <div className='tm-detail-poster'>
-            <ProxyImage
-              originalSrc={poster}
-              alt={data?.title || title}
-              loading='eager'
-            />
-          </div>
         ) : (
-          <div className='tm-detail-poster tm-detail-poster-empty'>
-            <Film size={40} />
-          </div>
+          <span className='tm-detail-poster'>
+            <FilmPoster
+              src={poster}
+              title={data?.title || title}
+              alt={data?.title || title}
+              fit='contain'
+              eager
+              className='tm-detail-poster-art'
+            />
+          </span>
         )}
         <div className='tm-detail-summary-copy'>
           <p className='tm-detail-meta'>

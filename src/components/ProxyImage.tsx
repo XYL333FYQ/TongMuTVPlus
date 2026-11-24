@@ -45,7 +45,13 @@ const ProxyImage: React.FC<ProxyImageProps> = ({
 
     let cancelled = false;
     void (async () => {
-      const reachable = await ensureBangumiImagePrimaryProbed();
+      // 探测本身出错时当作主源可用：保持现在的地址，不让一次探测失败变成未处理的异常
+      let reachable = true;
+      try {
+        reachable = await ensureBangumiImagePrimaryProbed();
+      } catch {
+        reachable = true;
+      }
       if (cancelled || reachable) return;
       setCurrentSrc(processImageUrl(originalSrc));
     })();

@@ -13,6 +13,7 @@ import PosterGrid from '@/components/catalog/PosterGrid';
 import Popover from '@/components/feedback/Popover';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import { PosterSkeleton } from '@/components/poster/FilmPoster';
 import PageHeader from '@/components/shell/PageHeader';
 import VideoCard from '@/components/VideoCard';
 
@@ -890,10 +891,7 @@ export default function PrivateLibraryPage() {
             // OpenList/Emby 加载骨架屏 - 海报卡片样式
             <PosterGrid className=''>
               {Array.from({ length: pageSize }).map((_, index) => (
-                <div
-                  key={index}
-                  className='tm-skeleton bg-raised rounded-lg aspect-[2/3]'
-                />
+                <PosterSkeleton key={index} />
               ))}
             </PosterGrid>
           )
