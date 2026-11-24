@@ -16,6 +16,7 @@ import {
   getOfflineDownloadBasePath,
   joinOpenListPath,
 } from '@/lib/openlist-offline-download';
+import { isOwnerRole } from '@/lib/roles';
 
 import {
   AnimeSubscription,
@@ -505,7 +506,7 @@ async function sendAnimeUpdateNotifications(
     const allUsers = await db.getAllUsers();
     for (const username of allUsers) {
       const userInfo = await db.getUserInfoV2(username);
-      if (userInfo?.role === 'owner') {
+      if (isOwnerRole(userInfo?.role)) {
         ownerUsername = username;
         break;
       }

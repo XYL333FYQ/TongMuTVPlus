@@ -43,6 +43,7 @@ import {
   type PublicCatalogItem,
   publicCatalogCategories,
 } from '@/lib/public-catalog';
+import { isPrivilegedRole } from '@/lib/roles';
 import {
   appendSpecialSourceParam,
   isSpecialSourceContext,
@@ -1234,9 +1235,7 @@ export function SearchPageClient({
     const guest =
       !authInfo?.username && !authInfo?.password && !authInfo?.signature;
     setIsGuest(guest);
-    setCanManageSources(
-      authInfo?.role === 'owner' || authInfo?.role === 'admin'
-    );
+    setCanManageSources(isPrivilegedRole(authInfo?.role));
     setUserRole(authInfo?.role || null);
     const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
     setNetdiskSearchEnabled(!guest && !!runtimeConfig.NETDISK_SEARCH_ENABLED);

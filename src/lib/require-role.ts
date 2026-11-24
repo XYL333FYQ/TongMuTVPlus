@@ -10,8 +10,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from './auth';
+import { type RoleLevel, ROLE_RANK as RANK } from './roles';
 
-export type RoleLevel = 'owner' | 'admin' | 'user';
+export type { RoleLevel };
 
 type UserRow = NonNullable<
   Awaited<ReturnType<typeof import('./db')['db']['getUserInfoV2']>>
@@ -23,8 +24,6 @@ export type Caller = {
   /** 用户表里的这一行；站长不查表，是 null */
   info: UserRow | null;
 };
-
-const RANK: Record<RoleLevel, number> = { user: 0, admin: 1, owner: 2 };
 
 /**
  * 一个账号在权限上算什么角色——全站只有这一条规则（接口权限、功能权限都用它）：

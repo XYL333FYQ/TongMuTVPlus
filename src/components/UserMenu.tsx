@@ -36,6 +36,7 @@ import {
   LOCAL_SETTINGS_KEYS,
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
+import { isOwnerRole, isPrivilegedRole } from '@/lib/roles';
 import { lockScroll } from '@/lib/scroll-lock';
 import {
   notificationWorkerScript,
@@ -2795,18 +2796,17 @@ export const UserMenu: React.FC = () => {
 
   // 检查是否显示管理面板按钮
   const showAdminPanel =
-    (authInfo?.role === 'owner' || authInfo?.role === 'admin') &&
-    storageType !== 'localstorage';
+    isPrivilegedRole(authInfo?.role) && storageType !== 'localstorage';
 
   // 检查是否显示离线下载按钮
   const showOfflineDownload =
-    (authInfo?.role === 'owner' || authInfo?.role === 'admin') &&
+    isPrivilegedRole(authInfo?.role) &&
     typeof window !== 'undefined' &&
     (window as any).RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD === true;
 
   // 检查是否显示修改密码按钮
   const showChangePassword =
-    authInfo?.role !== 'owner' && storageType !== 'localstorage';
+    !isOwnerRole(authInfo?.role) && storageType !== 'localstorage';
 
   // 角色中文映射
   const getRoleText = (role?: string) => {

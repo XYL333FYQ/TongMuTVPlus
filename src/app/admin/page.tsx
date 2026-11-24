@@ -80,6 +80,7 @@ import {
   ALL_FEATURE_PERMISSION_KEYS,
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
+import { isAdminRole, isOwnerRole } from '@/lib/roles';
 import { lockScroll } from '@/lib/scroll-lock';
 import { useNotificationTargetFocus } from '@/hooks/useNotificationTargetFocus';
 
@@ -660,8 +661,8 @@ const UserConfig = ({
 
   // 判断是否有旧版用户数据需要迁移
   const hasOldUserData =
-    config?.UserConfig?.Users?.filter((u: any) => u.role !== 'owner').length ??
-    0 > 0;
+    config?.UserConfig?.Users?.filter((u: any) => !isOwnerRole(u.role))
+      .length ?? 0 > 0;
 
   // 使用新版本用户列表（如果可用且没有旧数据），否则使用配置中的用户列表
   const displayUsers: Array<{
@@ -679,8 +680,8 @@ const UserConfig = ({
     const selectableUserCount =
       displayUsers?.filter(
         (user) =>
-          role === 'owner' ||
-          (role === 'admin' &&
+          isOwnerRole(role) ||
+          (isAdminRole(role) &&
             (user.role === 'user' || user.username === currentUsername))
       ).length || 0;
     return selectedUsers.size === selectableUserCount && selectedUsers.size > 0;
@@ -1038,8 +1039,8 @@ const UserConfig = ({
           displayUsers
             ?.filter(
               (user) =>
-                role === 'owner' ||
-                (role === 'admin' &&
+                isOwnerRole(role) ||
+                (isAdminRole(role) &&
                   (user.role === 'user' || user.username === currentUsername))
             )
             .map((u) => u.username) || [];
@@ -1207,7 +1208,7 @@ const UserConfig = ({
 
         {/* 数据迁移提示 */}
         {config.UserConfig.Users &&
-          config.UserConfig.Users.filter((u) => u.role !== 'owner').length >
+          config.UserConfig.Users.filter((u) => !isOwnerRole(u.role)).length >
             0 && (
             <div className='mt-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
               <div className='flex items-start justify-between'>
@@ -1625,7 +1626,7 @@ const UserConfig = ({
         <div className='relative'>
           {/* 迁移遮罩层 */}
           {config.UserConfig.Users &&
-            config.UserConfig.Users.filter((u) => u.role !== 'owner').length >
+            config.UserConfig.Users.filter((u) => !isOwnerRole(u.role)).length >
               0 && (
               <div className='absolute inset-0 z-20 backdrop-blur-sm bg-[var(--tm-surface-raised)] rounded-lg flex items-center justify-center'>
                 <div className='bg-[var(--tm-surface)] p-6 rounded-lg shadow-xl border border-[var(--tm-line)] max-w-md'>
@@ -1660,8 +1661,8 @@ const UserConfig = ({
                       // 检查是否有权限操作任何用户
                       const hasAnyPermission = displayUsers?.some(
                         (user) =>
-                          role === 'owner' ||
-                          (role === 'admin' &&
+                          isOwnerRole(role) ||
+                          (isAdminRole(role) &&
                             (user.role === 'user' ||
                               user.username === currentUsername))
                       );
@@ -1749,8 +1750,8 @@ const UserConfig = ({
                   type UserInfo = (typeof displayUsers)[number];
                   const priority = (u: UserInfo) => {
                     if (u.username === currentUsername) return 0;
-                    if (u.role === 'owner') return 1;
-                    if (u.role === 'admin') return 2;
+                    if (isOwnerRole(u.role)) return 1;
+                    if (isAdminRole(u.role)) return 2;
                     return 3;
                   };
                   return priority(a) - priority(b);
@@ -1777,28 +1778,28 @@ const UserConfig = ({
                     {sortedUsers.map((user) => {
                       // 修改密码权限：站长可修改管理员和普通用户密码，管理员可修改普通用户和自己的密码，但任何人都不能修改站长密码
                       const canChangePassword =
-                        user.role !== 'owner' && // 不能修改站长密码
-                        (role === 'owner' || // 站长可以修改管理员和普通用户密码
-                          (role === 'admin' &&
+                        !isOwnerRole(user.role) && // 不能修改站长密码
+                        (isOwnerRole(role) || // 站长可以修改管理员和普通用户密码
+                          (isAdminRole(role) &&
                             (user.role === 'user' ||
                               user.username === currentUsername))); // 管理员可以修改普通用户和自己的密码
 
                       // 删除用户权限：站长可删除除自己外的所有用户，管理员仅可删除普通用户
                       const canDeleteUser =
                         user.username !== currentUsername &&
-                        (role === 'owner' || // 站长可以删除除自己外的所有用户
-                          (role === 'admin' && user.role === 'user')); // 管理员仅可删除普通用户
+                        (isOwnerRole(role) || // 站长可以删除除自己外的所有用户
+                          (isAdminRole(role) && user.role === 'user')); // 管理员仅可删除普通用户
 
                       // 其他操作权限：不能操作自己，站长可操作所有用户，管理员可操作普通用户
                       const canOperate =
                         user.username !== currentUsername &&
-                        (role === 'owner' ||
-                          (role === 'admin' && user.role === 'user'));
+                        (isOwnerRole(role) ||
+                          (isAdminRole(role) && user.role === 'user'));
 
                       // 查看设备权限：站长可查看所有用户，管理员可查看普通用户和自己
                       const canViewDevices =
-                        role === 'owner' ||
-                        (role === 'admin' &&
+                        isOwnerRole(role) ||
+                        (isAdminRole(role) &&
                           (user.role === 'user' ||
                             user.username === currentUsername));
                       return (
@@ -1808,8 +1809,8 @@ const UserConfig = ({
                         >
                           <td className='w-4' />
                           <td className='w-10 px-1 py-3 text-center'>
-                            {role === 'owner' ||
-                            (role === 'admin' &&
+                            {isOwnerRole(role) ||
+                            (isAdminRole(role) &&
                               (user.role === 'user' ||
                                 user.username === currentUsername)) ? (
                               <label className='tm-admin-row-select'>
@@ -1845,16 +1846,16 @@ const UserConfig = ({
                           <td className='px-6 py-4 whitespace-nowrap'>
                             <span
                               className={`px-2 py-1 text-[13px] rounded-full ${
-                                user.role === 'owner'
+                                isOwnerRole(user.role)
                                   ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                                  : user.role === 'admin'
+                                  : isAdminRole(user.role)
                                   ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                                   : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]'
                               }`}
                             >
-                              {user.role === 'owner'
+                              {isOwnerRole(user.role)
                                 ? '站长'
-                                : user.role === 'admin'
+                                : isAdminRole(user.role)
                                 ? '管理员'
                                 : '普通用户'}
                             </span>
@@ -1878,8 +1879,8 @@ const UserConfig = ({
                                   : '无用户组'}
                               </span>
                               {/* 配置用户组按钮 */}
-                              {(role === 'owner' ||
-                                (role === 'admin' &&
+                              {(isOwnerRole(role) ||
+                                (isAdminRole(role) &&
                                   (user.role === 'user' ||
                                     user.username === currentUsername))) && (
                                 <button
@@ -1899,8 +1900,8 @@ const UserConfig = ({
                                   : '无限制'}
                               </span>
                               {/* 配置采集源权限按钮 */}
-                              {(role === 'owner' ||
-                                (role === 'admin' &&
+                              {(isOwnerRole(role) ||
+                                (isAdminRole(role) &&
                                   (user.role === 'user' ||
                                     user.username === currentUsername))) && (
                                 <button
@@ -1958,7 +1959,7 @@ const UserConfig = ({
                                       设为管理
                                     </button>
                                   )}
-                                  {user.role === 'admin' && (
+                                  {isAdminRole(user.role) && (
                                     <button
                                       onClick={() =>
                                         handleRemoveAdmin(user.username)
@@ -1979,7 +1980,7 @@ const UserConfig = ({
                                       取消管理
                                     </button>
                                   )}
-                                  {user.role !== 'owner' &&
+                                  {!isOwnerRole(user.role) &&
                                     (!user.banned ? (
                                       <button
                                         onClick={() =>
@@ -3889,7 +3890,7 @@ const OpenListConfigComponent = ({
             启用私人影库功能
           </h3>
           <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-            {role === 'owner'
+            {isOwnerRole(role)
               ? '关闭后入口仍保留并提示未开放，也不会执行定时扫描'
               : '私人影库的开放开关只有站长可以更改'}
           </p>
@@ -3899,7 +3900,7 @@ const OpenListConfigComponent = ({
             aria-label='启用私人影库'
             type='checkbox'
             checked={enabled}
-            disabled={role !== 'owner'}
+            disabled={!isOwnerRole(role)}
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
@@ -5698,7 +5699,7 @@ const EmbyConfigComponent = ({
   const [formData, setFormData] = useState({
     key: '',
     name: '',
-    enabled: role === 'owner',
+    enabled: isOwnerRole(role),
     ServerURL: '',
     ApiKey: '',
     Username: '',
@@ -5743,7 +5744,7 @@ const EmbyConfigComponent = ({
     setFormData({
       key: '',
       name: '',
-      enabled: role === 'owner',
+      enabled: isOwnerRole(role),
       ServerURL: '',
       ApiKey: '',
       Username: '',
@@ -6182,14 +6183,14 @@ const EmbyConfigComponent = ({
             </span>
             <button
               onClick={handleBatchEnable}
-              disabled={isLoading('batchEnableEmby') || role !== 'owner'}
+              disabled={isLoading('batchEnableEmby') || !isOwnerRole(role)}
               className={buttonStyles.successSmall}
             >
               批量启用
             </button>
             <button
               onClick={handleBatchDisable}
-              disabled={isLoading('batchDisableEmby') || role !== 'owner'}
+              disabled={isLoading('batchDisableEmby') || !isOwnerRole(role)}
               className={buttonStyles.warningSmall}
             >
               批量禁用
@@ -6198,7 +6199,7 @@ const EmbyConfigComponent = ({
               onClick={handleBatchDelete}
               disabled={
                 isLoading('batchDeleteEmby') ||
-                (role !== 'owner' &&
+                (!isOwnerRole(role) &&
                   sources.some((s) => selectedSources.has(s.key) && s.enabled))
               }
               className={buttonStyles.dangerSmall}
@@ -6276,9 +6277,11 @@ const EmbyConfigComponent = ({
                 <div className='flex gap-2 flex-wrap sm:flex-nowrap'>
                   <button
                     onClick={() => handleToggleEnabled(source)}
-                    disabled={isLoading('toggleEmbySource') || role !== 'owner'}
+                    disabled={
+                      isLoading('toggleEmbySource') || !isOwnerRole(role)
+                    }
                     title={
-                      role !== 'owner'
+                      !isOwnerRole(role)
                         ? '私人影库的开放状态只有站长可以更改'
                         : undefined
                     }
@@ -6307,7 +6310,7 @@ const EmbyConfigComponent = ({
                     onClick={() => handleDelete(source)}
                     disabled={
                       isLoading('deleteEmbySource') ||
-                      (role !== 'owner' && source.enabled)
+                      (!isOwnerRole(role) && source.enabled)
                     }
                     className={buttonStyles.dangerSmall}
                   >
@@ -6519,7 +6522,7 @@ const EmbyConfigComponent = ({
                 onClick={() =>
                   setFormData({ ...formData, enabled: !formData.enabled })
                 }
-                disabled={role !== 'owner'}
+                disabled={!isOwnerRole(role)}
                 aria-label='启用此 Emby 源（只有站长可以更改）'
                 className='tm-switch-btn'
                 role='switch'
@@ -9121,7 +9124,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
     name: '',
     description: '',
     code: '',
-    enabled: role === 'owner' || scripts.some((item) => item.enabled),
+    enabled: isOwnerRole(role) || scripts.some((item) => item.enabled),
   });
   const [testHook, setTestHook] = useState<
     'getSources' | 'search' | 'recommend' | 'detail' | 'resolvePlayUrl'
@@ -9137,7 +9140,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
         name: '',
         description: '',
         code: template,
-        enabled: role === 'owner' || scripts.some((item) => item.enabled),
+        enabled: isOwnerRole(role) || scripts.some((item) => item.enabled),
       });
       setSelectedScriptId(null);
       return;
@@ -9185,7 +9188,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
           name: '',
           description: '',
           code: data.template || '',
-          enabled: role === 'owner' || scripts.some((item) => item.enabled),
+          enabled: isOwnerRole(role) || scripts.some((item) => item.enabled),
         });
         setSelectedScriptId(null);
       }
@@ -9210,7 +9213,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
       name: '',
       description: '',
       code: template,
-      enabled: role === 'owner' || scripts.some((item) => item.enabled),
+      enabled: isOwnerRole(role) || scripts.some((item) => item.enabled),
     });
     setTestOutput('');
   };
@@ -9427,7 +9430,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
 
   return (
     <div className='space-y-6'>
-      {role !== 'owner' && (
+      {!isOwnerRole(role) && (
         <p className='text-[13px] text-[color:var(--tm-muted)]'>
           只有站长可以开放或关闭高级推荐；管理员可以维护已有脚本。
         </p>
@@ -9530,7 +9533,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
                       }}
                       disabled={
                         isLoading(`toggleSourceScript_${script.id}`) ||
-                        (role !== 'owner' &&
+                        (!isOwnerRole(role) &&
                           (script.enabled
                             ? scripts.filter((item) => item.enabled).length ===
                               1
@@ -9638,7 +9641,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
             <button
               onClick={handleDelete}
               disabled={
-                role !== 'owner' &&
+                !isOwnerRole(role) &&
                 !!editor.id &&
                 scripts.filter((item) => item.enabled).length === 1 &&
                 scripts.some((item) => item.id === editor.id && item.enabled)
@@ -14129,13 +14132,13 @@ const SuwayomiConfigComponent = ({
               启用漫画展馆
             </h3>
             <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-              {role === 'owner'
+              {isOwnerRole(role)
                 ? '关闭后入口仍保留，点击会提示站长暂未开放。'
                 : '漫画展馆的开放开关只有站长可以更改。'}
             </p>
           </div>
           <button
-            disabled={role !== 'owner'}
+            disabled={!isOwnerRole(role)}
             onClick={() => {
               if (!enabled) {
                 setShowMangaDisclaimer(true);
@@ -14645,13 +14648,13 @@ const OPDSConfigComponent = ({
             启用电子书馆
           </h3>
           <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
-            {role === 'owner'
+            {isOwnerRole(role)
               ? '关闭后入口仍保留，点击会提示站长暂未开放。'
               : '电子书馆的开放开关只有站长可以更改。'}
           </p>
         </div>
         <button
-          disabled={role !== 'owner'}
+          disabled={!isOwnerRole(role)}
           onClick={() => {
             if (!enabled) {
               setShowBooksDisclaimer(true);
@@ -15201,14 +15204,14 @@ const XiaoyaConfigComponent = ({
               启用小雅功能
             </h3>
             <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-              {role === 'owner'
+              {isOwnerRole(role)
                 ? '关闭后停止开放小雅内容；私人影库入口仍保留'
                 : '小雅的开放开关只有站长可以更改'}
             </p>
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
-            disabled={role !== 'owner'}
+            disabled={!isOwnerRole(role)}
             className='tm-switch-btn'
             role='switch'
             aria-checked={!!enabled}
@@ -16283,7 +16286,7 @@ const MovieRequestsComponent = ({
                 启用求片功能
               </label>
               <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-                {role === 'owner'
+                {isOwnerRole(role)
                   ? '关闭后用户将无法访问求片页面'
                   : '求片功能的开放开关只有站长可以更改'}
               </p>
@@ -16293,7 +16296,7 @@ const MovieRequestsComponent = ({
                 aria-label='启用求片功能'
                 type='checkbox'
                 checked={enableMovieRequest}
-                disabled={role !== 'owner'}
+                disabled={!isOwnerRole(role)}
                 onChange={(e) => setEnableMovieRequest(e.target.checked)}
                 className='sr-only peer'
               />
@@ -17472,7 +17475,7 @@ const MusicConfigComponent = ({
             启用音乐功能
           </h3>
           <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-            {role === 'owner'
+            {isOwnerRole(role)
               ? '关闭后入口仍保留并提示未开放，音乐页与接口将不可用'
               : '音乐功能的开放开关只有站长可以更改'}
           </p>
@@ -17482,7 +17485,7 @@ const MusicConfigComponent = ({
             aria-label='启用音乐功能'
             type='checkbox'
             checked={enabled}
-            disabled={role !== 'owner'}
+            disabled={!isOwnerRole(role)}
             onChange={(e) => {
               if (e.target.checked) {
                 setShowMusicDisclaimer(true);
@@ -18004,13 +18007,13 @@ const LiveSourceConfig = ({
             onClick={() => handleToggleEnable(liveSource.key)}
             disabled={
               isLoading(`toggleLiveSource_${liveSource.key}`) ||
-              (role !== 'owner' &&
+              (!isOwnerRole(role) &&
                 (!liveSources.some((s) => !s.disabled) ||
                   (!liveSource.disabled &&
                     liveSources.filter((s) => !s.disabled).length === 1)))
             }
             title={
-              role !== 'owner' &&
+              !isOwnerRole(role) &&
               (!liveSources.some((s) => !s.disabled) ||
                 (!liveSource.disabled &&
                   liveSources.filter((s) => !s.disabled).length === 1))
@@ -18023,7 +18026,7 @@ const LiveSourceConfig = ({
                 : buttonStyles.roundedSuccess
             } transition-colors ${
               isLoading(`toggleLiveSource_${liveSource.key}`) ||
-              (role !== 'owner' &&
+              (!isOwnerRole(role) &&
                 (!liveSources.some((s) => !s.disabled) ||
                   (!liveSource.disabled &&
                     liveSources.filter((s) => !s.disabled).length === 1)))
@@ -18128,10 +18131,10 @@ const LiveSourceConfig = ({
             <button
               onClick={() => setShowAddForm(!showAddForm)}
               disabled={
-                role !== 'owner' && !liveSources.some((s) => !s.disabled)
+                !isOwnerRole(role) && !liveSources.some((s) => !s.disabled)
               }
               title={
-                role !== 'owner' && !liveSources.some((s) => !s.disabled)
+                !isOwnerRole(role) && !liveSources.some((s) => !s.disabled)
                   ? '电视直播未开放，只有站长可以添加直播源'
                   : undefined
               }
@@ -18572,16 +18575,16 @@ const WebLiveConfig = ({
               网络直播功能总开关
             </h4>
             <p className='text-[13px] text-[color:var(--tm-muted)]'>
-              {role === 'owner'
+              {isOwnerRole(role)
                 ? '关闭后入口仍保留并提示未开放，网络直播页面将不可用'
                 : '网络直播的开放开关只有站长可以更改'}
             </p>
           </div>
           <button
             onClick={handleToggleWebLiveEnabled}
-            disabled={isLoading('toggleWebLiveEnabled') || role !== 'owner'}
+            disabled={isLoading('toggleWebLiveEnabled') || !isOwnerRole(role)}
             title={
-              role !== 'owner' ? '只有站长可以开放或关闭网络直播' : undefined
+              !isOwnerRole(role) ? '只有站长可以开放或关闭网络直播' : undefined
             }
             className='tm-switch-btn'
             role='switch'
@@ -19343,7 +19346,7 @@ function AdminPageClient() {
       icon: <Inbox size={20} className={navIconClass} />,
       render: () => (
         <FeedbackInboxPanel
-          isOwner={role === 'owner'}
+          isOwner={isOwnerRole(role)}
           targetId={feedbackTargetId}
           targetKey={notificationTargetKey}
         />
@@ -19591,7 +19594,7 @@ function AdminPageClient() {
   };
 
   const visibleNavItems = navItems.filter(
-    (it) => !it.ownerOnly || role === 'owner'
+    (it) => !it.ownerOnly || isOwnerRole(role)
   );
   const activeItem = findNavItem(activeKey);
 
@@ -19606,7 +19609,7 @@ function AdminPageClient() {
               管理站点配置、视频来源、用户权限与系统维护
             </p>
           </div>
-          {config && role === 'owner' && (
+          {config && isOwnerRole(role) && (
             <div className='tm-page-actions'>
               <button
                 onClick={handleResetConfig}
@@ -19747,7 +19750,7 @@ function AdminPageClient() {
         {/* 移动端 / 窄屏：保留原有手风琴 */}
         <div className='lg:hidden'>
           {/* 配置文件标签 - 仅站长可见 */}
-          {role === 'owner' && (
+          {isOwnerRole(role) && (
             <CollapsibleTab
               title='配置文件'
               icon={
@@ -19775,7 +19778,7 @@ function AdminPageClient() {
             <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
           </CollapsibleTab>
 
-          {role === 'owner' && (
+          {isOwnerRole(role) && (
             <CollapsibleTab
               title='版本与发布记录'
               icon={
@@ -19865,7 +19868,7 @@ function AdminPageClient() {
               onToggle={() => toggleTab('feedbackInbox')}
             >
               <FeedbackInboxPanel
-                isOwner={role === 'owner'}
+                isOwner={isOwnerRole(role)}
                 targetId={feedbackTargetId}
                 targetKey={notificationTargetKey}
               />
@@ -20178,7 +20181,7 @@ function AdminPageClient() {
             </CollapsibleTab>
 
             {/* 数据迁移标签 - 仅站长可见 */}
-            {role === 'owner' && (
+            {isOwnerRole(role) && (
               <CollapsibleTab
                 title='数据迁移'
                 icon={

@@ -7,6 +7,7 @@ import '@/styles/panels.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useReducedMotionSetting } from '@/lib/motion';
+import { isOwnerRole } from '@/lib/roles';
 import { readSetting, writeSetting } from '@/lib/settings';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
@@ -38,7 +39,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
 
       // 检查是否是站长
       const authInfo = getAuthInfoFromBrowserCookie();
-      if (!authInfo || authInfo.role !== 'owner') return false;
+      if (!authInfo || !isOwnerRole(authInfo.role)) return false;
 
       // 检查是否是 HTTP 环境（非 localhost 和 127.0.0.1）
       const { protocol, hostname } = window.location;

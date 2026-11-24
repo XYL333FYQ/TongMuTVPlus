@@ -1,5 +1,7 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-var-requires */
 
+import { isOwnerRole } from '@/lib/roles';
+
 import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
 import { MusicPlayRecord } from './db.client';
@@ -815,8 +817,8 @@ export class DbManager {
         }
 
         // 将站长角色转换为普通角色
-        const migratedRole = user.role === 'owner' ? 'user' : user.role;
-        if (user.role === 'owner') {
+        const migratedRole = isOwnerRole(user.role) ? 'user' : user.role;
+        if (isOwnerRole(user.role)) {
           console.log(`用户 ${user.username} 的角色从 owner 转换为 user`);
         }
 

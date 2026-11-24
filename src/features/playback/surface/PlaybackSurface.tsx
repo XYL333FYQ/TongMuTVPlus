@@ -27,6 +27,7 @@ import {
   getEpisodeTitleCorrection,
 } from '@/lib/episode-title-correction';
 import { isNetdiskSource, normalizeNetdiskSource } from '@/lib/netdisk/source';
+import { isPrivilegedRole } from '@/lib/roles';
 import { readJson, readSetting, writeSetting } from '@/lib/settings';
 import { CUSTOM_SUBTITLE_ACCEPT } from '@/lib/subtitle-converter';
 import { formatDuration } from '@/lib/time';
@@ -155,8 +156,7 @@ function PlayPageClient() {
     typeof window !== 'undefined'
       ? window.RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD || false
       : false;
-  const hasOfflinePermission =
-    authInfo?.role === 'owner' || authInfo?.role === 'admin';
+  const hasOfflinePermission = isPrivilegedRole(authInfo?.role);
 
   // -----------------------------------------------------------------------------
   // 状态变量（State）

@@ -165,20 +165,20 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 
 `src/components/feedback/`、`src/components/ui/` 里的每个文件都必须是某一行的主人；新加公共零件先在这里登记。
 
-| 零件       | 主人                                                                | 用法                                                                                                               | 检查         |
-| ---------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| 弹窗层     | `src/components/feedback/` `src/components/ui/Select.tsx`           | `ModalLayer`、`ConfirmDialog`、`MobileActionSheet`、`askConfirm()`、`Popover` / `useAnchoredLayer`（贴按钮的浮层） | `portal`     |
-| 浏览器存储 | `src/lib/`                                                          | 只在 lib 里读写，组件和功能调用 lib 的函数；键名不改                                                               | `storage`    |
-| 设备档位   | `src/lib/device-tier.ts`                                            | `html[data-tm-device]` 和 device-tier 的导出                                                                       | `screen`     |
-| 播放器     | `src/features/player/core/`                                         | `WatchPlayer`                                                                                                      | `player`     |
-| 时间格式   | `src/lib/time.ts`                                                   | 第二阶段在这里补 `formatDuration`（必须在 lib，S1 不许 components 引用 features）                                  | `timeFormat` |
-| 服务器权限 | `src/lib/require-role.ts`                                           | `requireRole()`                                                                                                    | `roleCheck`  |
-| 提示       | `src/components/feedback/`                                          | `notify()`、`notifyError()`                                                                                        | `toast`      |
-| 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`（整页加载）、`BusyDots`（按钮和短状态的处理中，不转圈）                                             | `spinner`    |
-| 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                                                        | —            |
-| 图标       | —                                                                   | 只用 lucide-react，不用 emoji                                                                                      | `emoji`      |
-| 滚动锁     | `src/lib/scroll-lock.ts`                                            | `lockScroll()`（弹窗层自带）                                                                                       | `scrollLock` |
-| 点外面关闭 | `src/components/feedback/`                                          | `ModalLayer` 点遮罩关闭（五种款式都带）；贴按钮的浮层由 `useAnchoredLayer` 在外面按下时关                          | —            |
+| 零件       | 主人                                                                | 用法                                                                                                                  | 检查         |
+| ---------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 弹窗层     | `src/components/feedback/` `src/components/ui/Select.tsx`           | `ModalLayer`、`ConfirmDialog`、`MobileActionSheet`、`askConfirm()`、`Popover` / `useAnchoredLayer`（贴按钮的浮层）    | `portal`     |
+| 浏览器存储 | `src/lib/`                                                          | 只在 lib 里读写，组件和功能调用 lib 的函数；键名不改                                                                  | `storage`    |
+| 设备档位   | `src/lib/device-tier.ts`                                            | `html[data-tm-device]` 和 device-tier 的导出                                                                          | `screen`     |
+| 播放器     | `src/features/player/core/`                                         | `WatchPlayer`                                                                                                         | `player`     |
+| 时间格式   | `src/lib/time.ts`                                                   | 第二阶段在这里补 `formatDuration`（必须在 lib，S1 不许 components 引用 features）                                     | `timeFormat` |
+| 服务器权限 | `src/lib/require-role.ts` `src/lib/roles.ts`                        | 接口用 `requireRole()`；页面按角色显示用 `isOwnerRole()`、`isAdminRole()`、`isPrivilegedRole()`（站点和房间角色都用） | `roleCheck`  |
+| 提示       | `src/components/feedback/`                                          | `notify()`、`notifyError()`                                                                                           | `toast`      |
+| 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`（整页加载）、`BusyDots`（按钮和短状态的处理中，不转圈）                                                | `spinner`    |
+| 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                                                           | —            |
+| 图标       | —                                                                   | 只用 lucide-react，不用 emoji                                                                                         | `emoji`      |
+| 滚动锁     | `src/lib/scroll-lock.ts`                                            | `lockScroll()`（弹窗层自带）                                                                                          | `scrollLock` |
+| 点外面关闭 | `src/components/feedback/`                                          | `ModalLayer` 点遮罩关闭（五种款式都带）；贴按钮的浮层由 `useAnchoredLayer` 在外面按下时关                             | —            |
 
 ## 术语表
 

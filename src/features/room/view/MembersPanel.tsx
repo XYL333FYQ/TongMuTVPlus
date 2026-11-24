@@ -9,6 +9,8 @@ import { useState } from 'react';
 
 import './MembersPanel.css';
 
+import { isAdminRole, isOwnerRole } from '@/lib/roles';
+
 import { Dialog, MEMBER_PERMISSION_LABELS } from './RoomForm';
 
 import type {
@@ -117,8 +119,8 @@ export default function MembersPanel(props: {
             const manageable =
               props.canManage &&
               !me &&
-              member.role !== 'owner' &&
-              (props.isOwner || member.role !== 'admin');
+              !isOwnerRole(member.role) &&
+              (props.isOwner || !isAdminRole(member.role));
             return (
               <li
                 key={member.accountId}
@@ -138,8 +140,8 @@ export default function MembersPanel(props: {
                     {me && <span className='tm-room-members-me'>我</span>}
                   </strong>
                   <small>
-                    {member.role === 'owner' && <Crown size={12} />}
-                    {member.role === 'admin' && <ShieldCheck size={12} />}
+                    {isOwnerRole(member.role) && <Crown size={12} />}
+                    {isAdminRole(member.role) && <ShieldCheck size={12} />}
                     {ROLE[member.role]}
                     {member.customPermissions && member.role === 'member'
                       ? ' · 单独设置了权限'
@@ -260,12 +262,12 @@ function MemberDialog(props: {
                 className='tm-room-btn'
                 onClick={() =>
                   void props.run('room:authorize-host', {
-                    canHost: member.role !== 'admin',
+                    canHost: !isAdminRole(member.role),
                   })
                 }
               >
                 <ShieldCheck size={16} />
-                {member.role === 'admin' ? '取消管理员' : '设为管理员'}
+                {isAdminRole(member.role) ? '取消管理员' : '设为管理员'}
               </button>
               <button
                 type='button'

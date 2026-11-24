@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { isPrivilegedRole } from '@/lib/roles';
 import { useRememberedTabHref } from '@/hooks/useRememberedTabHref';
 
 import { useShellReducedMotion } from '@/components/shell/ShellMotionProvider';
@@ -180,7 +181,7 @@ export function MoreMenu({
     setRuntime(window.RUNTIME_CONFIG || {});
     const auth = getAuthInfoFromBrowserCookie();
     setLoggedIn(!!auth?.username);
-    setIsStationAdmin(auth?.role === 'owner' || auth?.role === 'admin');
+    setIsStationAdmin(isPrivilegedRole(auth?.role));
   }, []);
 
   useEffect(() => {

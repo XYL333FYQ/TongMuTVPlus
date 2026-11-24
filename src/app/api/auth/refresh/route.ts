@@ -6,6 +6,7 @@ import { setAuthCookie } from '@/lib/auth-cookie';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
 import { refreshAccessToken } from '@/lib/middleware-auth';
+import { isOwnerRole } from '@/lib/roles';
 
 export const runtime = 'nodejs';
 
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
   const now = Date.now();
 
   if (authInfo.username === process.env.USERNAME) {
-    if (authInfo.role !== 'owner') {
+    if (!isOwnerRole(authInfo.role)) {
       return NextResponse.json({ error: 'Role changed' }, { status: 401 });
     }
   } else {

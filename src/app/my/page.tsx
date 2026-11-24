@@ -15,6 +15,7 @@ import { type ReactNode, Suspense, useEffect, useState } from 'react';
 import './my.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { isPrivilegedRole } from '@/lib/roles';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
 import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
@@ -68,7 +69,7 @@ function MyPageClient() {
     setUsername(auth?.username || '');
     setRole(auth?.role || '');
     setDownloadsEnabled(
-      (auth?.role === 'owner' || auth?.role === 'admin') &&
+      isPrivilegedRole(auth?.role) &&
         window.RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD === true
     );
   }, []);

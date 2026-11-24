@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { isPrivilegedRole } from '@/lib/roles';
 import { Notification } from '@/lib/types';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
@@ -124,7 +125,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     // 根据通知类型跳转
     if (notification.type === 'system' && notification.metadata?.feedbackId) {
       const authInfo = getAuthInfoFromBrowserCookie();
-      const isAdmin = authInfo?.role === 'owner' || authInfo?.role === 'admin';
+      const isAdmin = isPrivilegedRole(authInfo?.role);
       router.push(
         isAdmin
           ? `/admin?section=feedbackInbox&feedbackId=${encodeURIComponent(
@@ -157,7 +158,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     } else if (notification.type === 'movie_request') {
       // 获取用户角色
       const authInfo = getAuthInfoFromBrowserCookie();
-      const isAdmin = authInfo?.role === 'owner' || authInfo?.role === 'admin';
+      const isAdmin = isPrivilegedRole(authInfo?.role);
 
       // 管理员跳转到管理面板，普通用户跳转到我的求片
       const requestId = notification.metadata?.requestId;

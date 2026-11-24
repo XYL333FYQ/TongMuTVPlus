@@ -10,6 +10,7 @@ import { SimpleCrypto } from '@/lib/crypto';
 import { clearProgress, updateProgress } from '@/lib/data-migration-progress';
 import { db } from '@/lib/db';
 import { isCaller, requireRole } from '@/lib/require-role';
+import { isOwnerRole } from '@/lib/roles';
 
 export const runtime = 'nodejs';
 
@@ -214,7 +215,7 @@ export async function POST(req: NextRequest) {
             if (username === process.env.USERNAME) {
               role = 'owner';
             } else if (userV2) {
-              role = userV2.role === 'owner' ? 'user' : userV2.role;
+              role = isOwnerRole(userV2.role) ? 'user' : userV2.role;
             }
 
             const createdAt = userV2?.created_at || Date.now();

@@ -41,6 +41,7 @@ import {
   queuePlaybackHref,
   roomSelectionHref,
 } from '@/lib/playback-links';
+import { isPrivilegedRole } from '@/lib/roles';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import { formatDuration } from '@/lib/time';
 import type { TMDBVideoItem } from '@/lib/tmdb.client';
@@ -170,7 +171,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const [animeSubscribeToast, setAnimeSubscribeToast] = useState('');
     const isAdminUser = useMemo(() => {
       const auth = getAuthInfoFromBrowserCookie();
-      return auth?.role === 'admin' || auth?.role === 'owner';
+      return isPrivilegedRole(auth?.role);
     }, []);
     const resolvedIsAnime = useMemo(
       () => Boolean(isBangumi || isAnime || isAnimeCategoryText(typeName)),

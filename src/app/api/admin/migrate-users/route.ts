@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { isCaller, requireRole } from '@/lib/require-role';
+import { isOwnerRole } from '@/lib/roles';
 
 export const runtime = 'nodejs';
 
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // 检查是否有需要迁移的用户（排除站长）
     const usersToMigrate = adminConfig.UserConfig.Users.filter(
-      (u) => u.role !== 'owner'
+      (u) => !isOwnerRole(u.role)
     );
 
     if (!usersToMigrate || usersToMigrate.length === 0) {

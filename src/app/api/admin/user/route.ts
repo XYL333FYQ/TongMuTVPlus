@@ -8,6 +8,7 @@ import { db, getStorage } from '@/lib/db';
 import { sanitizeFeaturePermissions } from '@/lib/feature-permissions';
 import { revokeAllRefreshTokens } from '@/lib/refresh-token';
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
+import { isAdminRole, isOwnerRole } from '@/lib/roles';
 
 export const runtime = 'nodejs';
 
@@ -132,7 +133,7 @@ export async function POST(request: NextRequest) {
 
       if (
         targetEntry &&
-        targetEntry.role === 'owner' &&
+        isOwnerRole(targetEntry.role) &&
         !['changePassword', 'updateUserApis', 'updateUserGroups'].includes(
           action
         )
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 权限校验逻辑
-      isTargetAdmin = targetEntry?.role === 'admin';
+      isTargetAdmin = isAdminRole(targetEntry?.role);
     }
 
     switch (action) {
@@ -226,7 +227,7 @@ export async function POST(request: NextRequest) {
             { status: 404 }
           );
         }
-        if (targetEntry.role === 'admin') {
+        if (isAdminRole(targetEntry.role)) {
           return NextResponse.json(
             { error: '该用户已是管理员' },
             { status: 400 }
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
             { status: 404 }
           );
         }
-        if (targetEntry.role !== 'admin') {
+        if (!isAdminRole(targetEntry.role)) {
           return NextResponse.json(
             { error: '目标用户不是管理员' },
             { status: 400 }
@@ -280,7 +281,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 权限检查：不允许修改站长密码
-        if (targetEntry.role === 'owner') {
+        if (isOwnerRole(targetEntry.role)) {
           return NextResponse.json(
             { error: '无法修改站长密码' },
             { status: 401 }
@@ -497,7 +498,7 @@ export async function POST(request: NextRequest) {
             const userV2 = await db.getUserInfoV2(targetUsername);
             if (
               userV2 &&
-              userV2.role === 'admin' &&
+              isAdminRole(userV2.role) &&
               targetUsername !== username
             ) {
               return NextResponse.json(
