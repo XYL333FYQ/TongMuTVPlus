@@ -19,6 +19,7 @@ import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import { notify } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
+import ProxyImage from '@/components/ProxyImage';
 import Select from '@/components/ui/Select';
 
 interface AcgSearchItem {
@@ -128,9 +129,9 @@ function AcgPreviewImages({ images }: { images?: string[] }) {
   return (
     <div className='mb-3 flex gap-2 overflow-x-auto'>
       {list.map((img) => (
-        <img
+        <ProxyImage
+          originalSrc={img}
           key={img}
-          src={img}
           alt=''
           className='h-20 w-auto rounded object-cover'
           loading='lazy'
@@ -139,6 +140,7 @@ function AcgPreviewImages({ images }: { images?: string[] }) {
             const el = e.currentTarget;
             if (el.naturalWidth < 80 || el.naturalHeight < 60) markFailed(img);
           }}
+          proxy={false}
         />
       ))}
     </div>

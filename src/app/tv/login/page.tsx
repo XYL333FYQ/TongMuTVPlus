@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api-client';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import PageContainer from '@/components/PageContainer';
+import ProxyImage from '@/components/ProxyImage';
 import TVLayout from '@/components/tv/TVLayout';
 
 type QrState = { token: string; qrUrl: string; expiresAt: number; ttl: number };
@@ -98,10 +99,12 @@ export default function TVLoginPage() {
         </div>
         <div className='min-w-0 rounded-md border border-line bg-surface p-4 sm:p-7 text-center text-fg shadow-2xl shadow-ink/60'>
           {qrImg ? (
-            <img
-              src={qrImg}
+            <ProxyImage
+              originalSrc={qrImg}
               alt='扫码登录二维码'
               className='mx-auto aspect-square h-auto w-full max-w-[360px]'
+              proxy={false}
+              loading='eager'
             />
           ) : (
             <div className='flex h-[360px] items-center justify-center'>

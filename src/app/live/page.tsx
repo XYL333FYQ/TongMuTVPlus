@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console, @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
 'use client';
 
@@ -49,6 +49,7 @@ import LoadingStyle, {
 } from '@/components/feedback/LoadingStyle';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import {
@@ -2884,10 +2885,12 @@ function LivePageClient() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                         title='PotPlayer'
                       >
-                        <img
-                          src='/players/potplayer.png'
+                        <ProxyImage
+                          originalSrc='/players/potplayer.png'
                           alt='PotPlayer'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                           PotPlayer
@@ -2904,10 +2907,12 @@ function LivePageClient() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                         title='VLC'
                       >
-                        <img
-                          src='/players/vlc.png'
+                        <ProxyImage
+                          originalSrc='/players/vlc.png'
                           alt='VLC'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                           VLC
@@ -2924,10 +2929,12 @@ function LivePageClient() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                         title='MPV'
                       >
-                        <img
-                          src='/players/mpv.png'
+                        <ProxyImage
+                          originalSrc='/players/mpv.png'
                           alt='MPV'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                           MPV
@@ -2949,10 +2956,12 @@ function LivePageClient() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                         title='MX Player'
                       >
-                        <img
-                          src='/players/mxplayer.png'
+                        <ProxyImage
+                          originalSrc='/players/mxplayer.png'
                           alt='MX Player'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                           MX Player
@@ -2969,10 +2978,12 @@ function LivePageClient() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                         title='nPlayer'
                       >
-                        <img
-                          src='/players/nplayer.png'
+                        <ProxyImage
+                          originalSrc='/players/nplayer.png'
                           alt='nPlayer'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                           nPlayer
@@ -2994,10 +3005,12 @@ function LivePageClient() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                         title='IINA'
                       >
-                        <img
-                          src='/players/iina.png'
+                        <ProxyImage
+                          originalSrc='/players/iina.png'
                           alt='IINA'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                           IINA
@@ -3211,14 +3224,15 @@ function LivePageClient() {
                                 <div className='flex items-center gap-3'>
                                   <div className='w-10 h-10 bg-surface rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                                     {channel.logo ? (
-                                      <img
-                                        src={getLogoUrl(
+                                      <ProxyImage
+                                        originalSrc={getLogoUrl(
                                           channel.logo,
                                           currentSource?.key || ''
                                         )}
                                         alt={channel.name}
                                         className='w-full h-full rounded object-contain'
                                         loading='lazy'
+                                        proxy={false}
                                       />
                                     ) : (
                                       <Tv className='w-5 h-5 text-muted' />
@@ -3302,14 +3316,15 @@ function LivePageClient() {
                                 <div className='flex items-center gap-3'>
                                   <div className='w-10 h-10 bg-surface rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                                     {item.logo ? (
-                                      <img
-                                        src={getLogoUrl(
+                                      <ProxyImage
+                                        originalSrc={getLogoUrl(
                                           item.logo,
                                           currentSource?.key || ''
                                         )}
                                         alt={item.name}
                                         className='w-full h-full rounded object-contain'
                                         loading='lazy'
+                                        proxy={false}
                                       />
                                     ) : (
                                       <Tv className='w-5 h-5 text-muted' />
@@ -3547,14 +3562,15 @@ function LivePageClient() {
                 <div className='flex items-center gap-4'>
                   <div className='w-20 h-20 bg-surface rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                     {currentChannel.logo ? (
-                      <img
-                        src={getLogoUrl(
+                      <ProxyImage
+                        originalSrc={getLogoUrl(
                           currentChannel.logo,
                           currentSource?.key || ''
                         )}
                         alt={currentChannel.name}
                         className='w-full h-full rounded object-contain'
                         loading='lazy'
+                        proxy={false}
                       />
                     ) : (
                       <Tv className='w-10 h-10 text-muted' />

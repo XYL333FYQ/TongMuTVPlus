@@ -32,6 +32,7 @@ import {
   saveTVPlayerUpDownAction,
 } from '@/lib/tv-preferences';
 
+import ProxyImage from '@/components/ProxyImage';
 import TVLayout from '@/components/tv/TVLayout';
 
 const LOCAL_REMOTE_URL_KEY = 'moontv_local_remote_url';
@@ -311,13 +312,15 @@ export default function TVMePage() {
                   aria-label='局域网遥控地址二维码，手机扫码打开遥控器'
                   className='tv-focusable tv-focusable-light shrink-0 rounded-md border border-line bg-surface p-4 shadow-lg outline-none'
                 >
-                  <img
-                    src={`/api/auth/qr/image?data=${encodeURIComponent(
+                  <ProxyImage
+                    originalSrc={`/api/auth/qr/image?data=${encodeURIComponent(
                       localRemoteUrl
                     )}`}
                     alt='局域网遥控地址二维码'
                     className='pointer-events-none h-64 w-64 rounded-2xl'
                     draggable={false}
+                    proxy={false}
+                    loading='eager'
                   />
                   <div className='mt-3 text-center text-base font-medium text-fg'>
                     手机扫码打开遥控器

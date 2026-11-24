@@ -13,6 +13,7 @@ import {
 } from '@/lib/db.client';
 import { readSetting } from '@/lib/settings';
 
+import ProxyImage from '@/components/ProxyImage';
 import TVLayout from '@/components/tv/TVLayout';
 
 type LiveSource = { key: string; name: string };
@@ -192,10 +193,12 @@ export default function TVLivePage() {
           >
             <div className='flex min-w-0 items-center gap-3'>
               {lastChannel.logo ? (
-                <img
-                  src={getLogoUrl(lastChannel.logo, lastChannel.source)}
+                <ProxyImage
+                  originalSrc={getLogoUrl(lastChannel.logo, lastChannel.source)}
                   alt=''
                   className='h-10 w-10 shrink-0 rounded-2xl object-contain'
+                  proxy={false}
+                  loading='eager'
                 />
               ) : (
                 <Radio className='h-10 w-10 shrink-0 text-fg' />
@@ -278,10 +281,12 @@ export default function TVLivePage() {
                 className='tv-focusable flex min-w-[220px] cursor-pointer items-center gap-3 rounded-3xl bg-raised p-4 text-left outline-none min-h-[44px] tm-press'
               >
                 {item.cover ? (
-                  <img
-                    src={item.cover}
+                  <ProxyImage
+                    originalSrc={item.cover}
                     alt=''
                     className='h-12 w-12 rounded-xl object-contain'
+                    proxy={false}
+                    loading='eager'
                   />
                 ) : (
                   <Radio className='h-10 w-10 text-fg' />
@@ -363,10 +368,12 @@ export default function TVLivePage() {
                   className='tv-focusable flex min-h-28 cursor-pointer items-center gap-3 rounded-3xl border border-line bg-raised p-3 text-left outline-none transition hover:bg-line min-h-[44px] tm-press'
                 >
                   {channel.logo ? (
-                    <img
-                      src={getLogoUrl(channel.logo, source)}
+                    <ProxyImage
+                      originalSrc={getLogoUrl(channel.logo, source)}
                       alt=''
                       className='h-8 w-8 shrink-0 rounded-xl object-contain'
+                      proxy={false}
+                      loading='eager'
                     />
                   ) : (
                     <Radio className='h-8 w-8 shrink-0 text-fg' />

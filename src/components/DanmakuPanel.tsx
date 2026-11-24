@@ -15,6 +15,7 @@ import { logger } from '@/lib/logger';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
+import ProxyImage from '@/components/ProxyImage';
 
 interface DanmakuPanelProps {
   videoTitle: string;
@@ -647,13 +648,15 @@ export default function DanmakuPanel({
                   {/* 封面 */}
                   {anime.imageUrl && (
                     <div className='h-16 w-12 flex-shrink-0 overflow-hidden rounded'>
-                      <img
-                        src={anime.imageUrl}
+                      <ProxyImage
+                        originalSrc={anime.imageUrl}
                         alt={anime.animeTitle}
                         className='h-full w-full object-cover'
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                         }}
+                        proxy={false}
+                        loading='eager'
                       />
                     </div>
                   )}

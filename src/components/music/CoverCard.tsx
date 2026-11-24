@@ -5,6 +5,8 @@ import { useState } from 'react';
 
 import { cn } from '@/lib/cn';
 
+import ProxyImage from '@/components/ProxyImage';
+
 import {
   MUSIC_ART_BROKEN,
   MUSIC_ART_BROKEN_LABEL,
@@ -45,13 +47,14 @@ export default function CoverCard({
     <button type='button' onClick={onOpen} className={MUSIC_COVER}>
       <span className={MUSIC_COVER_FRAME}>
         {src ? (
-          <img
-            src={src}
+          <ProxyImage
+            originalSrc={src}
             alt=''
             loading='lazy'
             referrerPolicy='no-referrer'
             onError={() => setFailed(true)}
             className='h-full w-full object-cover'
+            proxy={false}
           />
         ) : (
           <span className={MUSIC_ART_BROKEN}>

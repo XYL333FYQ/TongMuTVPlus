@@ -19,6 +19,7 @@ import { formatClock } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 
 import PageContainer from '@/components/PageContainer';
+import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
@@ -322,10 +323,12 @@ function VinylTurntable({
         <div className='hidden pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-raised blur-md' />
         <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-line bg-surface md:h-[192px] md:w-[192px]'>
           {song.pic ? (
-            <img
-              src={song.pic}
+            <ProxyImage
+              originalSrc={song.pic}
               alt={song.name}
               className='h-full w-full rounded-full object-cover'
+              proxy={false}
+              loading='eager'
             />
           ) : (
             <div className='flex h-full w-full items-center justify-center text-4xl text-muted'>
@@ -740,7 +743,14 @@ export default function MusicPage() {
       <audio ref={attachAudio} className='hidden' />
 
       {song?.pic && (
-        <img src={song.pic} alt='' className='hidden' aria-hidden />
+        <ProxyImage
+          originalSrc={song.pic}
+          alt=''
+          className='hidden'
+          aria-hidden
+          proxy={false}
+          loading='eager'
+        />
       )}
       <div
         className={`absolute inset-0 ${isDark ? 'bg-surface' : 'bg-raised'}`}
@@ -779,10 +789,12 @@ export default function MusicPage() {
                     >
                       <div className='h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-line bg-surface'>
                         {song.pic ? (
-                          <img
-                            src={song.pic}
+                          <ProxyImage
+                            originalSrc={song.pic}
                             alt={song.name}
                             className='h-full w-full object-cover'
+                            proxy={false}
+                            loading='eager'
                           />
                         ) : (
                           <div className='flex h-full w-full items-center justify-center text-base text-muted'>

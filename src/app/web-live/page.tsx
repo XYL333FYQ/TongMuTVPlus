@@ -24,6 +24,7 @@ import LoadingStyle, {
 } from '@/components/feedback/LoadingStyle';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import {
@@ -799,10 +800,12 @@ export default function WebLivePage() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='PotPlayer'
                       >
-                        <img
-                          src='/players/potplayer.png'
+                        <ProxyImage
+                          originalSrc='/players/potplayer.png'
                           alt='PotPlayer'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           PotPlayer
@@ -820,10 +823,12 @@ export default function WebLivePage() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='VLC'
                       >
-                        <img
-                          src='/players/vlc.png'
+                        <ProxyImage
+                          originalSrc='/players/vlc.png'
                           alt='VLC'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           VLC
@@ -841,10 +846,12 @@ export default function WebLivePage() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='MPV'
                       >
-                        <img
-                          src='/players/mpv.png'
+                        <ProxyImage
+                          originalSrc='/players/mpv.png'
                           alt='MPV'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           MPV
@@ -867,10 +874,12 @@ export default function WebLivePage() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='MX Player'
                       >
-                        <img
-                          src='/players/mxplayer.png'
+                        <ProxyImage
+                          originalSrc='/players/mxplayer.png'
                           alt='MX Player'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           MX Player
@@ -891,10 +900,12 @@ export default function WebLivePage() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='nPlayer'
                       >
-                        <img
-                          src='/players/nplayer.png'
+                        <ProxyImage
+                          originalSrc='/players/nplayer.png'
                           alt='nPlayer'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           nPlayer
@@ -917,10 +928,12 @@ export default function WebLivePage() {
                         className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='IINA'
                       >
-                        <img
-                          src='/players/iina.png'
+                        <ProxyImage
+                          originalSrc='/players/iina.png'
                           alt='IINA'
                           className='w-4 h-4 flex-shrink-0'
+                          proxy={false}
+                          loading='eager'
                         />
                         <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           IINA
@@ -1087,22 +1100,28 @@ export default function WebLivePage() {
                           >
                             <div className='w-12 h-12 bg-raised rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                               {platform === 'huya' ? (
-                                <img
-                                  src='https://hd.huya.com/favicon.ico'
+                                <ProxyImage
+                                  originalSrc='https://hd.huya.com/favicon.ico'
                                   alt='虎牙'
                                   className='w-8 h-8'
+                                  proxy={false}
+                                  loading='eager'
                                 />
                               ) : platform === 'bilibili' ? (
-                                <img
-                                  src='https://www.bilibili.com/favicon.ico'
+                                <ProxyImage
+                                  originalSrc='https://www.bilibili.com/favicon.ico'
                                   alt='哔哩哔哩'
                                   className='w-8 h-8'
+                                  proxy={false}
+                                  loading='eager'
                                 />
                               ) : platform === 'douyin' ? (
-                                <img
-                                  src='https://lf1-cdn-tos.bytegoofy.com/goofy/ies/douyin_web/public/favicon.ico'
+                                <ProxyImage
+                                  originalSrc='https://lf1-cdn-tos.bytegoofy.com/goofy/ies/douyin_web/public/favicon.ico'
                                   alt='抖音'
                                   className='w-8 h-8'
+                                  proxy={false}
+                                  loading='eager'
                                 />
                               ) : (
                                 <Radio className='w-6 h-6 text-muted' />

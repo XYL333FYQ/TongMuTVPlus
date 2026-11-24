@@ -18,6 +18,7 @@ import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import AuthVersion from '@/components/auth/AuthVersion';
 import { useExternalAction } from '@/components/ExternalLink';
 import PageContainer from '@/components/PageContainer';
+import ProxyImage from '@/components/ProxyImage';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -39,7 +40,15 @@ function getOIDCProviderIcon(buttonText: string) {
 
   for (const provider of providers) {
     if (provider.keywords.some((keyword) => text.includes(keyword))) {
-      return <img src={provider.icon} alt={provider.alt} className='h-5 w-5' />;
+      return (
+        <ProxyImage
+          originalSrc={provider.icon}
+          alt={provider.alt}
+          className='h-5 w-5'
+          proxy={false}
+          loading='eager'
+        />
+      );
     }
   }
 

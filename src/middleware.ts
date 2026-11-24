@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { isGuestImageProxyRequest } from '@/lib/public-image-proxy';

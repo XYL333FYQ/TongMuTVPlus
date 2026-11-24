@@ -3,6 +3,7 @@
 import { Keyboard, Router, Users, X } from 'lucide-react';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import ProxyImage from '@/components/ProxyImage';
 
 import type { ShowToast } from './types';
 import { EXTERNAL_PLAYERS } from '../lib/external-players';
@@ -233,11 +234,12 @@ export default function PlaybackTools({
                 className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                 title={player.name}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- 外部播放器的小图标 */}
-                <img
-                  src={player.icon}
+                <ProxyImage
+                  originalSrc={player.icon}
                   alt={player.name}
                   className='w-4 h-4 flex-shrink-0'
+                  proxy={false}
+                  loading='eager'
                 />
                 <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                   {player.name}

@@ -35,6 +35,7 @@ import {
   MUSIC_PICK_DESC,
   MUSIC_PICK_FRAME,
 } from '@/components/music/tokens';
+import ProxyImage from '@/components/ProxyImage';
 
 /**
  * 左栏歌单名前面那张小缩略图。
@@ -50,13 +51,14 @@ function PickThumb({ src }: { src?: string }) {
   return (
     <span className={MUSIC_PICK_FRAME}>
       {url ? (
-        <img
-          src={url}
+        <ProxyImage
+          originalSrc={url}
           alt=''
           loading='lazy'
           referrerPolicy='no-referrer'
           onError={() => setFailed(true)}
           className='h-full w-full object-cover'
+          proxy={false}
         />
       ) : (
         <span className={MUSIC_ART_BROKEN}>

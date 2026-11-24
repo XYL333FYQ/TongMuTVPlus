@@ -14,6 +14,8 @@ import { musicSources } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
 import { formatPaddedClock } from '@/lib/time';
 
+import ProxyImage from '@/components/ProxyImage';
+
 import {
   MUSIC_ART_BROKEN,
   MUSIC_ICON_BUTTON,
@@ -86,13 +88,14 @@ function SongRow({
 
         <span className={MUSIC_ROW_ART}>
           {cover ? (
-            <img
-              src={cover}
+            <ProxyImage
+              originalSrc={cover}
               alt=''
               loading='lazy'
               referrerPolicy='no-referrer'
               onError={() => setCoverFailed(true)}
               className='h-full w-full object-cover'
+              proxy={false}
             />
           ) : (
             // 歌曲的封面和歌单一样是实打实给的，走到这儿只有一个原因：图挂了。

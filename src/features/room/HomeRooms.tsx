@@ -9,6 +9,7 @@ import { clientMemoryScope } from '@/lib/client-memory';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import SectionHeader from '@/components/catalog/SectionHeader';
+import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import {
@@ -140,12 +141,12 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
             data-has-cover={Boolean(cover)}
           >
             {cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={cover}
+              <ProxyImage
+                originalSrc={cover}
                 alt=''
                 loading='lazy'
                 referrerPolicy='no-referrer'
+                proxy={false}
               />
             ) : (
               Array.from(displayRoomName(room))[0] || '房'

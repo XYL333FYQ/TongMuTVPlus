@@ -80,6 +80,7 @@ import {
   MUSIC_ROW_TEXT,
 } from '@/components/music/tokens';
 import PageContainer from '@/components/PageContainer';
+import ProxyImage from '@/components/ProxyImage';
 
 import {
   RoomActivityActions,
@@ -297,13 +298,14 @@ function SortablePlaylistRow({
 
       <span className={MUSIC_ROW_ART}>
         {cover ? (
-          <img
-            src={cover}
+          <ProxyImage
+            originalSrc={cover}
             alt=''
             loading='lazy'
             referrerPolicy='no-referrer'
             onError={() => setCoverFailed(true)}
             className='h-full w-full object-cover'
+            proxy={false}
           />
         ) : (
           <span className={MUSIC_ART_BROKEN}>
@@ -491,13 +493,15 @@ function VinylTurntable({
         <div className='pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-raised blur-md' />
         <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-line bg-surface md:h-[192px] md:w-[192px]'>
           {cover ? (
-            <img
-              src={cover}
+            <ProxyImage
+              originalSrc={cover}
               alt={title}
               className='h-full w-full rounded-full object-cover'
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
+              proxy={false}
+              loading='eager'
             />
           ) : (
             <svg
@@ -2906,14 +2910,16 @@ export default function MusicClient({
                     onClick={() => setShowLyrics(true)}
                   >
                     {currentSong.pic ? (
-                      <img
-                        src={currentSong.pic}
+                      <ProxyImage
+                        originalSrc={currentSong.pic}
                         alt={currentSong.name}
                         className='w-full h-full object-cover'
                         onError={(e) => {
                           // 图片加载失败时显示默认图标
                           e.currentTarget.style.display = 'none';
                         }}
+                        proxy={false}
+                        loading='eager'
                       />
                     ) : (
                       <svg
@@ -3154,10 +3160,12 @@ export default function MusicClient({
                 <div className='relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-surface shrink-0 overflow-hidden'>
                   {currentSong.pic && (
                     <div className='absolute inset-0'>
-                      <img
-                        src={currentSong.pic}
+                      <ProxyImage
+                        originalSrc={currentSong.pic}
                         alt={currentSong.name}
                         className='w-full h-full object-cover opacity-30 blur-xl'
+                        proxy={false}
+                        loading='eager'
                       />
                     </div>
                   )}
@@ -3172,10 +3180,12 @@ export default function MusicClient({
                       className='w-16 h-16 md:hidden rounded-xl overflow-hidden shadow-2xl mb-2'
                     >
                       {currentSong.pic ? (
-                        <img
-                          src={currentSong.pic}
+                        <ProxyImage
+                          originalSrc={currentSong.pic}
                           alt={currentSong.name}
                           className='w-full h-full object-cover'
+                          proxy={false}
+                          loading='eager'
                         />
                       ) : (
                         <div className='w-full h-full bg-surface flex items-center justify-center'>
@@ -3215,10 +3225,12 @@ export default function MusicClient({
                   <div className='relative md:hidden flex-1 min-h-0 overflow-hidden bg-surface'>
                     {currentSong.pic && (
                       <div className='absolute inset-0'>
-                        <img
-                          src={currentSong.pic}
+                        <ProxyImage
+                          originalSrc={currentSong.pic}
                           alt={currentSong.name}
                           className='w-full h-full object-cover opacity-30 blur-xl'
+                          proxy={false}
+                          loading='eager'
                         />
                       </div>
                     )}

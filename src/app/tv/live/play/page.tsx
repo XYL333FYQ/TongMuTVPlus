@@ -21,6 +21,7 @@ import { apiFetch } from '@/lib/api-client';
 import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
 import { readSetting, writeSetting } from '@/lib/settings';
 
+import ProxyImage from '@/components/ProxyImage';
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
 
@@ -847,10 +848,12 @@ function TVLivePlayClient() {
         </button>
         <div className='flex min-w-0 items-center gap-2 rounded-2xl bg-ink/70 px-3 py-2 md:gap-4 md:px-6'>
           {channel.logo ? (
-            <img
-              src={getLogoUrl(channel.logo, source?.key)}
+            <ProxyImage
+              originalSrc={getLogoUrl(channel.logo, source?.key)}
               alt=''
               className='h-7 w-7 shrink-0 rounded-xl object-contain md:h-10 md:w-10'
+              proxy={false}
+              loading='eager'
             />
           ) : (
             <Radio className='h-7 w-7 shrink-0 text-fg md:h-10 md:w-10' />
@@ -1013,10 +1016,12 @@ function TVLivePlayClient() {
                     }`}
                   >
                     {item.logo ? (
-                      <img
-                        src={getLogoUrl(item.logo, source?.key)}
+                      <ProxyImage
+                        originalSrc={getLogoUrl(item.logo, source?.key)}
                         alt=''
                         className='h-9 w-9 rounded-lg object-contain'
+                        proxy={false}
+                        loading='eager'
                       />
                     ) : (
                       <Radio className='h-5 w-5 shrink-0 text-inherit md:h-8 md:w-8' />

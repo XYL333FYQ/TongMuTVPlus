@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
@@ -21,6 +21,7 @@ import { useExternalAction } from '@/components/ExternalLink';
 import { notify } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
+import ProxyImage from '@/components/ProxyImage';
 import Select from '@/components/ui/Select';
 
 interface PansouSearchProps {
@@ -1100,12 +1101,13 @@ export default function PansouSearch({
                     {link.images && link.images.length > 0 && (
                       <div className='mt-3 flex gap-2 overflow-x-auto'>
                         {link.images.map((img, imgIndex) => (
-                          <img
+                          <ProxyImage
+                            originalSrc={img}
                             key={imgIndex}
-                            src={img}
                             alt=''
                             className='h-20 w-auto rounded object-cover'
                             loading='lazy'
+                            proxy={false}
                           />
                         ))}
                       </div>

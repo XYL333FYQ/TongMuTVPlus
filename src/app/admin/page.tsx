@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-console, @typescript-eslint/no-non-null-assertion,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, react-hooks/exhaustive-deps, @typescript-eslint/no-empty-function */
 
 'use client';
 
@@ -96,6 +96,7 @@ import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import PageLayout from '@/components/PageLayout';
 import FilmPoster from '@/components/poster/FilmPoster';
+import ProxyImage from '@/components/ProxyImage';
 import Select from '@/components/ui/Select';
 import Switch from '@/components/ui/Switch';
 
@@ -10679,14 +10680,16 @@ const ThemeConfigComponent = ({
                   }`}
                 >
                   <div className='flex flex-col items-center gap-2'>
-                    <img
-                      src={thumb.url}
+                    <ProxyImage
+                      originalSrc={thumb.url}
                       alt=''
                       className='w-12 h-12 object-contain'
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect width="48" height="48" fill="%23ddd"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3E?%3C/text%3E%3C/svg%3E';
                       }}
+                      proxy={false}
+                      loading='eager'
                     />
                     <span className='text-sm font-medium text-[color:var(--tm-muted)] text-center'>
                       {thumb.name}
@@ -10736,8 +10739,8 @@ const ThemeConfigComponent = ({
                 <p className='text-[13px] text-[color:var(--tm-muted)] mb-2'>
                   预览：
                 </p>
-                <img
-                  src={themeSettings.progressThumbCustomUrl}
+                <ProxyImage
+                  originalSrc={themeSettings.progressThumbCustomUrl}
                   alt='自定义图标预览'
                   className='w-12 h-12 object-contain border border-[var(--tm-line)] rounded'
                   onError={(e) => {
@@ -10751,6 +10754,8 @@ const ThemeConfigComponent = ({
                       parent.appendChild(errorMsg);
                     }
                   }}
+                  proxy={false}
+                  loading='eager'
                 />
               </div>
             )}

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bs58 from 'bs58';
 
 import { getTmdbImageBaseUrl } from './tmdb-image-base';

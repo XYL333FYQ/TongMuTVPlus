@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger';
 
 import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
+import ProxyImage from '@/components/ProxyImage';
 
 interface Song {
   id: string;
@@ -337,10 +338,12 @@ export default function AddToPlaylistModal({
                   className='w-full px-4 py-3 bg-raised hover:bg-line disabled:bg-raised disabled:cursor-not-allowed rounded-lg transition-colors text-left flex items-center gap-3 min-h-[44px] tm-press'
                 >
                   {playlist.cover ? (
-                    <img
-                      src={playlist.cover}
+                    <ProxyImage
+                      originalSrc={playlist.cover}
                       alt={playlist.name}
                       className='w-12 h-12 rounded object-cover'
+                      proxy={false}
+                      loading='eager'
                     />
                   ) : (
                     <div className='w-12 h-12 rounded bg-surface flex items-center justify-center'>

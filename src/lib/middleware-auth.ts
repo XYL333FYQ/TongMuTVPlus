@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { logger } from '@/lib/logger';
 

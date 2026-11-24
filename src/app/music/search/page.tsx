@@ -45,6 +45,7 @@ import {
   MUSIC_SINGER_NAME,
   MUSIC_SINGER_PIC,
 } from '@/components/music/tokens';
+import ProxyImage from '@/components/ProxyImage';
 
 type HotSearchItem = { keyword: string; artist?: string };
 type SearchType = 'song' | 'singer' | 'album';
@@ -125,12 +126,13 @@ function SingerGrid({
         >
           <span className={MUSIC_SINGER_FRAME}>
             {singer.picUrl ? (
-              <img
-                src={singer.picUrl}
+              <ProxyImage
+                originalSrc={singer.picUrl}
                 alt=''
                 loading='lazy'
                 referrerPolicy='no-referrer'
                 className={MUSIC_SINGER_PIC}
+                proxy={false}
               />
             ) : (
               <span className='flex h-full w-full items-center justify-center font-sans text-[22px] text-[color:color-mix(in_srgb,var(--tm-muted)_60%,transparent)]'>

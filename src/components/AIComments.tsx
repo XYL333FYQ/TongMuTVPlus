@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import ProxyImage from '@/components/ProxyImage';
 
 interface AIComment {
   id: string;
@@ -223,10 +224,12 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
             <div className='flex items-start gap-3 mb-3'>
               {/* 头像 */}
               <div className='flex-shrink-0'>
-                <img
-                  src={comment.userAvatar}
+                <ProxyImage
+                  originalSrc={comment.userAvatar}
                   alt={comment.userName}
                   className='w-10 h-10 rounded-full'
+                  proxy={false}
+                  loading='eager'
                 />
               </div>
 

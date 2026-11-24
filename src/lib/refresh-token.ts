@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { logger } from '@/lib/logger';
 
 import { TOKEN_CONFIG } from './token-config';
