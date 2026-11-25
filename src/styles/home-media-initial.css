@@ -233,6 +233,7 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
 }
 
 @media (max-width: 599px) {
+  /* 手机上首页大图贴满屏宽 */
   .tm-home-hero {
     margin-inline: calc(var(--tm-content-gutter) * -1);
     margin-top: 12px;

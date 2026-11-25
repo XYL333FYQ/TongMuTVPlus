@@ -1,9 +1,4 @@
 /* loading.css 按块拆出的一段（tm-busy），引入顺序紧跟前一段，层叠结果不变 */
-/* P2 removed the sidebar; the old loading overlay still reserved its width. */
-html .mtv-load-overlay {
-  left: 0;
-}
-
 @keyframes tm-loading-appear {
   to {
     opacity: 1;

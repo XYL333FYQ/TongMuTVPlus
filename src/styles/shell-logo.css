@@ -186,8 +186,9 @@
   position: absolute;
 }
 
-/* 首页大图在手机上铺到屏幕最顶（大图的样式见 home.css），顶栏按钮浮在图上 */
+/* 首页大图在手机上铺到屏幕最顶（大图的样式见 home-media-initial.css），顶栏按钮浮在图上 */
 @media (max-width: 599px) {
+  /* 大图两种主题下都是深色的，浮在上面的按钮用图上的浅色 */
   body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
     .tm-mobile-header-v2 {
     color: var(--tm-on-art);

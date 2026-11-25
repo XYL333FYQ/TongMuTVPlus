@@ -312,3 +312,8 @@ html[data-loading-style='grid'] .mtv-err-box {
     left: 4rem;
   }
 }
+
+/* P2 removed the sidebar; the old loading overlay still reserved its width. */
+html .mtv-load-overlay {
+  left: 0;
+}
