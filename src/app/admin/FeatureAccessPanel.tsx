@@ -35,7 +35,7 @@ const hint = 'text-sm text-[color:var(--tm-muted)]';
 const button =
   'inline-flex items-center justify-center px-3 py-1.5 min-h-[36px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] disabled:opacity-50';
 const primaryButton =
-  'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 disabled:opacity-50';
+  'inline-flex items-center justify-center px-4 py-2 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 disabled:opacity-50';
 
 const labelOf = (key: string) =>
   FEATURE_PERMISSION_OPTIONS.find((item) => item.key === key)?.label || key;

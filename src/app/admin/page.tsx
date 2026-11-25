@@ -112,19 +112,19 @@ import ThemePresetPreview from './ThemePresetPreview';
 const buttonStyles = {
   // 主要操作 - 配置、设置、确认等
   primary:
-    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   // 添加、启用、保存等，与主要操作同样式，靠文案区分
   success:
-    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   // 危险操作 - 删除、禁用、重置等
   danger:
-    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
   // 次要操作 - 取消、关闭等
   secondary:
-    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   // 批量禁用等需要留意的操作
   warning:
-    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] [@media(pointer:coarse)]:min-h-[44px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   primarySmall:
     'inline-flex items-center justify-center px-3 py-1.5 min-h-[36px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   successSmall:
