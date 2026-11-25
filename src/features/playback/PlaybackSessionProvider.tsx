@@ -13,7 +13,6 @@ import {
   useState,
 } from 'react';
 
-import { viewportSize } from '@/lib/device-tier';
 import { normalizePlaybackHref, playbackIdentity } from '@/lib/playback-links';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 import {
@@ -28,6 +27,9 @@ import {
 
 import MiniPlayerControls from '@/components/mini-player/MiniPlayerControls';
 import { useMiniPlayerDrag } from '@/components/mini-player/useMiniPlayerDrag';
+
+import { useKeyboardVisible } from './session/useKeyboardVisible';
+import { useSlotRect } from './session/useSlotRect';
 
 const PlaybackSurface = dynamic(() => import('./surface/PlaybackSurface'), {
   ssr: false,
@@ -78,13 +80,11 @@ export default function PlaybackSessionProvider({
   const [media, setMedia] = useState<PlaybackMedia | null>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const [slot, registerSlot] = useState<HTMLElement | null>(null);
-  const [slotRect, setSlotRect] = useState<DOMRect | null>(null);
   const guardRef = useRef<PlaybackGuard | null>(null);
   // 仅界面：用户手动收起的失败提示文案；出现新的错误文案时会重新显示
   const [dismissedError, setDismissedError] = useState('');
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { ownsSound, claimSound } = useAudioFocus(controller?.video || null);
 
   const show = useCallback((nextHref: string) => {
@@ -146,90 +146,8 @@ export default function PlaybackSessionProvider({
     setSurfaceVersion((previous) => previous + 1);
   }, []);
 
-  // 房间舞台占位框：播放器按它的位置和大小显示
-  useEffect(() => {
-    if (!slot) {
-      setSlotRect(null);
-      return;
-    }
-    const measure = () => setSlotRect(slot.getBoundingClientRect());
-    const observer = new ResizeObserver(measure);
-    observer.observe(slot);
-    // Notices above the stage move the slot without changing its own size.
-    const roomContainer = slot.closest('.tm-rooms');
-    if (roomContainer) observer.observe(roomContainer);
-
-    // 滚动时：每帧直接把占位框的位置写到样式变量上，不走 React 状态（否则整页每次滚动都重渲），
-    // 并临时关掉位置过渡，窗口才会紧贴页面；停下后再同步一次状态。
-    // 用户在显示设置里打开“缓动跟随”时保留过渡。
-    const mount = () =>
-      hostRef.current?.querySelector<HTMLElement>('[data-tm-player-mount]') ||
-      null;
-    let frame = 0;
-    let idle: ReturnType<typeof setTimeout> | undefined;
-    const follow = () => {
-      frame = 0;
-      const rect = slot.getBoundingClientRect();
-      const style = hostRef.current?.style;
-      if (!style) return;
-      style.setProperty('--tm-slot-left', `${rect.left}px`);
-      style.setProperty('--tm-slot-top', `${rect.top}px`);
-      style.setProperty('--tm-slot-width', `${rect.width}px`);
-      style.setProperty('--tm-slot-height', `${rect.height}px`);
-    };
-    const onScroll = () => {
-      if (document.documentElement.dataset.tmPlayerEase !== 'true') {
-        const element = mount();
-        if (element) element.style.transition = 'none';
-      }
-      if (!frame) frame = requestAnimationFrame(follow);
-      clearTimeout(idle);
-      idle = setTimeout(() => {
-        const element = mount();
-        if (element) element.style.transition = '';
-        measure();
-      }, 160);
-    };
-    // Element scroll events do not bubble; capture BODY and nested page scrolling too.
-    window.addEventListener('scroll', onScroll, {
-      passive: true,
-      capture: true,
-    });
-    window.addEventListener('resize', measure);
-    measure();
-    return () => {
-      observer.disconnect();
-      if (frame) cancelAnimationFrame(frame);
-      clearTimeout(idle);
-      const element = mount();
-      if (element) element.style.transition = '';
-      window.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('resize', measure);
-    };
-  }, [slot]);
-
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    const update = () => {
-      const height = viewport?.height || viewportSize().height;
-      document.documentElement.style.setProperty(
-        '--tm-visual-height',
-        `${height}px`
-      );
-      const inputFocused = /^(INPUT|TEXTAREA)$/.test(
-        document.activeElement?.tagName || ''
-      );
-      setKeyboardVisible(inputFocused && viewportSize().height - height > 120);
-    };
-    viewport?.addEventListener('resize', update);
-    document.addEventListener('focusin', update);
-    document.addEventListener('focusout', update);
-    return () => {
-      viewport?.removeEventListener('resize', update);
-      document.removeEventListener('focusin', update);
-      document.removeEventListener('focusout', update);
-    };
-  }, []);
+  const slotRect = useSlotRect(slot, hostRef);
+  const keyboardVisible = useKeyboardVisible();
 
   const presentation: PlaybackPresentation =
     pathname === '/play' && href
