@@ -3,16 +3,9 @@
 import { ChevronDown, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect } from 'react';
 
-import { readCatalogMemory, writeCatalogMemory } from '@/lib/catalog-memory';
-import { clientMemoryScope } from '@/lib/client-memory';
-import { viewportSize } from '@/lib/device-tier';
-import { logger } from '@/lib/logger';
 import { publicCatalogCategories } from '@/lib/public-catalog';
-import { DoubanItem } from '@/lib/types';
-import { useClientMemoryState } from '@/hooks/useClientMemoryState';
-import { usePageRefresh } from '@/hooks/usePageRefresh';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import PosterGrid from '@/components/catalog/PosterGrid';
@@ -27,123 +20,32 @@ import BangumiScheduleTimeline from '@/features/library/parts/BangumiScheduleTim
 import DoubanCardSkeleton from '@/features/library/parts/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/features/library/parts/DoubanCustomSelector';
 import DoubanSelector from '@/features/library/parts/DoubanSelector';
-import { fetchLibraryPage } from '@/features/library/parts/fetch-library-page';
-
-/** 两次请求的参数是不是同一组（返回的结果还对不对得上当前选择） */
-interface CatalogSnapshot {
-  type: string;
-  primarySelection: string;
-  secondarySelection: string;
-  multiLevelSelection: Record<string, string>;
-  selectedWeekday: string;
-  currentPage: number;
-}
-function isSnapshotEqual(
-  snapshot1: CatalogSnapshot,
-  snapshot2: CatalogSnapshot
-) {
-  return (
-    snapshot1.type === snapshot2.type &&
-    snapshot1.primarySelection === snapshot2.primarySelection &&
-    snapshot1.secondarySelection === snapshot2.secondarySelection &&
-    snapshot1.selectedWeekday === snapshot2.selectedWeekday &&
-    snapshot1.currentPage === snapshot2.currentPage &&
-    JSON.stringify(snapshot1.multiLevelSelection) ===
-      JSON.stringify(snapshot2.multiLevelSelection)
-  );
-}
+import { useLibraryFeed } from '@/features/library/parts/useLibraryFeed';
+import {
+  getTodayWeekday,
+  useLibrarySelection,
+} from '@/features/library/parts/useLibrarySelection';
 
 function DoubanPageClient() {
   const searchParams = useSearchParams();
-  const [doubanData, setDoubanData] = useState<DoubanItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [loadingError, setLoadingError] = useState('');
-  const [retryAttempt, setRetryAttempt] = useState(0);
-  const [selectorsReady, setSelectorsReady] = useState(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadingRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const loadedSignature = useRef<string | null>(null);
-  const loadedAt = useRef(0);
-  const loadedPage = useRef(0);
-  const dataGeneration = useRef(0);
-  const restoredPage = useRef<{ signature: string; page: number } | null>(null);
-  useEffect(
-    () => () => {
-      dataGeneration.current += 1;
-    },
-    []
-  );
-
-  // 用于存储最新参数值的 refs
-  const currentParamsRef = useRef({
-    type: '',
-    primarySelection: '',
-    secondarySelection: '',
-    multiLevelSelection: {} as Record<string, string>,
-    selectedWeekday: '',
-    currentPage: 0,
-  });
 
   const type = searchParams.get('type') || 'movie';
 
-  // 获取 runtimeConfig 中的自定义分类数据
-  const [customCategories, setCustomCategories] = useState<
-    Array<{ name: string; type: 'movie' | 'tv'; query: string }>
-  >([]);
-
-  // 选择器状态 - 完全独立，不依赖URL参数
-  const [primarySelection, setPrimarySelection, restoredPrimary] =
-    useClientMemoryState<string>(`douban:${type}:primary`, () => {
-      if (type === 'movie') return '热门';
-      if (type === 'tv' || type === 'show') return '最近热门';
-      if (type === 'anime') return '每日放送';
-      return '';
-    });
-  const [secondarySelection, setSecondarySelection, restoredSecondary] =
-    useClientMemoryState<string>(`douban:${type}:secondary`, () => {
-      if (type === 'movie') return '全部';
-      if (type === 'tv') return 'tv';
-      if (type === 'show') return 'show';
-      return '全部';
-    });
-
-  // MultiLevelSelector 状态
-  const [multiLevelValues, setMultiLevelValues, restoredMulti] =
-    useClientMemoryState<Record<string, string>>(`douban:${type}:multi`, {
-      type: 'all',
-      region: 'all',
-      year: 'all',
-      platform: 'all',
-      label: 'all',
-      sort: 'T',
-    });
-
-  // 星期选择器状态 - 默认选中今天
-  const getTodayWeekday = (): string => {
-    const today = new Date().getDay();
-    // getDay() 返回 0-6，0 是周日，1-6 是周一到周六
-    const weekdayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return weekdayMap[today];
-  };
-
-  const [selectedWeekday, setSelectedWeekday, restoredWeekday] =
-    useClientMemoryState<string>(`douban:${type}:weekday`, () => {
-      if (type === 'anime') {
-        return getTodayWeekday();
-      }
-      return '';
-    });
-
-  // 每日放送视图模式：grid(卡片) / schedule(时刻表)
-  const [viewMode, setViewMode] = useClientMemoryState<'grid' | 'schedule'>(
-    `douban:${type}:view`,
-    'grid'
-  );
+  const {
+    customCategories,
+    primarySelection,
+    setPrimarySelection,
+    secondarySelection,
+    setSecondarySelection,
+    multiLevelValues,
+    setMultiLevelValues,
+    selectedWeekday,
+    setSelectedWeekday,
+    viewMode,
+    setViewMode,
+    selectorsReady,
+    setSelectorsReady,
+  } = useLibrarySelection(type);
   const signature = JSON.stringify([
     type,
     primarySelection,
@@ -151,512 +53,37 @@ function DoubanPageClient() {
     multiLevelValues,
     selectedWeekday,
   ]);
-  const memoryScope = clientMemoryScope();
-  useEffect(() => {
-    if (
-      loadedSignature.current !== signature ||
-      loadedPage.current !== currentPage ||
-      loading ||
-      isLoadingMore ||
-      loadingError
-    )
-      return;
-    writeCatalogMemory(
-      type,
-      {
-        signature,
-        list: doubanData,
-        page: currentPage,
-        hasMore,
-        at: loadedAt.current,
-      },
-      memoryScope
-    );
-  }, [
-    signature,
-    type,
+  const {
     doubanData,
-    currentPage,
-    hasMore,
     loading,
+    setLoading,
+    currentPage,
+    setCurrentPage,
+    hasMore,
     isLoadingMore,
     loadingError,
-    memoryScope,
-  ]);
-
-  // 获取自定义分类数据
-  useEffect(() => {
-    const categories = window.RUNTIME_CONFIG?.CUSTOM_CATEGORIES;
-    if (Array.isArray(categories) && categories.length > 0) {
-      setCustomCategories(categories);
-    }
-  }, []);
-
-  // 同步最新参数值到 ref
-  useEffect(() => {
-    currentParamsRef.current = {
-      type,
-      primarySelection,
-      secondarySelection,
-      multiLevelSelection: multiLevelValues,
-      selectedWeekday,
-      currentPage,
-    };
-  }, [
-    type,
-    primarySelection,
-    secondarySelection,
-    multiLevelValues,
-    selectedWeekday,
-    currentPage,
-  ]);
-
-  // 初始化时标记选择器为准备好状态
-  useEffect(() => {
-    // 短暂延迟确保初始状态设置完成
-    const timer = setTimeout(() => {
-      setSelectorsReady(true);
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, []); // 只在组件挂载时执行一次
-
-  // type变化时立即重置selectorsReady（最高优先级）
-  useEffect(() => {
-    setSelectorsReady(false);
-    setLoading(true); // 立即显示loading状态
-  }, [type]);
-
-  // 换类型时要看的“当前选择”：这个重置只跟着 type / 自定义分类走，读的是那一刻的值
-  const selectionNow = useRef({
-    primarySelection,
-    secondarySelection,
-    restored: false,
-  });
-  selectionNow.current = {
-    primarySelection,
-    secondarySelection,
-    restored:
-      restoredPrimary && restoredSecondary && restoredMulti && restoredWeekday,
-  };
-
-  // 当type变化时重置选择器状态
-  useEffect(() => {
-    if (
-      selectionNow.current.restored &&
-      (type !== 'custom' ||
-        !customCategories.length ||
-        customCategories.some(
-          (category) =>
-            category.type === selectionNow.current.primarySelection &&
-            category.query === selectionNow.current.secondarySelection
-        ))
-    ) {
-      const timer = setTimeout(() => setSelectorsReady(true), 50);
-      return () => clearTimeout(timer);
-    }
-    if (type === 'custom' && customCategories.length > 0) {
-      // 自定义分类模式：优先选择 movie，如果没有 movie 则选择 tv
-      const types = Array.from(
-        new Set(customCategories.map((cat) => cat.type))
-      );
-      if (types.length > 0) {
-        // 优先选择 movie，如果没有 movie 则选择 tv
-        let selectedType = types[0]; // 默认选择第一个
-        if (types.includes('movie')) {
-          selectedType = 'movie';
-        } else {
-          selectedType = 'tv';
-        }
-        setPrimarySelection(selectedType);
-
-        // 设置选中类型的第一个分类的 query 作为二级选择
-        const firstCategory = customCategories.find(
-          (cat) => cat.type === selectedType
-        );
-        if (firstCategory) {
-          setSecondarySelection(firstCategory.query);
-        }
-      }
-      setSelectedWeekday(''); // 清空星期选择
-    } else {
-      // 原有逻辑
-      if (type === 'movie') {
-        setPrimarySelection('热门');
-        setSecondarySelection('全部');
-        setSelectedWeekday(''); // 清空星期选择
-      } else if (type === 'tv') {
-        setPrimarySelection('最近热门');
-        setSecondarySelection('tv');
-        setSelectedWeekday(''); // 清空星期选择
-      } else if (type === 'show') {
-        setPrimarySelection('最近热门');
-        setSecondarySelection('show');
-        setSelectedWeekday(''); // 清空星期选择
-      } else if (type === 'anime') {
-        setPrimarySelection('每日放送');
-        setSecondarySelection('全部');
-        setSelectedWeekday(getTodayWeekday()); // 默认选中今天
-      } else {
-        setPrimarySelection('');
-        setSecondarySelection('全部');
-        setSelectedWeekday(''); // 清空星期选择
-      }
-    }
-
-    // 清空 MultiLevelSelector 状态
-    setMultiLevelValues({
-      type: 'all',
-      region: 'all',
-      year: 'all',
-      platform: 'all',
-      label: 'all',
-      sort: 'T',
-    });
-
-    // 使用短暂延迟确保状态更新完成后标记选择器准备好
-    const timer = setTimeout(() => {
-      setSelectorsReady(true);
-    }, 50);
-
-    return () => clearTimeout(timer);
-    // setter 跟着 type 一起换（存储键里带 type），不会多跑
-  }, [
-    type,
-    customCategories,
-    setPrimarySelection,
-    setSecondarySelection,
-    setSelectedWeekday,
-    setMultiLevelValues,
-  ]);
-
-  // 生成骨架屏数据
-  const skeletonData = Array.from({ length: 25 }, (_, index) => index);
-
-  // 防抖的数据加载函数
-  const loadInitialData = useCallback(
-    async (allowMemory = true, signal?: AbortSignal) => {
-      const generation = ++dataGeneration.current;
-      const saved = allowMemory
-        ? readCatalogMemory(type, signature)
-        : undefined;
-      if (saved) {
-        loadedSignature.current = signature;
-        loadedAt.current = saved.at;
-        loadedPage.current = saved.page;
-        restoredPage.current = { signature, page: saved.page };
-        setDoubanData(saved.list);
-        setCurrentPage(saved.page);
-        setHasMore(saved.hasMore);
-        setLoadingError('');
-        setLoading(false);
-        setIsLoadingMore(false);
-        return true;
-      }
-      loadedSignature.current = null;
-      restoredPage.current = null;
-      // 创建当前参数的快照
-      const requestSnapshot = {
-        type,
-        primarySelection,
-        secondarySelection,
-        multiLevelSelection: multiLevelValues,
-        selectedWeekday,
-        currentPage: signal ? currentParamsRef.current.currentPage : 0,
-      };
-
-      const onAbort = () => {
-        if (generation !== dataGeneration.current) return;
-        dataGeneration.current += 1;
-        setLoading(false);
-        setIsLoadingMore(false);
-      };
-      signal?.addEventListener('abort', onAbort, { once: true });
-
-      try {
-        setLoading(true);
-        setLoadingError('');
-        // 确保在加载初始数据时重置页面状态
-        if (!signal) {
-          setDoubanData([]);
-          setCurrentPage(0);
-          setHasMore(true);
-        }
-        setIsLoadingMore(false);
-
-        const data = await fetchLibraryPage(
-          {
-            type,
-            primarySelection,
-            secondarySelection,
-            multiLevelValues,
-            selectedWeekday,
-            customCategories,
-          },
-          0,
-          signal ? { signal, reportError: false } : undefined
-        );
-
-        if (data.code === 200) {
-          // 检查参数是否仍然一致，如果一致才设置数据
-          // 使用 ref 获取最新的当前值
-          const currentSnapshot = { ...currentParamsRef.current };
-
-          if (
-            !signal?.aborted &&
-            generation === dataGeneration.current &&
-            isSnapshotEqual(requestSnapshot, currentSnapshot)
-          ) {
-            loadedSignature.current = signature;
-            loadedAt.current = Date.now();
-            loadedPage.current = 0;
-            setDoubanData(data.list);
-            if (signal) setCurrentPage(0);
-            setHasMore(data.list.length !== 0);
-            setLoading(false);
-            return true;
-          }
-          // 如果参数不一致，不执行任何操作，避免设置过期数据
-        } else {
-          throw new Error(data.message || '获取数据失败');
-        }
-      } catch (err) {
-        // 界面上已经提示“影视信息暂时无法获取”，原始错误留给排查
-        if (!signal?.aborted) logger.error(err);
-        if (
-          !signal?.aborted &&
-          generation === dataGeneration.current &&
-          isSnapshotEqual(requestSnapshot, currentParamsRef.current)
-        ) {
-          setLoadingError('影视信息暂时无法获取');
-          setLoading(false);
-        }
-      } finally {
-        signal?.removeEventListener('abort', onAbort);
-      }
-      return false;
-    },
-    [
-      type,
-      primarySelection,
-      secondarySelection,
-      multiLevelValues,
-      selectedWeekday,
-      customCategories,
-      signature,
-    ]
-  );
-
-  usePageRefresh(
-    '/douban',
-    async (signal) => {
-      const refreshed = await loadInitialData(false, signal);
-      if (!refreshed && !signal.aborted)
-        throw new Error('Catalogue refresh failed');
-    },
-    selectorsReady,
-    memoryScope + ':' + signature
-  );
-
-  // 只在选择器准备好后才加载数据
-  useEffect(() => {
-    // 只有在选择器准备好时才开始加载
-    if (!selectorsReady) {
-      return;
-    }
-
-    // 清除之前的防抖定时器
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // 使用防抖机制加载数据，避免连续状态更新触发多次请求
-    debounceTimeoutRef.current = setTimeout(() => {
-      loadInitialData();
-    }, 100); // 100ms 防抖延迟
-
-    // 清理函数
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, [
-    selectorsReady,
-    type,
-    primarySelection,
-    secondarySelection,
-    multiLevelValues,
-    selectedWeekday,
+    setRetryAttempt,
+    loadingRef,
+    contentRef,
     loadInitialData,
-  ]);
-
-  // 单独处理 currentPage 变化（加载更多）
-  useEffect(() => {
-    let cancelled = false;
-    const generation = dataGeneration.current;
-    if (
-      restoredPage.current?.signature === signature &&
-      restoredPage.current.page === currentPage
-    )
-      return;
-    if (currentPage > 0) {
-      const fetchMoreData = async () => {
-        // 创建当前参数的快照
-        const requestSnapshot = {
-          type,
-          primarySelection,
-          secondarySelection,
-          multiLevelSelection: multiLevelValues,
-          selectedWeekday,
-          currentPage,
-        };
-
-        try {
-          setIsLoadingMore(true);
-          setLoadingError('');
-
-          const data = await fetchLibraryPage(
-            {
-              type,
-              primarySelection,
-              secondarySelection,
-              multiLevelValues,
-              selectedWeekday,
-              customCategories,
-            },
-            currentPage
-          );
-
-          if (data.code === 200) {
-            // 检查参数是否仍然一致，如果一致才设置数据
-            // 使用 ref 获取最新的当前值
-            const currentSnapshot = { ...currentParamsRef.current };
-
-            if (
-              !cancelled &&
-              generation === dataGeneration.current &&
-              isSnapshotEqual(requestSnapshot, currentSnapshot)
-            ) {
-              loadedSignature.current = signature;
-              loadedAt.current = Date.now();
-              loadedPage.current = currentPage;
-              setDoubanData((prev) => [...prev, ...data.list]);
-              setHasMore(data.list.length !== 0);
-            }
-          } else {
-            throw new Error(data.message || '获取数据失败');
-          }
-        } catch (err) {
-          if (
-            !cancelled &&
-            generation === dataGeneration.current &&
-            isSnapshotEqual(requestSnapshot, currentParamsRef.current)
-          ) {
-            setLoadingError('下一页加载失败，已保留当前内容');
-          }
-        } finally {
-          if (!cancelled && generation === dataGeneration.current)
-            setIsLoadingMore(false);
-        }
-      };
-
-      fetchMoreData();
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    currentPage,
-    signature,
-    retryAttempt,
+    resetFeed,
+  } = useLibraryFeed({
     type,
     primarySelection,
     secondarySelection,
-    customCategories,
     multiLevelValues,
     selectedWeekday,
-  ]);
-
-  // 设置滚动监听
-  useEffect(() => {
-    // 如果没有更多数据或正在加载，则不设置监听
-    if (!hasMore || isLoadingMore || loading || loadingError) {
-      return;
-    }
-
-    // 确保 loadingRef 存在
-    if (!loadingRef.current) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          setCurrentPage((prev) => prev + 1);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(loadingRef.current);
-    observerRef.current = observer;
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [hasMore, isLoadingMore, loading, loadingError]);
-
-  // 首屏如果未被撑满，仅在第一页时额外请求一次下一页
-  useEffect(() => {
-    if (
-      loading ||
-      loadingError ||
-      !selectorsReady ||
-      isLoadingMore ||
-      !hasMore ||
-      doubanData.length === 0 ||
-      currentPage !== 0
-    ) {
-      return;
-    }
-
-    const rafId = window.requestAnimationFrame(() => {
-      const contentEl = contentRef.current;
-      if (!contentEl) return;
-
-      const rect = contentEl.getBoundingClientRect();
-      const preloadThreshold = viewportSize().height + 120;
-
-      if (rect.bottom < preloadThreshold) {
-        setCurrentPage(1);
-      }
-    });
-
-    return () => window.cancelAnimationFrame(rafId);
-  }, [
-    loading,
-    loadingError,
+    customCategories,
     selectorsReady,
-    isLoadingMore,
-    hasMore,
-    doubanData.length,
-    currentPage,
-  ]);
+    signature,
+  });
 
   // 处理选择器变化
   const handlePrimaryChange = useCallback(
     (value: string) => {
       // 只有当值真正改变时才设置loading状态
       if (value !== primarySelection) {
-        setLoading(true);
-        // 立即重置页面状态，防止基于旧状态的请求
-        setCurrentPage(0);
-        setDoubanData([]);
-        setHasMore(true);
-        setIsLoadingMore(false);
+        resetFeed();
 
         // 清空 MultiLevelSelector 状态
         setMultiLevelValues({
@@ -712,6 +139,7 @@ function DoubanPageClient() {
       setSecondarySelection,
       setSelectedWeekday,
       setMultiLevelValues,
+      resetFeed,
     ]
   );
 
@@ -719,16 +147,11 @@ function DoubanPageClient() {
     (value: string) => {
       // 只有当值真正改变时才设置loading状态
       if (value !== secondarySelection) {
-        setLoading(true);
-        // 立即重置页面状态，防止基于旧状态的请求
-        setCurrentPage(0);
-        setDoubanData([]);
-        setHasMore(true);
-        setIsLoadingMore(false);
+        resetFeed();
         setSecondarySelection(value);
       }
     },
-    [secondarySelection, setSecondarySelection]
+    [secondarySelection, setSecondarySelection, resetFeed]
   );
 
   const handleMultiLevelChange = useCallback(
@@ -751,15 +174,10 @@ function DoubanPageClient() {
         return;
       }
 
-      setLoading(true);
-      // 立即重置页面状态，防止基于旧状态的请求
-      setCurrentPage(0);
-      setDoubanData([]);
-      setHasMore(true);
-      setIsLoadingMore(false);
+      resetFeed();
       setMultiLevelValues(values);
     },
-    [multiLevelValues, setMultiLevelValues]
+    [multiLevelValues, setMultiLevelValues, resetFeed]
   );
 
   const handleWeekdayChange = useCallback(
@@ -768,6 +186,15 @@ function DoubanPageClient() {
     },
     [setSelectedWeekday]
   );
+
+  // type变化时立即重置selectorsReady（最高优先级）
+  useEffect(() => {
+    setSelectorsReady(false);
+    setLoading(true); // 立即显示loading状态
+  }, [type, setLoading, setSelectorsReady]);
+
+  // 生成骨架屏数据
+  const skeletonData = Array.from({ length: 25 }, (_, index) => index);
 
   const libraryTabs = [
     ...publicCatalogCategories,
