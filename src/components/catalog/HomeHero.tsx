@@ -6,27 +6,28 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Play, Users } from 'lucide-react';
 import {
   type ReactNode,
-  type TouchEventHandler,
   isValidElement,
   useEffect,
   useRef,
   useState,
 } from 'react';
 
-import { posterTiltHandlers, useReducedMotionSetting } from '@/lib/motion';
+import { useReducedMotionSetting } from '@/lib/motion';
 import { useLatest } from '@/hooks/useLatest';
 
 import { useHeroAutoplay } from '@/components/catalog/useHeroAutoplay';
-import FilmPoster from '@/components/poster/FilmPoster';
 
-export interface HeroDeckItem {
-  id: string;
-  title: string;
-  src: string;
-}
+import type { HomeHeroProps } from './home-hero-types';
+import {
+  HeroControls,
+  HeroCopyLines,
+  HeroDots,
+  HeroMainPoster,
+  HeroNeighborPoster,
+  HeroUpNext,
+} from './HomeHeroParts';
 
 export default function HomeHero({
   id,
@@ -50,29 +51,7 @@ export default function HomeHero({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-}: {
-  id: string;
-  title: string;
-  meta: ReactNode;
-  description?: string;
-  art: ReactNode;
-  contain: boolean;
-  deck?: HeroDeckItem[];
-  renderPoster?: (item: HeroDeckItem) => ReactNode;
-  onPlay: () => void;
-  onWatchInRoom: () => void;
-  onDetail?: () => void;
-  titles: string[];
-  index: number;
-  onSelect: (index: number) => void;
-  onAutoSelect?: (index: number) => void;
-  autoPlayInterval?: number;
-  autoPlayDisabled?: boolean;
-  extraControls?: ReactNode;
-  onTouchStart?: TouchEventHandler<HTMLElement>;
-  onTouchMove?: TouchEventHandler<HTMLElement>;
-  onTouchEnd?: TouchEventHandler<HTMLElement>;
-}) {
+}: HomeHeroProps) {
   const reduced = useReducedMotionSetting();
   const [imageShapes, setImageShapes] = useState<Record<string, boolean>>({});
   const portrait = imageShapes[id] ?? contain;
@@ -179,52 +158,14 @@ export default function HomeHero({
     .filter((target) => target !== index)
     .slice(0, 2);
   const controls = titles.length > 1 && (
-    <div className='tm-home-hero-controls' aria-label='推荐切换'>
-      <button
-        type='button'
-        className='tm-home-hero-control'
-        aria-label='上一部推荐'
-        onClick={() => select((index - 1 + titles.length) % titles.length)}
-      >
-        <ChevronLeft size={18} aria-hidden />
-      </button>
-      <span
-        className='tm-home-hero-counter'
-        aria-label={`第 ${index + 1} 部，共 ${titles.length} 部`}
-      >
-        <strong>{String(index + 1).padStart(2, '0')}</strong>
-        <span> / {String(titles.length).padStart(2, '0')}</span>
-      </span>
-      <button
-        type='button'
-        className='tm-home-hero-control'
-        aria-label='下一部推荐'
-        onClick={() => select((index + 1) % titles.length)}
-      >
-        <ChevronRight size={18} aria-hidden />
-      </button>
-      {!reduced && (
-        <div
-          ref={progressElement}
-          className='tm-home-hero-progress'
-          role='progressbar'
-          aria-label='封面自动切换进度'
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={0}
-          aria-valuetext={
-            autoplay.state === 'idle'
-              ? '手动浏览中，静置12秒后恢复自动切换'
-              : autoplay.state === 'suspended'
-              ? '自动切换暂缓'
-              : '正在计时，随后自动切换封面'
-          }
-          data-state={autoplay.state}
-        >
-          <motion.span style={{ scaleX: autoplay.progress }} />
-        </div>
-      )}
-    </div>
+    <HeroControls
+      index={index}
+      count={titles.length}
+      reduced={reduced}
+      select={select}
+      progressRef={progressElement}
+      autoplay={autoplay}
+    />
   );
 
   return (
@@ -375,237 +316,65 @@ export default function HomeHero({
               y: reduced || portrait ? 0 : copyY,
             }}
           >
-            <motion.div
-              initial='hidden'
-              animate='visible'
-              variants={{
-                hidden: {},
-                visible: {
-                  transition: { staggerChildren: reduced ? 0 : 0.06 },
-                },
-              }}
-            >
-              {[
-                <div className='tm-home-hero-meta' key='meta'>
-                  {meta}
-                </div>,
-                <h2 className='tm-home-hero-title' key='title'>
-                  {title}
-                </h2>,
-                description ? (
-                  <p className='tm-home-hero-description' key='description'>
-                    {description}
-                  </p>
-                ) : null,
-                <div className='tm-home-hero-actions' key='actions'>
-                  <button
-                    className='tm-btn tm-btn-lg tm-btn-primary tm-btn-art tm-home-hero-action'
-                    onClick={onPlay}
-                  >
-                    <Play size={16} fill='currentColor' />
-                    播放
-                  </button>
-                  <button
-                    className='tm-btn tm-btn-lg tm-btn-art-glass tm-home-hero-action tm-home-hero-action-glass'
-                    onClick={onWatchInRoom}
-                  >
-                    <Users size={18} />
-                    一起看
-                  </button>
-                  {onDetail && (
-                    <button
-                      className='tm-btn tm-btn-lg tm-btn-ghost tm-home-hero-action tm-home-hero-detail'
-                      onClick={onDetail}
-                    >
-                      详情
-                    </button>
-                  )}
-                </div>,
-              ].map(
-                (child, i) =>
-                  child && (
-                    <motion.div
-                      key={i === 3 ? 'actions' : id + '-' + i}
-                      initial='hidden'
-                      animate='visible'
-                      variants={{
-                        hidden: { opacity: 0, y: reduced ? 0 : 12 },
-                        visible: {
-                          opacity: 1,
-                          y: 0,
-                          transition: {
-                            duration: reduced ? 0.12 : 0.36,
-                            delay: reduced ? 0 : i * 0.06,
-                            ease: [0.22, 1, 0.36, 1],
-                          },
-                        },
-                      }}
-                    >
-                      {child}
-                    </motion.div>
-                  )
-              )}
-            </motion.div>
+            <HeroCopyLines
+              id={id}
+              meta={meta}
+              title={title}
+              description={description}
+              reduced={reduced}
+              onPlay={onPlay}
+              onWatchInRoom={onWatchInRoom}
+              onDetail={onDetail}
+            />
             {!showcase && titles.length > 1 && (
-              <div className='tm-home-hero-dots' aria-label='切换推荐'>
-                {titles.map((name, n) => (
-                  <button
-                    key={n}
-                    aria-label={`查看推荐 ${n + 1}：${name}`}
-                    aria-current={n === index ? 'true' : undefined}
-                    data-active={n === index}
-                    onClick={() => select(n)}
-                  >
-                    <span />
-                  </button>
-                ))}
-              </div>
+              <HeroDots titles={titles} index={index} select={select} />
             )}
           </motion.div>
           {showcase ? (
             <div className='tm-home-hero-showcase'>
               <div className='tm-home-hero-poster-deck' aria-label='推荐海报'>
-                <div className='tm-home-hero-poster tm-home-hero-poster-main'>
-                  <button
-                    type='button'
-                    className='tm-home-hero-poster-surface'
-                    aria-label={'查看影片详情：' + title}
-                    onClick={onDetail || onPlay}
-                    {...posterTiltHandlers}
-                  >
-                    <AnimatePresence initial={false}>
-                      {settled && settled.id !== id && (
-                        <motion.span
-                          key={settled.id}
-                          className='tm-home-hero-poster-face'
-                          aria-hidden='true'
-                          initial={false}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration }}
-                        >
-                          {settled.art}
-                        </motion.span>
-                      )}
-                      <motion.span
-                        key={id}
-                        className='tm-home-hero-poster-face'
-                        onLoadCapture={(event) => {
-                          if (event.target instanceof HTMLImageElement)
-                            markLoaded(event.target);
-                        }}
-                        initial={{ opacity: 0, scale: reduced ? 1 : 0.98 }}
-                        animate={{
-                          opacity: ready || !settled ? 1 : 0,
-                          scale: 1,
-                        }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        {failedId === id ? (
-                          <span
-                            className='tm-home-hero-poster-fallback'
-                            role='img'
-                            aria-label='海报暂时无法加载'
-                          >
-                            {Array.from(title)[0] || '影'}
-                          </span>
-                        ) : (
-                          art
-                        )}
-                      </motion.span>
-                    </AnimatePresence>
-                  </button>
-                </div>
+                <HeroMainPoster
+                  id={id}
+                  title={title}
+                  art={art}
+                  settled={settled}
+                  ready={ready}
+                  failed={failedId === id}
+                  reduced={reduced}
+                  duration={duration}
+                  onOpen={onDetail || onPlay}
+                  onImageLoad={markLoaded}
+                />
                 {neighbors.map((target, slot) => {
                   const item = deck?.[target];
                   if (!item) return null;
                   return (
-                    <div
+                    <HeroNeighborPoster
                       key={slot}
-                      className={
-                        'tm-home-hero-poster tm-home-hero-poster-' +
-                        (slot === 0 ? 'left' : 'right')
-                      }
-                    >
-                      <button
-                        type='button'
-                        className='tm-home-hero-poster-surface'
-                        aria-label={'切换推荐：' + item.title}
-                        onClick={() => select(target)}
-                        {...posterTiltHandlers}
-                      >
-                        <AnimatePresence initial={false}>
-                          <motion.span
-                            key={item.id}
-                            className='tm-home-hero-poster-face'
-                            initial={{
-                              opacity: 0,
-                              x: reduced ? 0 : slot === 0 ? -12 : 12,
-                            }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration }}
-                          >
-                            {renderPoster ? (
-                              renderPoster(item)
-                            ) : (
-                              <FilmPoster
-                                src={item.src}
-                                title={item.title}
-                                fit='contain'
-                                eager
-                                className='tm-home-hero-deck-art'
-                              />
-                            )}
-                          </motion.span>
-                        </AnimatePresence>
-                      </button>
-                    </div>
+                      item={item}
+                      side={slot === 0 ? 'left' : 'right'}
+                      reduced={reduced}
+                      duration={duration}
+                      renderPoster={renderPoster}
+                      onSelect={() => select(target)}
+                    />
                   );
                 })}
               </div>
               {controls}
             </div>
           ) : previews.length > 1 ? (
-            <div className='tm-home-upnext' aria-label='接下来'>
-              <span className='tm-home-upnext-label'>接下来</span>
-              <div className='tm-home-hero-thumbs'>
-                {previews.map((item, offset) => {
-                  const target = previewStart + offset;
-                  return (
-                    <button
-                      key={item.id}
-                      className='tm-home-hero-thumb'
-                      aria-label={'切换推荐：' + item.title}
-                      aria-pressed={target === index}
-                      data-active={target === index}
-                      data-small-visible={
-                        target >= smallStart && target < smallStart + 3
-                      }
-                      onClick={() => select(target)}
-                    >
-                      {renderPoster ? (
-                        renderPoster(item)
-                      ) : (
-                        <FilmPoster
-                          src={item.src}
-                          title={item.title}
-                          className='tm-home-hero-deck-art'
-                        />
-                      )}
-                      {target === index && !reduced && (
-                        <motion.span
-                          key={id}
-                          className='tm-home-hero-thumb-progress'
-                          style={{ scaleX: autoplay.progress }}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <HeroUpNext
+              previews={previews}
+              previewStart={previewStart}
+              smallStart={smallStart}
+              index={index}
+              id={id}
+              reduced={reduced}
+              progress={autoplay.progress}
+              renderPoster={renderPoster}
+              select={select}
+            />
           ) : null}
         </div>
         {extraControls && (
