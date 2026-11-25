@@ -18,7 +18,6 @@ import {
 import { installTouchControls } from '@/lib/player-touch-controls';
 import { roomServerNow } from '@/lib/room-clock';
 import type { SearchResult } from '@/lib/types';
-import { base58Decode } from '@/lib/utils';
 import { useLatest } from '@/hooks/useLatest';
 
 import {
@@ -33,7 +32,6 @@ import {
   wakeLockPlugin,
   WatchPlayer,
 } from '@/features/player';
-import { fetchSourceDetail } from '@/features/room/media/catalog';
 import { resolvePlayback } from '@/features/room/media/playback-url';
 import { mediaKey } from '@/features/room/sync/drift';
 import {
@@ -43,81 +41,11 @@ import {
 
 import { ChatDanmaku } from './chat-danmaku';
 import { portFor } from './port';
+import { roomDetail } from './room-detail';
+import type { RoomCommands, RoomPlayerState } from './room-player-types';
 import { filmFromState, playChange } from '../lib/commands';
 
 import type { PlayState, Room } from '@/types/watch-room';
-
-export interface RoomCommands {
-  roomCommand(
-    event: string,
-    payload?: Record<string, unknown>
-  ): Promise<unknown>;
-}
-
-/** 房间影片的详情（选集、标题）：同一片源同一影片只取一次 */
-const detailCache = new Map<string, Promise<SearchResult | null>>();
-
-export function roomDetail(
-  state: Pick<
-    PlayState,
-    'source' | 'videoId' | 'videoName' | 'searchTitle' | 'poster'
-  >
-) {
-  const key = `${state.source}\u0000${state.videoId}`;
-  let pending = detailCache.get(key);
-  if (!pending) {
-    if (state.source === 'directplay') {
-      let url = '';
-      try {
-        url = base58Decode(state.videoId);
-      } catch {
-        url = '';
-      }
-      pending = Promise.resolve(
-        url
-          ? ({
-              id: state.videoId,
-              title: state.videoName || '直链播放',
-              poster: state.poster || '',
-              episodes: [url],
-              episodes_titles: ['直链'],
-              source: 'directplay',
-              source_name: '直链',
-              class: '',
-              year: '',
-              desc: '',
-              type_name: '',
-              douban_id: 0,
-            } as SearchResult)
-          : null
-      );
-    } else
-      pending = fetchSourceDetail(
-        state.source,
-        state.videoId,
-        state.searchTitle || state.videoName || ''
-      ).catch(() => null);
-    detailCache.set(key, pending);
-    void pending.then((value) => {
-      if (!value) detailCache.delete(key);
-    });
-  }
-  return pending;
-}
-
-export interface RoomPlayerState {
-  player: WatchPlayer | null;
-  detail: SearchResult | null;
-  /** 正在放的集（从 0 开始） */
-  episodeIndex: number;
-  loading: boolean;
-  error: string | null;
-  danmaku: DanmakuController;
-  /** 在播放器上飘一条聊天弹幕 */
-  shoot(text: string, self?: boolean, name?: string): void;
-  /** 房间聊天弹幕：飘过画面，全屏时控制条里可以发 */
-  chat: ChatDanmaku;
-}
 
 export function useRoomPlayer(options: {
   container: HTMLDivElement | null;

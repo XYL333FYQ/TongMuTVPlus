@@ -7,7 +7,7 @@
 
 import { createContext, useContext } from 'react';
 
-import type { RoomPlayerState } from '../player/useRoomPlayer';
+import type { RoomPlayerState } from '../player/room-player-types';
 
 export interface RoomVoice {
   available: boolean;
