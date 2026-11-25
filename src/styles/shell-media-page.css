@@ -1,4 +1,50 @@
-/* shell.css 按块拆出的一段（tm-perf、tm-launch），引入顺序紧跟前一段，层叠结果不变 */
+/* shell.css 按块拆出的一段（tm-media-page、tm-route-skeleton、tm-perf、tm-launch），引入顺序紧跟前一段，层叠结果不变 */
+/* 子页名称交给共用顶栏，局部页头保留说明与返回入口。 */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-shell
+  > .tm-media-page-head {
+  border-bottom: 0;
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-page-head-row {
+  height: auto;
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-page-title {
+  display: none;
+}
+
+@keyframes tm-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.tm-route-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.tm-route-skeleton-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+@media (min-width: 768px) {
+  .tm-route-skeleton-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
 /* 卡顿测速条（?perf=1 才出现）：只读，不挡操作 */
 .tm-perf-probe {
   position: fixed;
@@ -147,6 +193,17 @@ html[data-tm-shell] {
   letter-spacing: 0.05em;
 }
 
+html[data-tm-native-launch='true'] .tm-launch-cue,
+html[data-tm-reduced-motion='true'] .tm-launch-cue {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-launch-cue {
+    display: none;
+  }
+}
+
 @keyframes tm-launch-open {
   from {
     opacity: 0;
@@ -186,13 +243,9 @@ html[data-tm-shell] {
   }
 }
 
-html[data-tm-native-launch='true'] .tm-launch-cue,
-html[data-tm-reduced-motion='true'] .tm-launch-cue {
+/* ---------------------------------------------------------------- 沉浸模式（hooks/useImmersiveShell） */
+/* bare：顶栏、手机顶栏、底栏都不显示，给它们留的位置也收回来（手机、触屏平板上的房间页） */
+html[data-tm-immersive='bare']
+  :is(.tm-top-header, .tm-mobile-header-v2, .tm-mobile-nav) {
   display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tm-launch-cue {
-    display: none;
-  }
 }

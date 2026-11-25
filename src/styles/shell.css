@@ -89,79 +89,6 @@ html[data-tm-immersive='bare'] .tm-shell > .tm-shell-body {
   padding-top: 0;
 }
 
-.tm-main {
-  position: relative;
-  min-width: 0;
-  min-height: 100dvh;
-  padding-top: calc(var(--tm-header-height) + 8px + var(--tm-safe-top));
-  padding-bottom: calc(
-    var(--tm-bottom-nav-height) + var(--tm-safe-bottom) + 56px
-  );
-}
-
-.tm-shell-no-navigation .tm-main {
-  padding: 0;
-}
-
-/* Shared desktop scale: navigation must not change size between destinations. */
-@media (min-width: 1700px) {
-  .tm-shell .tm-main {
-    padding-top: calc(8 * var(--tm-wide-unit));
-  }
-}
-
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-main {
-  padding-top: calc(var(--tm-header-height) + var(--tm-safe-top));
-}
-
-/*
-   * 一级页（底栏上的五个页）：底栏已经写明页名，顶部不再重复一遍。
-   * 顶栏只剩右侧几个按钮，行高收到 44px，没有底色，随页面一起滚走（像 Apple TV App），
-   * 页名留给读屏软件。
-   */
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has(.tm-shell[data-tab='true']) {
-  --tm-header-height: 44px;
-}
-
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-main {
-  padding-top: 8px;
-  padding-bottom: 96px;
-}
-
-:where(html[data-tm-device='phone-landscape']) .tm-main {
-  padding-right: env(safe-area-inset-right);
-  padding-left: env(safe-area-inset-left);
-}
-
-/* ---------------------------------------------------------------- 沉浸模式（hooks/useImmersiveShell） */
-/* bare：顶栏、手机顶栏、底栏都不显示，给它们留的位置也收回来（手机、触屏平板上的房间页） */
-html[data-tm-immersive='bare']
-  :is(.tm-top-header, .tm-mobile-header-v2, .tm-mobile-nav) {
-  display: none;
-}
-
-/* fit：外壳照常，主区域不留上下空白、不撑满一屏（窄的电脑窗口上的房间页）；bare 也一样 */
-html:is([data-tm-immersive='bare'], [data-tm-immersive='fit']) .tm-main {
-  min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-/* flush：外壳照常，主区域不留底部空白（电脑上的房间页） */
-html[data-tm-immersive='flush'] .tm-main {
-  padding-bottom: 0;
-}
-
-/* 自己看的播放页完整显示时（手机 / 平板）：页面底部让出它的操作坞，手机底栏不出现 */
-:where(html:not([data-tm-device='wide']))
-  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
-  .tm-main {
-  padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
-}
-
 .tm-embedded-page {
   width: 100%;
   min-width: 0;
@@ -172,11 +99,51 @@ html[data-tm-immersive='flush'] .tm-main {
   animation: tm-page-enter var(--tm-d-page) var(--tm-ease-out) backwards;
 }
 
-@keyframes tm-page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+.tm-account-initial {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tm-account-placeholder {
+  width: 44px;
+  height: 44px;
+}
+
+@media (min-width: 1700px) {
+  .tm-account-initial {
+    width: calc(32 * var(--tm-wide-unit));
+    height: calc(32 * var(--tm-wide-unit));
+    font-size: calc(13 * var(--tm-wide-unit));
   }
+}
+
+.tm-account-indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+}
+
+.tm-mobile-account > .tm-account-placeholder {
+  width: 48px;
+  height: 48px;
+}
+
+.tm-mobile-account .tm-account-initial {
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
 }
 
 /* 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity） */
@@ -191,24 +158,76 @@ html[data-tm-immersive='flush'] .tm-main {
   }
 }
 
-@keyframes tm-page-enter-forward {
-  from {
-    opacity: 0;
-    transform: translateX(28px);
+/* 位置、宽度、层级、最大高度、入场归公共浮层（.tm-popover-layer / useAnchoredLayer），这里只管外观 */
+.tm-account-menu {
+  padding: 6px;
+  border: 0;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  font-size: var(--tm-fs-small);
+  box-shadow: var(--tm-shadow-lg);
+}
+
+.tm-account-menu svg {
+  color: var(--tm-muted);
+}
+
+.tm-account-menu-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: var(--tm-radius-md);
+  text-align: left;
+  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-account-menu-heading:hover {
+  background: var(--tm-surface-raised);
+}
+
+/* 菜单展开时各组依次淡入 */
+.tm-account-menu > * {
+  animation: tm-menu-group-in var(--tm-d-panel) var(--tm-ease-out) backwards;
+}
+
+.tm-account-menu > :nth-child(2) {
+  animation-delay: 20ms;
+}
+
+.tm-account-menu > :nth-child(3) {
+  animation-delay: 40ms;
+}
+
+.tm-account-menu > :nth-child(4) {
+  animation-delay: 60ms;
+}
+
+.tm-account-menu > :nth-child(5) {
+  animation-delay: 80ms;
+}
+
+.tm-account-menu > :nth-child(n + 6) {
+  animation-delay: 100ms;
+}
+
+html[data-tm-reduced-motion='true'] .tm-account-menu > * {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-account-menu > * {
+    animation: none;
   }
 }
 
-@keyframes tm-page-enter-back {
-  from {
-    opacity: 0;
-    transform: translateX(-28px);
-  }
-}
-
-@keyframes tm-page-fade {
-  from {
-    opacity: 0;
-  }
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-account-menu {
+  right: var(--tm-content-gutter);
+  box-shadow: var(--tm-shadow-sm);
 }
 
 html[data-tm-reduced-motion='true']:not([data-tm-nav='tab'])
@@ -222,10 +241,9 @@ html[data-tm-reduced-motion='true']:not([data-tm-nav='tab'])
   }
 }
 
-@keyframes tm-fade {
-  from {
-    opacity: 0;
-  }
+/* —— 切页即时占位（RouteSkeleton）：不播进场动画，网格/列表铺满 —— */
+html .tm-page-transition.tm-page-instant {
+  animation: none;
 }
 
 /* 底栏切换标签：直接换页，不做整页位移动画（新页面渲染占住主线程时，位移动画只剩几帧，看着卡）。
@@ -234,33 +252,11 @@ html[data-tm-nav='tab'] .tm-page-transition {
   animation: tm-page-fade 120ms linear backwards;
 }
 
-/* —— 桌面顶栏 —— */
-/* 顶栏、手机顶栏、底栏显隐时一样淡入淡出 */
-.tm-top-header {
-  display: none;
-  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
-}
-
-.tm-top-header-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  height: var(--tm-header-height);
-}
-
-/* 顶栏常驻在根布局、不在页面流里：固定在顶部，页面主体留出同样的高度，版面与原来一致 */
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has([data-tm-nav-page])
-  .tm-top-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: var(--tm-z-header);
-  display: block;
-  height: var(--tm-header-height);
+@keyframes tm-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
 
 .tm-header-glass {

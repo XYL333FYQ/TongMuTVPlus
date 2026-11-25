@@ -1,4 +1,16 @@
-/* detail.css 按块拆出的一段（tm-detail-facts、tm-detail-error、tm-detail-loading、tm-detail-aux、tm-detail-handle、tm-detail-desktop），引入顺序紧跟前一段，层叠结果不变 */
+/* detail.css 按块拆出的一段（tm-detail-expand、tm-detail-facts、tm-detail-error、tm-detail-loading、tm-detail-aux、tm-detail-handle、tm-detail-desktop），引入顺序紧跟前一段，层叠结果不变 */
+.tm-detail-expand {
+  display: none;
+}
+
+:where(html[data-tm-device='phone']) .tm-detail-expand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 2px;
+  color: var(--tm-text);
+}
+
 .tm-detail-facts {
   padding: 20px;
   border: 0;

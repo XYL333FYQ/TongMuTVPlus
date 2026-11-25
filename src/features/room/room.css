@@ -123,22 +123,6 @@
   padding: 0 12px;
 }
 
-/* ================================================================ 公共 */
-:is(
-    .tm-room-btn,
-    .tm-room-icon,
-    .tm-room-link,
-    .tm-room-pill,
-    .tm-room-lobby-card,
-    .tm-room-segment button,
-    .tm-room-picker-result-head,
-    .tm-room-chat-send,
-    .tm-room-chat-message-delete
-  ):focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: 2px;
-}
-
 .tm-room-share-actions .tm-room-btn-primary {
   flex: 1;
 }
@@ -174,11 +158,6 @@
   .tm-room-lobby-actions
   > .tm-room-btn-primary {
   width: 100%;
-}
-
-:is(.tm-room-recs-chip, .tm-room-view-menu button):focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: 2px;
 }
 
 :where(.tm-room-view[data-layout='compact'])

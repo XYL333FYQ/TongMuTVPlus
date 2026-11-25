@@ -112,25 +112,6 @@
     scale var(--tm-d-press) var(--tm-ease-out);
 }
 
-.tm-theme-segments.tm-animated-theme button[aria-checked='true'] {
-  color: var(--tm-accent-contrast);
-  background: transparent;
-  cursor: default;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .tm-animated-theme button:not([aria-checked='true']):hover {
-    color: var(--tm-text);
-  }
-}
-
-@media (pointer: coarse) {
-  .tm-animated-theme button {
-    min-height: 44px;
-    padding: 0 14px;
-  }
-}
-
 /* 主题分段选择（浅色 / 深色 / 跟随系统） */
 .tm-theme-segments {
   display: flex;
@@ -155,25 +136,22 @@
   color: var(--tm-accent-contrast);
 }
 
-.tm-control-selection {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: var(--tm-text);
-  box-shadow: var(--tm-shadow-sm);
+.tm-theme-segments.tm-animated-theme button[aria-checked='true'] {
+  color: var(--tm-accent-contrast);
+  background: transparent;
+  cursor: default;
 }
 
-html[data-tm-reduced-motion='true'] .tm-control-selection {
-  transform: none !important;
-  transition: none !important;
+@media (hover: hover) and (pointer: fine) {
+  .tm-animated-theme button:not([aria-checked='true']):hover {
+    color: var(--tm-text);
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .tm-control-selection {
-    transform: none !important;
-    transition: none !important;
+@media (pointer: coarse) {
+  .tm-animated-theme button {
+    min-height: 44px;
+    padding: 0 14px;
   }
 }
 
@@ -278,6 +256,28 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
 @media (pointer: coarse) {
   .tm-dropdown-trigger {
     min-height: 44px;
+  }
+}
+
+.tm-control-selection {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--tm-text);
+  box-shadow: var(--tm-shadow-sm);
+}
+
+html[data-tm-reduced-motion='true'] .tm-control-selection {
+  transform: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-control-selection {
+    transform: none !important;
+    transition: none !important;
   }
 }
 

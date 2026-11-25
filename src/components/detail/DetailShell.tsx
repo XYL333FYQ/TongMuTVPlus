@@ -11,8 +11,8 @@ import {
 } from 'react';
 
 import './detail.css';
-import './detail-ambient.css';
-import './detail-facts.css';
+import './detail-rating.css';
+import './detail-expand.css';
 
 import { getDeviceTier } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';

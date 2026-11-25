@@ -1,0 +1,51 @@
+/* primitives.css 按块拆出的一段（主题切换动画和减少动态，不属于任何块），引入顺序紧跟前一段，层叠结果不变 */
+/*
+ * 新旧两层画面：默认新画面在上（铺开式），收拢式反过来（下面两条）。
+ * 底层画面的呼吸：被圆揭开 / 被圆吞回的那一层不裁切，让它朝点击点轻微收放，
+ * 和裁切圆同时长同缓动，新旧主题像一个东西在变形，而不是两张图叠换。
+ * 铺开式（新画面在上层被圆撑开）：旧画面（底层）从点击点略微放大离场；
+ * 收拢式（旧画面在上层被圆收回）：新画面（底层）从略大回落。
+ * 缩放只能 ≥ 1：小于 1 会让画面四边内缩，露出下面的页面底色，形成"边界"。
+ * 只动 transform，走合成层；动画由 theme-transition.ts 给（绕点击点 = 原点在左上角、先平移再缩放）。
+ */
+html[data-tm-theme-transition='circle']::view-transition-old(root) {
+  z-index: 0;
+  animation: none;
+  mix-blend-mode: normal;
+  contain: paint;
+  will-change: clip-path, transform;
+  transform-origin: 0 0;
+}
+
+html[data-tm-theme-transition='circle']::view-transition-new(root) {
+  z-index: 1;
+  animation: none;
+  mix-blend-mode: normal;
+  contain: paint;
+  will-change: clip-path, transform;
+  transform-origin: 0 0;
+}
+
+html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-old(
+    root
+  ) {
+  z-index: 1;
+}
+
+html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-new(
+    root
+  ) {
+  z-index: 0;
+}
+
+/* 减少动态：去掉位移与缩放，只留淡入淡出 */
+html[data-tm-reduced-motion='true']
+  :is(.tm-press, .tm-btn, .tm-icon-btn, .tm-chip):active {
+  scale: 1 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.tm-press, .tm-btn, .tm-icon-btn, .tm-chip):active {
+    scale: 1 !important;
+  }
+}

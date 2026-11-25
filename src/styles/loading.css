@@ -49,16 +49,6 @@ html:not([data-loading-style]) .mtv-load-talisman {
   color: var(--tm-text);
 }
 
-@keyframes mtv-float {
-  0%,
-  100% {
-    transform: translateY(-4px) rotate(-2.5deg);
-  }
-  50% {
-    transform: translateY(-15px) rotate(-2.5deg);
-  }
-}
-
 /* 向外扩散的光环：跟格子同形的圆角方框，边扩大边淡出 */
 .tm-loading-panel.cur::before {
   content: '';
@@ -69,18 +59,6 @@ html:not([data-loading-style]) .mtv-load-talisman {
   box-shadow: 0 0 12px color-mix(in srgb, var(--mtv-acc) 70%, transparent);
   pointer-events: none;
   animation: mtv-spark-ring 1.5s ease-out infinite;
-}
-
-@keyframes mtv-spark-ring {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.9);
-  }
-  75%,
-  100% {
-    opacity: 0;
-    transform: scale(1.5);
-  }
 }
 
 /* 向外迸出的光点：八个点（四边 + 四角）边外扩边闪灭 */
@@ -105,54 +83,10 @@ html:not([data-loading-style]) .mtv-load-talisman {
   animation: mtv-spark-dots 1.5s ease-out 0.3s infinite;
 }
 
-@keyframes mtv-spark-dots {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  25% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.9);
-  }
-}
-
-@keyframes mtv-icon-pop {
-  0% {
-    transform: scale(0.5) rotate(-16deg);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.22) rotate(6deg);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1) rotate(0);
-  }
-}
-
 .tm-loading-grid-dead .tm-loading-panel svg,
 .tm-loading-grid-dead .tm-loading-panel span {
   color: var(--tm-text);
   opacity: 1;
-}
-
-html[data-loading-style='talisman'] .mtv-err-legacy,
-html[data-loading-style='grid'] .mtv-err-legacy,
-html[data-loading-style='grid'] .mtv-err-box {
-  display: none;
-}
-
-/* ---------------- ⑤ 播放器遮罩里的同款 ----------------
-   蒙层底色是 black/85，明暗两套里只有暗色那套看得见，所以这里钉死暗色，
-   不跟站点主题开关走；阵也收小一号，免得顶出 300px 高的移动端播放器。 */
-.mtv-on-dark.mtv-load-grid,
-.mtv-on-dark.mtv-load-talisman {
-  --mtv-ink: var(--tm-text);
-  --mtv-done: var(--tm-text);
-  --mtv-surface: var(--tm-surface);
 }
 
 .mtv-on-dark .tm-loading-panel {
@@ -267,4 +201,116 @@ html .tm-loading .tm-loading-panel.cur::after {
   );
   box-shadow: none;
   animation: tm-loading-sweep 1.6s linear infinite;
+}
+
+@keyframes mtv-float {
+  0%,
+  100% {
+    transform: translateY(-4px) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(-2.5deg);
+  }
+}
+
+@keyframes mtv-spark-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes mtv-spark-dots {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+@keyframes mtv-icon-pop {
+  0% {
+    transform: scale(0.5) rotate(-16deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.22) rotate(6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* 气泡的小尖角：外层描边色三角，里层底色三角叠在上面 */
+.tm-loading-bubble::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: -12px;
+  left: 28px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 12px solid var(--mtv-ink);
+}
+
+.tm-loading-bubble::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: -7.5px;
+  left: 30.5px;
+  border-left: 7.5px solid transparent;
+  border-right: 7.5px solid transparent;
+  border-bottom: 9px solid var(--mtv-surface);
+}
+
+.mtv-on-dark .tm-loading-bubble {
+  max-width: 260px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+@media (min-width: 1024px) {
+  .mtv-on-dark .tm-loading-bubble {
+    max-width: 300px;
+    padding: 10px 17px;
+    font-size: 15px;
+  }
+}
+
+html .tm-loading .tm-loading-bubble::before,
+html .tm-loading .tm-loading-bubble::after {
+  display: none;
+}
+
+html .tm-loading .tm-loading-bubble {
+  position: relative;
+  max-width: 300px;
+  margin: 0;
+  border-radius: var(--tm-radius-md);
+  overflow-wrap: anywhere;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--tm-text);
+  box-shadow: none;
+  transform: none;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
 }

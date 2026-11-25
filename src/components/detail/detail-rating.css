@@ -1,0 +1,325 @@
+/* detail.css 按块拆出的一段（tm-detail-rating、tm-detail-actions、tm-detail-intro、tm-detail-content、tm-detail-panel、tm-detail-ambient、tm-detail-primary、tm-detail-secondary、tm-detail-favorite、tm-detail-mobile、tm-detail-lower、tm-detail-story），引入顺序紧跟前一段，层叠结果不变 */
+.tm-detail-rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+
+.tm-detail-rating .mtv-rate {
+  position: static;
+  font-size: 12px;
+  padding: 2px 7px;
+  font-weight: 500;
+}
+
+:where(html[data-tm-device='phone']) .tm-detail-rating {
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.tm-detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.tm-detail-actions :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border-radius: var(--tm-radius-md);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tm-detail-side .tm-detail-actions {
+  flex-wrap: wrap;
+}
+
+.tm-detail-side .tm-detail-actions > :not(.tm-detail-favorite) {
+  width: 100%;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-mobile-actions
+  .tm-detail-actions {
+  margin: 0;
+  gap: 8px;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-mobile-actions
+  .tm-detail-actions
+  > :not(.tm-detail-favorite) {
+  width: auto;
+  min-width: 0;
+  flex: 1;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-mobile-actions
+  .tm-detail-actions:not(:has(.tm-detail-favorite))
+  > :is(.tm-detail-primary, .tm-detail-secondary) {
+  flex: 0 1 168px;
+  width: 168px;
+}
+
+.tm-detail-story .tm-detail-intro {
+  margin-bottom: 20px;
+}
+
+.tm-detail-intro h4 {
+  margin-bottom: 10px;
+}
+
+.tm-detail-content h4 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: var(--tm-text);
+}
+
+.tm-detail-intro p {
+  white-space: pre-wrap;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-intro
+  p:not([data-expanded='true']) {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:where(html[data-tm-device='phone']) .tm-detail-intro h4 {
+  margin-bottom: 6px;
+}
+
+:where(html[data-tm-device='phone']) .tm-detail-story .tm-detail-intro {
+  margin-bottom: 12px;
+}
+
+/* 进退场（DetailShell 的 data-state）：进场前、关闭时透明并略缩；手机底部面板改为滑到底下。
+   从海报放大展开时（data-origin）进场不滑，交给放大动画。下拉跟手时不过渡。 */
+.tm-detail-layer .tm-detail-panel {
+  transition: opacity var(--tm-d-panel) var(--tm-ease-out),
+    scale var(--tm-d-panel) var(--tm-ease-out),
+    translate var(--tm-d-panel) var(--tm-ease-out);
+}
+
+.tm-detail-layer
+  .tm-detail-panel:is([data-state='entering'], [data-state='closing']) {
+  opacity: 0;
+  scale: 0.98;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-layer
+  .tm-detail-panel:is(
+    [data-state='entering']:not([data-origin]),
+    [data-state='closing']
+  ) {
+  scale: none;
+  translate: 0 100%;
+}
+
+.tm-detail-layer .tm-detail-panel[data-dragging] {
+  transition: none;
+}
+
+.tm-detail-layer .tm-detail-panel[data-kind='gallery'] {
+  height: calc(100dvh - 80px);
+  box-shadow: var(--tm-shadow-sm);
+}
+
+.tm-detail-layer .tm-detail-panel[data-kind='detail'] {
+  height: calc(100dvh - 80px);
+  box-shadow: var(--tm-shadow-sm);
+}
+
+.tm-detail-panel :is(button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+.tm-detail-panel :is(button, a, [tabindex]) {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.tm-detail-panel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.tm-detail-panel .font-semibold {
+  font-weight: 500;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-layer
+  .tm-detail-panel[data-kind='detail'] {
+  height: calc(100dvh - 56px);
+  box-shadow: var(--tm-shadow-sm);
+}
+
+html[data-tm-no-blur='true'] .tm-detail-panel :is(.tm-glass, .tm-detail-icon) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--tm-glass-solid);
+}
+
+html[data-tm-reduced-motion='true'] .tm-detail-panel {
+  transform: none !important;
+  translate: none !important;
+  scale: none !important;
+  transition-duration: 120ms !important;
+  box-shadow: var(--tm-shadow-sm);
+}
+
+html[data-tm-reduced-motion='true'] .tm-detail-panel * {
+  transition-duration: 120ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-detail-panel {
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    transition-duration: 120ms !important;
+    box-shadow: var(--tm-shadow-sm);
+  }
+  .tm-detail-panel * {
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.tm-detail-art .tm-detail-ambient {
+  opacity: 0.35;
+}
+
+/* 影片详情的氛围背景：海报放大、高斯模糊后铺在底下 */
+.tm-detail-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tm-detail-ambient img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.4);
+  filter: blur(80px) saturate(1.3);
+}
+
+html[data-tm-no-blur='true'] .tm-detail-ambient img {
+  filter: none;
+}
+
+.tm-detail-primary {
+  width: 168px;
+  border: 0;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+
+.tm-detail-secondary {
+  width: 168px;
+  color: var(--tm-text);
+  border: 0;
+  background: var(--tm-detail-control-glass);
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-mobile-actions
+  .tm-detail-secondary {
+  background: transparent;
+}
+
+.tm-detail-actions .tm-detail-favorite {
+  width: 48px;
+  border: 0;
+  background: var(--tm-surface-raised);
+}
+
+.tm-detail-mobile-actions {
+  display: none;
+}
+
+:where(html[data-tm-device='phone']) .tm-detail-mobile-actions {
+  display: block;
+  padding: 12px 16px max(32px, env(safe-area-inset-bottom));
+  border-radius: 0;
+  border-width: 1px 0 0;
+  flex-shrink: 0;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-detail-mobile-actions:has(.tm-detail-actions:empty) {
+  display: none;
+}
+
+:where(html[data-tm-device='phone']) .tm-detail-side .tm-detail-mobile-actions {
+  display: none;
+}
+
+.tm-detail-lower {
+  padding: 32px 48px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 48px;
+}
+
+.tm-detail-side .tm-detail-lower {
+  grid-template-columns: 1fr;
+  padding: 24px 20px;
+  gap: 24px;
+}
+
+:where(html[data-tm-device='phone']) .tm-detail-lower {
+  grid-template-columns: 1fr;
+  padding: 24px 16px;
+  gap: 24px;
+}
+
+.tm-detail-story {
+  min-width: 0;
+}
+
+.tm-detail-story section {
+  margin-bottom: 24px;
+}
+
+.tm-detail-story p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--tm-text);
+}
+
+.tm-detail-story .text-xs {
+  font-size: 13px;
+}
+
+.tm-detail-story
+  :is(.tm-dactors-h4-1, .tm-daux-p-1, .tm-depisodes-p-1, .tm-depisodes-p-3) {
+  color: var(--tm-text);
+}
+
+.tm-detail-story :is(.tm-dactors-div-2, .tm-depisodes-div-10) {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+}

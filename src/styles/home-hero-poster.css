@@ -1,53 +1,4 @@
-/* home.css 按块拆出的一段（tm-home-hero-extra、tm-home-hero-loading、tm-home-hero-showcase、tm-home-hero-poster、tm-home-hero-deck、tm-home-hero-controls、tm-home-hero-control、tm-home-hero-counter），引入顺序紧跟前一段，层叠结果不变 */
-.tm-home-hero-extra {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-}
-
-.tm-home-hero-extra button {
-  color: var(--tm-on-art);
-  background: var(--tm-scrim-soft);
-}
-
-.tm-home-hero-loading {
-  display: grid;
-  place-items: center;
-  min-height: 480px;
-  color: var(--tm-on-art-muted);
-}
-
-@media (min-width: 1700px) {
-  .tm-home-hero-loading {
-    min-height: calc(480 * var(--tm-wide-unit));
-  }
-}
-
-.tm-home-hero-showcase {
-  min-width: 0;
-  height: calc(408 * var(--tm-wide-unit));
-}
-
-@media (min-width: 900px) and (max-width: 1199px) {
-  .tm-home-hero-showcase {
-    height: 384px;
-  }
-}
-
-@media (min-width: 600px) and (max-width: 899px) {
-  .tm-home-hero-showcase {
-    height: 344px;
-  }
-}
-
-@media (max-width: 599px) {
-  .tm-home-hero-showcase {
-    width: 100%;
-    height: 274px;
-    order: 1;
-  }
-}
-
+/* home.css 按块拆出的一段（tm-home-hero-poster、tm-home-hero-deck、tm-home-hero-controls、tm-home-hero-control），引入顺序紧跟前一段，层叠结果不变 */
 .tm-home-hero-poster-deck {
   position: relative;
   height: calc(364 * var(--tm-wide-unit));
@@ -317,16 +268,4 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-control {
     transform: none !important;
     transition: none !important;
   }
-}
-
-.tm-home-hero-counter {
-  white-space: nowrap;
-  font-size: calc(14 * var(--tm-wide-unit));
-  font-variant-numeric: tabular-nums;
-  color: var(--tm-on-art-muted);
-}
-
-.tm-home-hero-counter strong {
-  color: var(--tm-on-art);
-  font-weight: 600;
 }

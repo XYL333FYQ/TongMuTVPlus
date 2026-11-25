@@ -1,4 +1,4 @@
-/* RoomView.css 按块拆出的一段（tm-room-view-now、tm-room-view-strip、tm-room-view-ep），引入顺序紧跟前一段，层叠结果不变 */
+/* RoomView.css 按块拆出的一段（tm-room-view-now、tm-room-view-chat、tm-room-view-strip），引入顺序紧跟前一段，层叠结果不变 */
 /* 正在放映 */
 .tm-room-view-now {
   /* 正在放映：直接放在舞台下面，不再套一层卡片 */
@@ -98,8 +98,56 @@
   width: 100%;
 }
 
+.tm-room-view-chat-count {
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 粘在它一开始的位置（顶栏 + 房间栏下面），一进来就看得到输入框，往下滚也不动 */
+.tm-room-view-chat {
+  position: sticky;
+  top: calc(var(--tm-header-height) + 92px);
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--tm-header-height) - 108px);
+  /* 矮屏（平板横屏约 550 高）不能比屏幕还高；以前固定 420 */
+  min-height: 300px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  box-shadow: inset 0 0 0 1px var(--tm-line), var(--tm-shadow-sm);
+}
+
+.tm-room-view-chat-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tm-line);
+}
+
+.tm-room-view-chat-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 .tm-room-view-now .tm-room-view-now-actions {
   gap: 2px;
+}
+
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat {
+  min-width: 0;
+  position: static;
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  border-top: 1px solid var(--tm-line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-now {
@@ -138,6 +186,10 @@
   .tm-room-view-now
   .tm-room-view-now-actions {
   width: auto;
+}
+
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat-head {
+  display: none;
 }
 
 .tm-room-view-now-episode {
@@ -181,6 +233,15 @@
   box-shadow: none;
 }
 
+:where(html[data-tm-device='phone-landscape']) .tm-room-view-chat {
+  display: flex;
+  flex: 0 0 clamp(280px, 36vw, 400px);
+  flex-direction: column;
+  min-height: 0;
+  border-top: 0;
+  border-left: 1px solid var(--tm-line);
+}
+
 .tm-room-view[data-layout='tablet'] .tm-room-view-now {
   flex: none;
   gap: 14px;
@@ -197,6 +258,21 @@
 
 .tm-room-view[data-layout='tablet'] .tm-room-view-now h2 {
   font-size: 17px;
+}
+
+/* 侧栏：四个标签 + 内容；聊天一直挂着，切到别的标签时藏起来 */
+.tm-room-view[data-layout='tablet'] .tm-room-view-chat {
+  position: static;
+  flex: 0 0 clamp(320px, 32vw, 400px);
+  height: auto;
+  min-height: 0;
+  border-radius: var(--tm-radius-xl);
+}
+
+:where(html[data-tm-device='tablet'])
+  .tm-room-view[data-layout='tablet']
+  .tm-room-view-chat {
+  flex: 1 0 260px;
 }
 
 /* 快速选集 */
@@ -233,68 +309,4 @@
 
 .tm-room-view[data-layout='tablet'] .tm-room-view-strip::-webkit-scrollbar {
   display: none;
-}
-
-.tm-room-view-ep {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  min-width: 52px;
-  height: 44px;
-  padding: 0 12px;
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-surface);
-  box-shadow: inset 0 0 0 1px var(--tm-line);
-  color: var(--tm-text);
-  font-size: 14px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  transition: background var(--tm-d-hover), transform var(--tm-d-press);
-}
-
-.tm-room-view-ep:hover:not(:disabled) {
-  background: var(--tm-surface-raised);
-}
-
-.tm-room-view-ep:active:not(:disabled) {
-  transform: scale(0.96);
-}
-
-.tm-room-view-ep[aria-current='true'] {
-  background: var(--tm-text);
-  box-shadow: none;
-  color: var(--tm-accent-contrast);
-}
-
-.tm-room-view-ep:disabled:not([aria-current='true']) {
-  opacity: 0.55;
-}
-
-.tm-room-view-ep-no {
-  max-width: 9em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 面板里的集数：实心小块，和原型一致 */
-.tm-room-view-panel .tm-room-view-ep:not([aria-current='true']) {
-  background: var(--tm-surface-raised);
-  box-shadow: none;
-}
-
-:where(.tm-room-view[data-layout='desktop'])
-  .tm-room-view-strip
-  .tm-room-view-ep {
-  min-width: 46px;
-  height: 38px;
-  font-size: 13px;
-}
-
-.tm-room-view[data-layout='tablet'] .tm-room-view-strip .tm-room-view-ep {
-  flex: none;
-  min-width: 64px;
-  height: 48px;
-  padding: 0 16px;
-  font-size: 15px;
 }

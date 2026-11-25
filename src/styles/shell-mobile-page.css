@@ -1,45 +1,4 @@
-/* shell.css 按块拆出的一段（tm-mobile-title、tm-mobile-page、tm-mobile-account、tm-mobile-back、tm-mobile-nav、tm-ptr），引入顺序紧跟前一段，层叠结果不变 */
-.tm-mobile-title-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  height: var(--tm-header-height);
-  padding-inline: 16px 8px;
-}
-
-.tm-mobile-header-v2[data-has-subtitle='true'] .tm-mobile-title-row {
-  height: calc(var(--tm-header-height) + 20px);
-  align-items: start;
-  padding-top: 10px;
-}
-
-.tm-mobile-header-v2[data-has-subtitle='true'][data-compact='true']
-  .tm-mobile-title-row {
-  height: var(--tm-header-height);
-  align-items: center;
-  padding-top: 0;
-}
-
-/* 访客多一个登录入口，标题使用操作区之外的实际剩余宽度。 */
-.tm-mobile-title-row:has(.tm-guest-login) {
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 8px;
-}
-
-/* Extra actions share the same bounded title lane as the guest login controls. */
-.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-title-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 8px;
-}
-
-.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login),
-.tm-mobile-header-v2[data-room-actions='true']
-  .tm-mobile-title-row:has(.tm-mobile-back) {
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  column-gap: 4px;
-}
-
+/* shell.css 按块拆出的一段（tm-mobile-page、tm-mobile-account、tm-mobile-back、tm-mobile-nav、tm-ptr、tm-install-hint），引入顺序紧跟前一段，层叠结果不变 */
 .tm-mobile-page-title {
   grid-column: 2;
   grid-row: 1;
@@ -156,6 +115,16 @@
   position: static;
   grid-column: 1;
   grid-row: 1;
+}
+
+/*
+   * 一级页（底栏上的五个页）：底栏已经写明页名，顶部不再重复一遍。
+   * 顶栏只剩右侧几个按钮，行高收到 44px，没有底色，随页面一起滚走（像 Apple TV App），
+   * 页名留给读屏软件。
+   */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-shell[data-tab='true']) {
+  --tm-header-height: 44px;
 }
 
 /*
@@ -312,5 +281,52 @@ html:where(:not([data-tm-device='wide']))
 @media (min-width: 768px) {
   .tm-ptr {
     display: none;
+  }
+}
+
+/* iPhone 安装到主屏幕引导 */
+.tm-install-hint {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--tm-bottom-nav-height) + 28px + var(--tm-safe-bottom));
+  z-index: var(--tm-z-nav);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--tm-radius-md);
+  font-size: 14px;
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-md);
+}
+
+.tm-install-hint p {
+  flex: 1;
+  margin: 0;
+}
+
+.tm-install-hint .tm-install-hint-btn {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+@keyframes tm-page-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+@keyframes tm-page-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+
+@keyframes tm-page-fade {
+  from {
+    opacity: 0;
   }
 }

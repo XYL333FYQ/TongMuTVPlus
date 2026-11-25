@@ -3,12 +3,12 @@
 import '@/styles/tokens.css';
 import '@/styles/base.css';
 import '@/styles/primitives.css';
-import '@/styles/primitives-tabs.css';
-import '@/styles/primitives-theme-toggle.css';
-import '@/styles/primitives-morph.css';
+import '@/styles/primitives-chip.css';
+import '@/styles/primitives-theme-emblem.css';
+import '@/styles/primitives-motion.css';
 import '@/styles/layout.css';
-import '@/styles/layout-poster.css';
-import '@/styles/layout-spin.css';
+import '@/styles/layout-section.css';
+import '@/styles/layout-public.css';
 
 import EmptyState from '@/components/feedback/EmptyState';
 

@@ -1,97 +1,4 @@
-/* primitives.css 按块拆出的一段（tm-tabs、tm-tab、tm-chips、tm-chip、tm-input、tm-field、tm-switch、tm-badge），引入顺序紧跟前一段，层叠结果不变 */
-/* —— 一级标签（下划线）：电影 / 剧集 —— */
-.tm-tabs {
-  display: flex;
-  gap: 28px;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--tm-line);
-}
-
-/* 触屏：间距挪进左右内边距，视觉不变、点按区够 44px */
-@media (pointer: coarse) {
-  .tm-tabs {
-    gap: 12px;
-  }
-}
-
-@media (min-width: 1700px) {
-  .tm-tabs {
-    gap: calc(28 * var(--tm-wide-unit));
-  }
-}
-
-.tm-tab {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  min-height: 48px;
-  font-size: var(--tm-fs-subtitle);
-  font-weight: 500;
-  color: var(--tm-muted);
-  white-space: nowrap;
-  transition: color var(--tm-d-hover) var(--tm-ease-out);
-}
-
-.tm-tab:hover {
-  color: var(--tm-text);
-}
-
-.tm-tab:is(
-    [aria-current='page'],
-    [aria-selected='true'],
-    [data-active='true']
-  ) {
-  color: var(--tm-text);
-}
-
-.tm-tab:is(
-    [aria-current='page'],
-    [aria-selected='true'],
-    [data-active='true']
-  )::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-text);
-}
-
-@media (pointer: coarse) {
-  .tm-tab {
-    padding-inline: 8px;
-  }
-  .tm-tab:is(
-      [aria-current='page'],
-      [aria-selected='true'],
-      [data-active='true']
-    )::after {
-    left: 8px;
-    right: 8px;
-  }
-}
-
-@media (min-width: 1700px) {
-  .tm-tab {
-    min-height: calc(48 * var(--tm-wide-unit));
-  }
-}
-
-/* —— 二级筛选（胶囊）：热门 / 最新 —— */
-.tm-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tm-chips[data-scroll='true'] {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-
+/* primitives.css 按块拆出的一段（tm-chip、tm-input、tm-field、tm-switch、tm-badge、tm-theme-toggle），引入顺序紧跟前一段，层叠结果不变 */
 .tm-chip {
   display: inline-flex;
   align-items: center;
@@ -152,6 +59,20 @@
     background-color var(--tm-d-hover) var(--tm-ease-out);
 }
 
+.tm-input::placeholder {
+  color: var(--tm-muted);
+}
+
+.tm-input:hover {
+  border-color: var(--tm-line-strong);
+}
+
+.tm-input:focus {
+  outline: none;
+  border-color: var(--tm-text);
+  box-shadow: 0 0 0 1px var(--tm-text);
+}
+
 /* 触屏上输入框字号不得小于 16px：iOS Safari 聚焦小于 16px 的输入框会自动放大整页。后台沿用自己的紧凑尺寸。 */
 @media (pointer: coarse) {
   body.tm-app
@@ -171,20 +92,6 @@
     ):not(.tm-admin-page *) {
     font-size: max(16px, 1em);
   }
-}
-
-.tm-input::placeholder {
-  color: var(--tm-muted);
-}
-
-.tm-input:hover {
-  border-color: var(--tm-line-strong);
-}
-
-.tm-input:focus {
-  outline: none;
-  border-color: var(--tm-text);
-  box-shadow: 0 0 0 1px var(--tm-text);
 }
 
 .tm-field-label {
@@ -326,4 +233,95 @@ html[data-tm-reduced-motion] .tm-switch-btn-thumb {
 .mtv-rate svg {
   fill: var(--tm-rating-star);
   stroke: none;
+}
+
+@media (min-width: 1700px) {
+  .mtv-rate {
+    top: calc(10 * var(--tm-wide-unit));
+    left: calc(8 * var(--tm-wide-unit));
+    gap: calc(3 * var(--tm-wide-unit));
+    padding: calc(2 * var(--tm-wide-unit)) calc(7 * var(--tm-wide-unit));
+  }
+  .mtv-rate svg {
+    width: calc(11 * var(--tm-wide-unit));
+    height: calc(11 * var(--tm-wide-unit));
+  }
+}
+
+/* —— 主题切换按钮与「日冕形态 ⇄ 月神形态」圆形结界过渡 —— */
+.tm-theme-toggle-placeholder {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.tm-theme-toggle {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--tm-radius-pill);
+  color: var(--tm-text);
+  background: transparent;
+}
+
+.tm-theme-toggle::before {
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  content: '';
+  border: 1px solid var(--tm-line);
+  border-radius: inherit;
+  background: var(--tm-surface-raised);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    transform var(--tm-d-hover) var(--tm-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-theme-toggle:hover::before {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tm-theme-toggle:focus-visible::before,
+.tm-theme-toggle[data-tm-theme-origin='true']::before {
+  opacity: 1;
+  transform: none;
+}
+
+html[data-tm-reduced-motion='true'] .tm-theme-toggle::before {
+  transform: none !important;
+  transition-duration: var(--tm-d-press);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-theme-toggle::before {
+    transform: none !important;
+    transition-duration: var(--tm-d-press);
+  }
+}
+
+/* 主题切换按钮放在顶栏、手机账户区时的尺寸（外壳只摆位置，大小在这里） */
+.tm-mobile-account > .tm-theme-toggle,
+.tm-mobile-account > .tm-theme-toggle-placeholder {
+  width: 48px;
+  height: 48px;
+}
+
+@media (min-width: 1700px) {
+  .tm-top-header .tm-theme-toggle,
+  .tm-top-header .tm-theme-toggle-placeholder {
+    width: calc(44 * var(--tm-wide-unit));
+    height: calc(44 * var(--tm-wide-unit));
+  }
+  .tm-top-header .tm-theme-toggle > svg {
+    width: calc(18 * var(--tm-wide-unit));
+    height: calc(18 * var(--tm-wide-unit));
+  }
 }

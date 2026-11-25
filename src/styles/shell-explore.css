@@ -1,4 +1,4 @@
-/* shell.css 按块拆出的一段（tm-explore、tm-icon-button、tm-media-shell、tm-media-page、tm-page-instant、tm-route-skeleton），引入顺序紧跟前一段，层叠结果不变 */
+/* shell.css 按块拆出的一段（tm-explore、tm-icon-button、tm-media-shell、tm-main），引入顺序紧跟前一段，层叠结果不变 */
 /* —— 「更多」面板 —— */
 .tm-explore-dialog {
   position: fixed;
@@ -16,13 +16,6 @@
 
 .tm-explore-dialog[open] {
   animation: tm-dialog-in var(--tm-d-panel) var(--tm-ease-out);
-}
-
-@keyframes tm-dialog-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-  }
 }
 
 .tm-explore-dialog::backdrop {
@@ -194,19 +187,11 @@ html[data-tm-no-blur='true'] .tm-explore-dialog::backdrop {
   min-height: 44px;
 }
 
-html[data-tm-reduced-motion='true']
-  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
-  animation: tm-fade 120ms var(--tm-ease-out);
-}
-
 html[data-tm-reduced-motion='true'] .tm-explore-card:active {
   scale: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
-    animation: tm-fade 120ms var(--tm-ease-out);
-  }
   .tm-explore-card:active {
     scale: 1;
   }
@@ -221,6 +206,13 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
   }
 }
 
+@keyframes tm-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
 .tm-icon-button {
   display: inline-grid;
   place-items: center;
@@ -229,6 +221,17 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
   border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
   color: var(--tm-text);
+}
+
+html[data-tm-reduced-motion='true']
+  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
+  animation: tm-fade 120ms var(--tm-ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
+    animation: tm-fade 120ms var(--tm-ease-out);
+  }
 }
 
 /* 音乐等自带二级导航的页面：放在全站顶栏下方的正常文档流里 */
@@ -273,47 +276,58 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
   top: var(--tm-header-height);
 }
 
-/* 子页名称交给共用顶栏，局部页头保留说明与返回入口。 */
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-shell
-  > .tm-media-page-head {
-  border-bottom: 0;
+.tm-main {
+  position: relative;
+  min-width: 0;
+  min-height: 100dvh;
+  padding-top: calc(var(--tm-header-height) + 8px + var(--tm-safe-top));
+  padding-bottom: calc(
+    var(--tm-bottom-nav-height) + var(--tm-safe-bottom) + 56px
+  );
 }
 
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-page-head-row {
-  height: auto;
+.tm-shell-no-navigation .tm-main {
+  padding: 0;
 }
 
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-page-title {
-  display: none;
-}
-
-/* —— 切页即时占位（RouteSkeleton）：不播进场动画，网格/列表铺满 —— */
-html .tm-page-transition.tm-page-instant {
-  animation: none;
-}
-
-.tm-route-skeleton-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.tm-route-skeleton-list {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-@media (min-width: 768px) {
-  .tm-route-skeleton-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 16px;
+/* Shared desktop scale: navigation must not change size between destinations. */
+@media (min-width: 1700px) {
+  .tm-shell .tm-main {
+    padding-top: calc(8 * var(--tm-wide-unit));
   }
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-main {
+  padding-top: calc(var(--tm-header-height) + var(--tm-safe-top));
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-main {
+  padding-top: 8px;
+  padding-bottom: 96px;
+}
+
+:where(html[data-tm-device='phone-landscape']) .tm-main {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* fit：外壳照常，主区域不留上下空白、不撑满一屏（窄的电脑窗口上的房间页）；bare 也一样 */
+html:is([data-tm-immersive='bare'], [data-tm-immersive='fit']) .tm-main {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* flush：外壳照常，主区域不留底部空白（电脑上的房间页） */
+html[data-tm-immersive='flush'] .tm-main {
+  padding-bottom: 0;
+}
+
+/* 自己看的播放页完整显示时（手机 / 平板）：页面底部让出它的操作坞，手机底栏不出现 */
+:where(html:not([data-tm-device='wide']))
+  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
+  .tm-main {
+  padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
 }

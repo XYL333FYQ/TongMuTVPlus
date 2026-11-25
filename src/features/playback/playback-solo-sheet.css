@@ -1,4 +1,4 @@
-/* playback.css 按块拆出的一段（tm-solo-sheet、tm-solo-rail、tm-solo-selector），引入顺序紧跟前一段，层叠结果不变 */
+/* playback.css 按块拆出的一段（tm-solo-sheet、tm-solo-selector、tm-solo-tools），引入顺序紧跟前一段，层叠结果不变 */
 /* ================================================================
  * 独立看播放页（2026-11-14 C 版）：
  * 手机 / 平板：选集、换源、弹幕、工具、详情收进底部操作坞，点开是半屏面板，画面留在上面；
@@ -7,6 +7,15 @@
 .tm-solo-sheet-close,
 .tm-solo-sheet-head,
 .tm-solo-sheet-backdrop {
+  display: none;
+}
+
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-selector:not([data-tm-sheet]) {
+  display: none;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-tools:not([data-tm-sheet]) {
   display: none;
 }
 
@@ -59,6 +68,11 @@
   place-items: center;
 }
 
+:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] {
+  padding-top: 0;
+  overflow-y: auto;
+}
+
 :where(html:not([data-tm-device='wide']))
   .tm-solo-tools[data-tm-sheet]
   > .tm-solo-sheet-head {
@@ -89,6 +103,31 @@
   color: var(--tm-muted);
 }
 
+/* 工具面板里按钮带字、换行排，不再横向挤一条 */
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-tools[data-tm-sheet]
+  > div:not(.tm-solo-sheet-head) {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] button {
+  width: auto;
+  height: 44px;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-tools[data-tm-sheet]
+  button
+  > span {
+  display: inline;
+  max-width: none;
+}
+
 :where(html:not([data-tm-device='wide'])) .tm-solo-sheet-backdrop[data-open] {
   position: fixed;
   inset: 0;
@@ -97,133 +136,6 @@
   border: 0;
   /* 不压暗：上面的画面要照常看清楚，点空白处关面板 */
   background: transparent;
-}
-
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  .tm-solo-sheet-close {
-  top: 10px;
-}
-
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  > .tm-solo-sheet-head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 60px;
-  background: var(--tm-surface);
-}
-
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  .tm-solo-sheet-head
-  h2 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  .tm-solo-sheet-head
-  button {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  margin-right: -8px;
-  border-radius: 50%;
-  color: var(--tm-muted);
-}
-
-:where(html[data-tm-device='wide']) .tm-solo-sheet-backdrop[data-open] {
-  position: fixed;
-  inset: 0;
-  top: var(--tm-header-height);
-  z-index: calc(var(--tm-z-overlay) - 1);
-  display: block;
-  border: 0;
-  background: var(--tm-scrim);
-}
-
-@keyframes tm-solo-drawer-in {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-}
-
-:where(html:not([data-tm-device='wide'])) .tm-solo-rail {
-  display: none;
-}
-
-/* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
-:where(html[data-tm-device='wide']) .tm-solo-rail {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: 2px;
-  width: 64px;
-  padding: 6px 4px;
-  border-radius: var(--tm-radius-lg);
-  background: var(--tm-surface);
-  box-shadow: inset 0 0 0 1px var(--tm-line);
-}
-
-:where(html[data-tm-device='wide']) .tm-solo-rail button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  width: 56px;
-  min-height: 54px;
-  border-radius: var(--tm-radius-md);
-  color: var(--tm-muted);
-  font-size: 12px;
-  font-weight: 600;
-  transition: background var(--tm-d-hover), color var(--tm-d-hover);
-}
-
-:where(html[data-tm-device='wide']) .tm-solo-rail button:hover,
-:where(html[data-tm-device='wide']) .tm-solo-rail button[aria-pressed='true'] {
-  background: var(--tm-surface-raised);
-  color: var(--tm-text);
-}
-
-:where(html[data-tm-device='wide']) .tm-solo-rail button:focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: 2px;
-}
-
-/* 半屏面板打开时，房间入口胶囊和聊天先让开 */
-body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
-  :is(.tm-room-dock-pill, .tm-room-dock) {
-  visibility: hidden;
-}
-
-:where(html[data-tm-device='wide']) .tm-solo-rail button svg {
-  width: 19px;
-  height: 19px;
-}
-
-:where(html[data-tm-device='wide']) .tm-solo-rail-sep {
-  height: 1px;
-  margin: 4px 10px;
-  background: var(--tm-line);
-}
-
-:where(html[data-tm-device='wide']) .tm-solo-rail-end {
-  margin-top: auto;
-}
-
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector:not([data-tm-sheet]) {
-  display: none;
 }
 
 /* 半屏面板里：选集组件占满剩下的高度，去掉它自带的卡片外框，集数是一格一格的块 */
@@ -276,4 +188,150 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
   padding-inline: 8px;
   border-radius: var(--tm-radius-md);
   background: none;
+}
+
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-selector[data-tm-sheet]
+  .tm-solo-sheet-close {
+  top: 10px;
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-tools:not([data-tm-sheet]) {
+  display: none;
+}
+
+/* 页面容器自成一层（z-index 10），盖不过站点顶栏：抽屉从顶栏下面开始 */
+:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] {
+  position: fixed;
+  top: var(--tm-header-height);
+  right: 0;
+  bottom: 0;
+  z-index: var(--tm-z-overlay);
+  display: block;
+  width: min(380px, 100vw);
+  margin: 0;
+  padding: 0 20px 24px;
+  overflow-y: auto;
+  background: var(--tm-surface);
+  box-shadow: -24px 0 60px -24px rgb(var(--tm-ink-rgb) / 0.6),
+    inset 1px 0 0 var(--tm-line);
+  animation: tm-solo-drawer-in var(--tm-d-panel) var(--tm-ease-out);
+}
+
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  > .tm-solo-sheet-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  background: var(--tm-surface);
+}
+
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  .tm-solo-sheet-head
+  h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  .tm-solo-sheet-head
+  button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  border-radius: 50%;
+  color: var(--tm-muted);
+}
+
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  > div:not(.tm-solo-sheet-head) {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  :is(
+    .tm-ptools-div-3,
+    .tm-ptools-div-4,
+    .tm-ptools-button-1,
+    .tm-ptools-button-2,
+    .tm-ptools-button-3,
+    .tm-ptools-button-4,
+    .tm-ptools-button-7,
+    .tm-ptools-button-8,
+    .tm-ptools-button-9
+  ) {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] button {
+  width: auto;
+  height: 40px;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  button
+  > span {
+  display: inline;
+  max-width: none;
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-sheet-backdrop[data-open] {
+  position: fixed;
+  inset: 0;
+  top: var(--tm-header-height);
+  z-index: calc(var(--tm-z-overlay) - 1);
+  display: block;
+  border: 0;
+  background: var(--tm-scrim);
+}
+
+html[data-tm-reduced-motion] .tm-solo-tools[data-tm-sheet] {
+  animation: none;
+}
+
+/* 工具按钮一排排往下排，去广告等开关另起一行 */
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  :is(
+    .tm-ptools-div-3,
+    .tm-ptools-div-4,
+    .tm-ptools-button-1,
+    .tm-ptools-button-2,
+    .tm-ptools-button-3,
+    .tm-ptools-button-4,
+    .tm-ptools-button-7,
+    .tm-ptools-button-8,
+    .tm-ptools-button-9
+  )
+  > :is(
+    .tm-ptools-div-3,
+    .tm-ptools-div-4,
+    .tm-ptools-button-1,
+    .tm-ptools-button-2,
+    .tm-ptools-button-3,
+    .tm-ptools-button-4,
+    .tm-ptools-button-7,
+    .tm-ptools-button-8,
+    .tm-ptools-button-9
+  ) {
+  flex: 0 0 100%;
 }

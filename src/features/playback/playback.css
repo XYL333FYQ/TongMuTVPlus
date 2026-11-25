@@ -246,20 +246,6 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   font-size: 13px;
 }
 
-/* 播放器工具栏、设置面板可用 Tab 到达（art-keyboard.ts），焦点环画在视频上方，用浅色 */
-.art-video-player
-  :is(.art-control, .art-setting-item, .art-selector-item):focus-visible {
-  outline: 2px solid var(--tm-on-art);
-  outline-offset: -2px;
-  border-radius: var(--tm-radius-xs);
-}
-
-/* Artplayer 把播放器里所有 svg 涂满文字色（.art-video-player svg { fill }）。
-   线条图标（svg 上写了 fill="none"）被涂满后成了一坨，例如房间弹幕开关。按图标自己声明的来 */
-.art-video-player svg[fill='none'] {
-  fill: none;
-}
-
 /* 拖动过程中跟手，不要过渡；松手后吸附到角落才有 220ms 动画 */
 .tm-playback-host[data-dragging='true'] [data-tm-player-mount] {
   transition: none;
@@ -305,6 +291,20 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   z-index: var(--tm-z-nav);
   text-align: center;
   box-shadow: var(--tm-shadow-md);
+}
+
+/* 播放器工具栏、设置面板可用 Tab 到达（art-keyboard.ts），焦点环画在视频上方，用浅色 */
+.art-video-player
+  :is(.art-control, .art-setting-item, .art-selector-item):focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: -2px;
+  border-radius: var(--tm-radius-xs);
+}
+
+/* Artplayer 把播放器里所有 svg 涂满文字色（.art-video-player svg { fill }）。
+   线条图标（svg 上写了 fill="none"）被涂满后成了一坨，例如房间弹幕开关。按图标自己声明的来 */
+.art-video-player svg[fill='none'] {
+  fill: none;
 }
 
 /* 播放器设置面板：矮播放器（手机竖屏约 200px）里不能比画面还高，

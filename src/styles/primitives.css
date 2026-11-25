@@ -70,6 +70,22 @@ html[data-tm-no-blur='true'] .tm-glass {
   animation: tm-skeleton-sweep 1.5s var(--tm-ease-in-out) 180ms infinite;
 }
 
+html[data-tm-theme-transition] .tm-skeleton::after {
+  animation-play-state: paused !important;
+}
+
+html[data-tm-reduced-motion='true'] .tm-skeleton::after {
+  animation: none !important;
+  background: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-skeleton::after {
+    animation: none !important;
+    background: none;
+  }
+}
+
 @keyframes tm-skeleton-appear {
   to {
     opacity: 1;
@@ -79,88 +95,6 @@ html[data-tm-no-blur='true'] .tm-glass {
 @keyframes tm-skeleton-sweep {
   to {
     transform: translateX(100%);
-  }
-}
-
-html[data-tm-theme-transition] .tm-skeleton::after {
-  animation-play-state: paused !important;
-}
-
-[data-tm-theme-origin='true'] {
-  view-transition-name: tm-theme-control;
-}
-
-/* 日冕环的占位：只为了在过渡层里有一个名字，位置由 theme-transition.ts 写在自己身上 */
-[data-tm-theme-aura='true'] {
-  position: fixed;
-  width: 2px;
-  height: 2px;
-  margin-left: -1px;
-  margin-top: -1px;
-  pointer-events: none;
-  opacity: 0;
-  view-transition-name: tm-theme-aura;
-}
-
-html[data-tm-theme-transition='circle']::view-transition {
-  pointer-events: none;
-}
-
-html[data-tm-theme-transition='circle']::view-transition-group(
-    tm-theme-control
-  ) {
-  z-index: 2;
-  animation: tm-theme-origin-pulse var(--tm-d-theme) var(--tm-ease-theme) both;
-}
-
-/*
- * 日 ⇄ 月 同一图形变形：新层是按钮的实时画面，里面的 SVG 自己在做变形（光线收拢、
- * 圆盘被咬成弯月）；旧层只是静态的起始帧，快速淡出把它让给实时画面，没有两个形状叠换。
- */
-html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-control) {
-  animation: tm-theme-control-out calc(var(--tm-d-theme) * 0.4)
-    var(--tm-ease-theme) both;
-  mix-blend-mode: normal;
-}
-
-html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-control) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-@keyframes tm-theme-origin-pulse {
-  0% {
-    filter: brightness(1);
-  }
-  38% {
-    filter: brightness(1.16);
-  }
-  100% {
-    filter: brightness(1);
-  }
-}
-
-@keyframes tm-theme-control-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-html[data-tm-reduced-motion='true'] .tm-skeleton::after {
-  animation: none !important;
-  background: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :is(.tm-press, .tm-btn, .tm-icon-btn, .tm-chip):active {
-    scale: 1 !important;
-  }
-  .tm-skeleton::after {
-    animation: none !important;
-    background: none;
   }
 }
 
@@ -269,16 +203,6 @@ html[data-tm-no-blur='true'] .tm-btn-art-glass {
     min-height: calc(44 * var(--tm-wide-unit));
     padding-inline: calc(20 * var(--tm-wide-unit));
   }
-  .mtv-rate {
-    top: calc(10 * var(--tm-wide-unit));
-    left: calc(8 * var(--tm-wide-unit));
-    gap: calc(3 * var(--tm-wide-unit));
-    padding: calc(2 * var(--tm-wide-unit)) calc(7 * var(--tm-wide-unit));
-  }
-  .mtv-rate svg {
-    width: calc(11 * var(--tm-wide-unit));
-    height: calc(11 * var(--tm-wide-unit));
-  }
 }
 
 .tm-icon-btn {
@@ -316,4 +240,97 @@ html[data-tm-no-blur='true'] .tm-btn-art-glass {
 
 .tm-icon-btn[data-variant='art']:hover {
   background: var(--tm-scrim);
+}
+
+/* —— 一级标签（下划线）：电影 / 剧集 —— */
+.tm-tabs {
+  display: flex;
+  gap: 28px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--tm-line);
+}
+
+/* 触屏：间距挪进左右内边距，视觉不变、点按区够 44px */
+@media (pointer: coarse) {
+  .tm-tabs {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1700px) {
+  .tm-tabs {
+    gap: calc(28 * var(--tm-wide-unit));
+  }
+}
+
+.tm-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 48px;
+  font-size: var(--tm-fs-subtitle);
+  font-weight: 500;
+  color: var(--tm-muted);
+  white-space: nowrap;
+  transition: color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-tab:hover {
+  color: var(--tm-text);
+}
+
+.tm-tab:is(
+    [aria-current='page'],
+    [aria-selected='true'],
+    [data-active='true']
+  ) {
+  color: var(--tm-text);
+}
+
+.tm-tab:is(
+    [aria-current='page'],
+    [aria-selected='true'],
+    [data-active='true']
+  )::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-text);
+}
+
+@media (pointer: coarse) {
+  .tm-tab {
+    padding-inline: 8px;
+  }
+  .tm-tab:is(
+      [aria-current='page'],
+      [aria-selected='true'],
+      [data-active='true']
+    )::after {
+    left: 8px;
+    right: 8px;
+  }
+}
+
+@media (min-width: 1700px) {
+  .tm-tab {
+    min-height: calc(48 * var(--tm-wide-unit));
+  }
+}
+
+/* —— 二级筛选（胶囊）：热门 / 最新 —— */
+.tm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tm-chips[data-scroll='true'] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }

@@ -1,0 +1,239 @@
+/* playback.css 按块拆出的一段（tm-solo-dock、tm-solo-row、tm-solo-page、tm-solo-detail、tm-solo-rail、tm-solo-title），引入顺序紧跟前一段，层叠结果不变 */
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--tm-z-page-float);
+  display: flex;
+  gap: 2px;
+  padding: 4px max(4px, var(--tm-safe-left, 0px))
+    calc(4px + var(--tm-safe-bottom, 0px));
+  border-top: 1px solid var(--tm-line);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+
+html:where(:not([data-tm-device='wide']))[data-tm-no-blur] .tm-solo-dock {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--tm-surface);
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock button {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 50px;
+  padding: 0 2px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-text);
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock button:hover {
+  background: var(--tm-line);
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock button:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: -2px;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock span {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock em {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-dock {
+  display: none;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock svg {
+  width: 19px;
+  height: 19px;
+}
+
+@keyframes tm-solo-sheet-in {
+  from {
+    transform: translateY(32px);
+    opacity: 0.4;
+  }
+}
+
+@keyframes tm-solo-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+html[data-tm-reduced-motion]
+  :is(.tm-solo-selector, .tm-solo-tools, .tm-solo-sheet-backdrop) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.tm-solo-selector, .tm-solo-tools, .tm-solo-sheet-backdrop) {
+    animation: none;
+  }
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.tm-solo-page > .tm-solo-row {
+  order: 1;
+}
+
+/* 半屏面板打开时，房间入口胶囊和聊天先让开 */
+body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
+  :is(.tm-room-dock-pill, .tm-room-dock) {
+  visibility: hidden;
+}
+
+/* ---------- 和原型对齐（2026-11-15）：手机 / 平板上画面在最上面，标题在画面下面 */
+/* 所有宽度：画面在最上面，标题在画面下面 */
+.tm-solo-page > * {
+  order: 3;
+}
+
+/* 手机 / 平板：画面贴满两边、不留圆角 */
+:where(html:not([data-tm-device='wide'])) .tm-page-container.tm-solo-page {
+  padding-top: 0;
+}
+
+/* 详情：不再重复一个超大标题，和上面的标题同一级字号 */
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail > div > div {
+  padding: 4px 0 0;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 {
+  justify-content: flex-start;
+  margin-bottom: 4px;
+  font-size: 16px;
+  text-align: left;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 svg {
+  width: 22px;
+  height: 22px;
+}
+
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-detail
+  :is(
+    .tm-pdetail-button-2,
+    .tm-pdetail-div-8,
+    .tm-pdetail-div-11,
+    .tm-pdetail-div-12
+  ) {
+  font-size: 14px;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-rail {
+  display: none;
+}
+
+/* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
+:where(html[data-tm-device='wide']) .tm-solo-rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  width: 64px;
+  padding: 6px 4px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-rail button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 56px;
+  min-height: 54px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background var(--tm-d-hover), color var(--tm-d-hover);
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-rail button:hover,
+:where(html[data-tm-device='wide']) .tm-solo-rail button[aria-pressed='true'] {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-rail button:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-rail button svg {
+  width: 19px;
+  height: 19px;
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-rail-sep {
+  height: 1px;
+  margin: 4px 10px;
+  background: var(--tm-line);
+}
+
+:where(html[data-tm-device='wide']) .tm-solo-rail-end {
+  margin-top: auto;
+}
+
+.tm-solo-page > .tm-solo-title {
+  order: 2;
+}
+
+/* ---------- 收紧尺寸（2026-11-15 第二轮） */
+/* 手机 / 平板：标题、标签、详情字号降一级 */
+:where(html:not([data-tm-device='wide'])) .tm-solo-title {
+  padding-block: 2px;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-solo-title h1 {
+  gap: 6px;
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-title
+  h1
+  span:is(.tm-ptitle-span-3, .tm-ptitle-span-4, .tm-ptitle-span-5) {
+  padding: 1px 9px;
+  font-size: 12px;
+}
+
+@keyframes tm-solo-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}

@@ -25,80 +25,6 @@
   padding-inline: var(--tm-content-gutter);
 }
 
-.tm-home-hero {
-  position: relative;
-  isolation: isolate;
-  margin-top: 16px;
-}
-
-@media (max-width: 599px) {
-  .tm-home-hero {
-    margin-inline: calc(var(--tm-content-gutter) * -1);
-    margin-top: 12px;
-  }
-}
-
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell[data-page='/']
-  .tm-home-hero {
-  margin-top: 0;
-}
-
-/* 首页大图在手机上铺到屏幕最顶（顶栏按钮浮在图上），不再留一条空带 */
-@media (max-width: 599px) {
-  .tm-shell[data-tab='true'][data-page='/'] .tm-home-hero {
-    margin-top: calc(-1 * (var(--tm-safe-top) + var(--tm-header-height)));
-  }
-}
-
-.tm-home-hero-panel {
-  position: relative;
-  isolation: isolate;
-  min-height: 480px;
-  /* Scaled artwork must not make focus scroll the entire hero. */
-  overflow: clip;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-hero-bg);
-  color: var(--tm-on-art);
-}
-
-@media (min-width: 900px) and (max-width: 1199px) {
-  .tm-home-hero-panel {
-    min-height: 440px;
-  }
-}
-
-@media (max-width: 899px) {
-  .tm-home-hero-panel {
-    min-height: 400px;
-  }
-}
-
-@media (max-width: 599px) {
-  .tm-home-hero-panel {
-    min-height: 420px;
-    border-radius: 0;
-  }
-  .tm-home-hero-panel[data-showcase='true'] {
-    min-height: 560px;
-  }
-}
-
-/* Keep the reference composition on wide desktop viewports, including a
-   browser displaying more CSS pixels at a smaller page zoom. No zoom detection
-   or document scaling: the same twelve columns retain their proportions. */
-@media (min-width: 1700px) {
-  .tm-home-hero-panel {
-    min-height: calc(480 * var(--tm-wide-unit));
-  }
-}
-
-@media (max-width: 599px) {
-  .tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel {
-    padding-top: calc(var(--tm-safe-top) + var(--tm-header-height));
-  }
-}
-
 .tm-home-hero-art {
   position: absolute;
   inset: 0;
@@ -358,5 +284,68 @@ html[data-tm-no-blur='true'] .tm-home-hero-image {
     padding-inline: calc(8 * var(--tm-wide-unit));
     font-size: calc(12 * var(--tm-wide-unit));
     line-height: calc(20 * var(--tm-wide-unit));
+  }
+}
+
+.tm-home-hero-meta .tm-hero-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tm-on-art);
+  font-weight: 600;
+}
+
+.tm-hero-score svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--tm-rating-star);
+  stroke: none;
+}
+
+@media (min-width: 1700px) {
+  .tm-hero-score svg {
+    width: calc(14 * var(--tm-wide-unit));
+    height: calc(14 * var(--tm-wide-unit));
+  }
+}
+
+.tm-home-hero-title {
+  margin-top: 14px;
+  color: var(--tm-on-art);
+  font-size: clamp(32px, 4.4vw, 56px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -1px;
+  overflow-wrap: anywhere;
+}
+
+.tm-home-hero-panel[data-showcase='true'] .tm-home-hero-title {
+  font-size: calc(60 * var(--tm-wide-unit));
+  line-height: 1.1;
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-title {
+    font-size: 50px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-title {
+    font-size: 42px;
+  }
+}
+
+@media (max-width: 599px) {
+  .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-title {
+    font-size: 40px;
+  }
+}
+
+@media (min-width: 1700px) {
+  .tm-home-hero-title {
+    margin-top: calc(14 * var(--tm-wide-unit));
+    font-size: calc(56 * var(--tm-wide-unit));
+    letter-spacing: calc(-1 * var(--tm-wide-unit));
   }
 }

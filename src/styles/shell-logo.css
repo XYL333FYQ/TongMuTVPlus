@@ -1,4 +1,4 @@
-/* shell.css 按块拆出的一段（tm-logo、tm-primary-nav、tm-repository、tm-account、tm-mobile-header），引入顺序紧跟前一段，层叠结果不变 */
+/* shell.css 按块拆出的一段（tm-logo、tm-repository、tm-primary-nav、tm-top-header、tm-mobile-header、tm-mobile-title），引入顺序紧跟前一段，层叠结果不变 */
 .tm-logo {
   display: inline-flex;
   align-items: center;
@@ -25,6 +25,36 @@
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+.tm-repository-trigger {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.tm-repository-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 1;
+  padding-top: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.tm-repository-tooltip > span {
+  display: block;
+  padding: 8px 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-sm);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 @media (min-width: 1700px) {
@@ -106,160 +136,33 @@
   }
 }
 
-.tm-repository-trigger {
+/* —— 桌面顶栏 —— */
+/* 顶栏、手机顶栏、底栏显隐时一样淡入淡出 */
+.tm-top-header {
+  display: none;
+  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
+}
+
+.tm-top-header-grid {
   position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
-.tm-repository-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  z-index: 1;
-  padding-top: 8px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-}
-
-.tm-repository-tooltip > span {
-  display: block;
-  padding: 8px 12px;
-  border: 1px solid var(--tm-line);
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-surface-raised);
-  color: var(--tm-text);
-  box-shadow: var(--tm-shadow-sm);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.tm-account-initial {
   display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.tm-account-placeholder {
-  width: 44px;
-  height: 44px;
-}
-
-@media (min-width: 1700px) {
-  .tm-account-initial {
-    width: calc(32 * var(--tm-wide-unit));
-    height: calc(32 * var(--tm-wide-unit));
-    font-size: calc(13 * var(--tm-wide-unit));
-  }
-}
-
-.tm-account-indicator {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border: 0;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
-}
-
-.tm-mobile-account > .tm-account-placeholder {
-  width: 48px;
-  height: 48px;
-}
-
-.tm-mobile-account .tm-account-initial {
-  width: 36px;
-  height: 36px;
-  font-size: 15px;
-}
-
-/* 位置、宽度、层级、最大高度、入场归公共浮层（.tm-popover-layer / useAnchoredLayer），这里只管外观 */
-.tm-account-menu {
-  padding: 6px;
-  border: 0;
-  border-radius: var(--tm-radius-lg);
-  background: var(--tm-surface);
-  color: var(--tm-text);
-  font-size: var(--tm-fs-small);
-  box-shadow: var(--tm-shadow-lg);
-}
-
-.tm-account-menu svg {
-  color: var(--tm-muted);
-}
-
-.tm-account-menu-heading {
-  display: flex;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 64px;
-  padding: 10px 12px;
-  border-radius: var(--tm-radius-md);
-  text-align: left;
-  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
+  gap: 16px;
+  height: var(--tm-header-height);
 }
 
-.tm-account-menu-heading:hover {
-  background: var(--tm-surface-raised);
-}
-
-/* 菜单展开时各组依次淡入 */
-.tm-account-menu > * {
-  animation: tm-menu-group-in var(--tm-d-panel) var(--tm-ease-out) backwards;
-}
-
-.tm-account-menu > :nth-child(2) {
-  animation-delay: 20ms;
-}
-
-.tm-account-menu > :nth-child(3) {
-  animation-delay: 40ms;
-}
-
-.tm-account-menu > :nth-child(4) {
-  animation-delay: 60ms;
-}
-
-.tm-account-menu > :nth-child(5) {
-  animation-delay: 80ms;
-}
-
-.tm-account-menu > :nth-child(n + 6) {
-  animation-delay: 100ms;
-}
-
-@keyframes tm-menu-group-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-}
-
-html[data-tm-reduced-motion='true'] .tm-account-menu > * {
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tm-account-menu > * {
-    animation: none;
-  }
-}
-
+/* 顶栏常驻在根布局、不在页面流里：固定在顶部，页面主体留出同样的高度，版面与原来一致 */
 :where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-account-menu {
-  right: var(--tm-content-gutter);
-  box-shadow: var(--tm-shadow-sm);
+  body:has([data-tm-nav-page])
+  .tm-top-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--tm-z-header);
+  display: block;
+  height: var(--tm-header-height);
 }
 
 /* —— 手机工具栏：页名从首屏起保持居中，控件随栏高协调放大 —— */
@@ -317,4 +220,45 @@ html[data-tm-reduced-motion='true'] .tm-account-menu > * {
 :where(html[data-tm-device='phone-landscape']) .tm-mobile-header-v2 {
   padding-right: env(safe-area-inset-right);
   padding-left: env(safe-area-inset-left);
+}
+
+.tm-mobile-title-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  height: var(--tm-header-height);
+  padding-inline: 16px 8px;
+}
+
+.tm-mobile-header-v2[data-has-subtitle='true'] .tm-mobile-title-row {
+  height: calc(var(--tm-header-height) + 20px);
+  align-items: start;
+  padding-top: 10px;
+}
+
+.tm-mobile-header-v2[data-has-subtitle='true'][data-compact='true']
+  .tm-mobile-title-row {
+  height: var(--tm-header-height);
+  align-items: center;
+  padding-top: 0;
+}
+
+/* 访客多一个登录入口，标题使用操作区之外的实际剩余宽度。 */
+.tm-mobile-title-row:has(.tm-guest-login) {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+}
+
+/* Extra actions share the same bounded title lane as the guest login controls. */
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-title-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+}
+
+.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login),
+.tm-mobile-header-v2[data-room-actions='true']
+  .tm-mobile-title-row:has(.tm-mobile-back) {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  column-gap: 4px;
 }

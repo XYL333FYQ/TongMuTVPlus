@@ -1,0 +1,305 @@
+/* primitives.css 按块拆出的一段（tm-theme-emblem、tm-theme-morph、tm-morph），引入顺序紧跟前一段，层叠结果不变 */
+.tm-theme-emblem {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tm-radius-full);
+}
+
+.tm-theme-emblem-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    transform var(--tm-d-hover) var(--tm-ease-out);
+}
+
+/* 日冕星轨（待唤醒浅色）与月神弦轨（待唤醒深色） */
+.tm-theme-toggle[data-tm-celestial='solar'] .tm-theme-emblem-orbit {
+  border: 1px dashed color-mix(in srgb, var(--tm-text) 34%, transparent);
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--tm-text) 14%, transparent);
+}
+
+.tm-theme-toggle[data-tm-celestial='lunar'] .tm-theme-emblem-orbit {
+  border: 1px solid color-mix(in srgb, var(--tm-text) 28%, transparent);
+  box-shadow: inset -2px -1px 0 0
+    color-mix(in srgb, var(--tm-text) 42%, transparent);
+}
+
+.tm-theme-emblem-core {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-theme-toggle:hover .tm-theme-emblem-orbit {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  .tm-theme-toggle[data-tm-celestial='solar']:hover .tm-theme-emblem-core {
+    transform: rotate(18deg) scale(1.05);
+  }
+  .tm-theme-toggle[data-tm-celestial='lunar']:hover .tm-theme-emblem-core {
+    transform: rotate(-14deg) scale(1.05);
+  }
+}
+
+.tm-theme-toggle[data-tm-theme-origin='true'] .tm-theme-emblem-orbit {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+html[data-tm-theme-transition] .tm-theme-morph {
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme) !important;
+}
+
+html[data-tm-theme-transition] .tm-theme-morph * {
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme),
+    opacity calc(var(--tm-d-theme) * 0.6) var(--tm-ease-theme) !important;
+}
+
+[data-tm-theme-origin='true'] {
+  view-transition-name: tm-theme-control;
+}
+
+/* 日冕环的占位：只为了在过渡层里有一个名字，位置由 theme-transition.ts 写在自己身上 */
+[data-tm-theme-aura='true'] {
+  position: fixed;
+  width: 2px;
+  height: 2px;
+  margin-left: -1px;
+  margin-top: -1px;
+  pointer-events: none;
+  opacity: 0;
+  view-transition-name: tm-theme-aura;
+}
+
+html[data-tm-theme-transition='circle']::view-transition {
+  pointer-events: none;
+}
+
+html[data-tm-theme-transition='circle']::view-transition-group(
+    tm-theme-control
+  ) {
+  z-index: 2;
+  animation: tm-theme-origin-pulse var(--tm-d-theme) var(--tm-ease-theme) both;
+}
+
+/*
+ * 日 ⇄ 月 同一图形变形：新层是按钮的实时画面，里面的 SVG 自己在做变形（光线收拢、
+ * 圆盘被咬成弯月）；旧层只是静态的起始帧，快速淡出把它让给实时画面，没有两个形状叠换。
+ */
+html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-control) {
+  animation: tm-theme-control-out calc(var(--tm-d-theme) * 0.4)
+    var(--tm-ease-theme) both;
+  mix-blend-mode: normal;
+}
+
+html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-control) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@keyframes tm-theme-origin-pulse {
+  0% {
+    filter: brightness(1);
+  }
+  38% {
+    filter: brightness(1.16);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@keyframes tm-theme-control-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* 日月变形图标：状态由 data-tm-celestial 驱动，solar = 正显示太阳，lunar = 正显示月亮 */
+.tm-theme-morph {
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme);
+}
+
+.tm-theme-morph * {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme),
+    opacity calc(var(--tm-d-theme) * 0.6) var(--tm-ease-theme);
+}
+
+[data-tm-celestial='solar'] .tm-theme-morph {
+  transform: rotate(0deg);
+}
+
+[data-tm-celestial='lunar'] .tm-theme-morph {
+  transform: rotate(-24deg);
+}
+
+html[data-tm-reduced-motion='true'] .tm-theme-morph,
+html[data-tm-reduced-motion='true'] .tm-theme-morph * {
+  transition-duration: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-theme-morph,
+  .tm-theme-morph * {
+    transition-duration: 0s;
+  }
+}
+
+html[data-tm-reduced-motion='true'] .tm-theme-emblem-orbit,
+html[data-tm-reduced-motion='true'] .tm-theme-emblem-core {
+  transform: none !important;
+  transition-duration: var(--tm-d-press);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-theme-emblem-orbit,
+  .tm-theme-emblem-core {
+    transform: none !important;
+    transition-duration: var(--tm-d-press);
+  }
+}
+
+.tm-mobile-account .tm-theme-emblem {
+  width: 36px;
+  height: 36px;
+}
+
+.tm-mobile-account .tm-theme-morph {
+  width: 24px;
+  height: 24px;
+}
+
+/*
+ * 主题切换的圆形揭开期间（约半秒）：全站普通 DOM 不做颜色 / 背景 / 边框过渡，
+ * 玻璃模糊（backdrop-filter）先关、其他动画暂停——新画面是实时层，这些每一帧都要重画。
+ * 只用最简单的选择器：以前写成 *:not(.tm-theme-morph):not(.tm-theme-morph *)，
+ * 每个元素都要往上翻祖先，页面越大开头结尾那两次全站重算越慢。日月图标在下面单独放行。
+ */
+html[data-tm-theme-transition] *::before,
+html[data-tm-theme-transition] *::after {
+  transition: none !important;
+}
+
+html[data-tm-theme-transition] * {
+  transition: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  animation-play-state: paused !important;
+}
+
+[data-tm-celestial='solar'] .tm-morph-disc {
+  transform: scale(0.56);
+}
+
+[data-tm-celestial='solar'] .tm-morph-bite {
+  transform: translate(14px, -14px);
+}
+
+[data-tm-celestial='solar'] .tm-morph-rays {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-tm-celestial='lunar'] .tm-morph-disc {
+  transform: scale(1);
+}
+
+[data-tm-celestial='lunar'] .tm-morph-bite {
+  transform: translate(0, 0);
+}
+
+[data-tm-celestial='lunar'] .tm-morph-rays {
+  opacity: 0;
+  transform: rotate(-60deg) scale(0.4);
+}
+
+/*
+ * 日冕破晓波前 / 月神蚀日星环（纯 GPU Compositor 缩放层）：
+ * 环的外径是 1.08 * R，92.59% 处恰好在每一帧贴合 clip-path 边界，
+ * 用柔亮日冕/月华能量带包裹几何裁切线，消除数字剪辑硬边，且下方文字保持锐利。
+ * 这一层固定 1024px 见方（AURA_SIZE），位置、放大倍数和淡入淡出都由 theme-transition.ts
+ * 用 transform / opacity 动画给出——以前直接画成 2.16R 见方，平板上是六千多像素的图层。
+ */
+html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-aura),
+html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-aura) {
+  display: none;
+}
+
+html[data-tm-theme-transition='circle']::view-transition-group(tm-theme-aura) {
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 1024px;
+  height: 1024px;
+  border-radius: var(--tm-radius-full);
+  pointer-events: none;
+  contain: layout style paint;
+  opacity: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    transparent 0% 76%,
+    color-mix(in srgb, var(--tm-on-art) 16%, transparent) 80.5%,
+    transparent 82.5% 88.5%,
+    color-mix(in srgb, var(--tm-on-art) 32%, transparent) 91.5%,
+    color-mix(in srgb, var(--tm-on-art) 82%, transparent) 92.6%,
+    color-mix(in srgb, var(--tm-on-art) 28%, transparent) 94.4%,
+    transparent 98% 100%
+  );
+  /* 盖掉浏览器默认的位置 / 尺寸动画，真正的动画在脚本里 */
+  animation: none;
+}
+
+html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-group(
+    tm-theme-aura
+  ) {
+  background: radial-gradient(
+    circle,
+    transparent 0% 77%,
+    color-mix(in srgb, var(--tm-on-art) 14%, transparent) 81%,
+    transparent 83% 89%,
+    color-mix(in srgb, var(--tm-on-art) 26%, transparent) 91.4%,
+    color-mix(in srgb, var(--tm-on-art) 76%, transparent) 92.6%,
+    color-mix(in srgb, var(--tm-video-bg) 48%, transparent) 95.2%,
+    transparent 98.5% 100%
+  );
+}
+
+html[data-tm-reduced-motion='true']::view-transition-old(root),
+html[data-tm-reduced-motion='true']::view-transition-new(root),
+html[data-tm-reduced-motion='true']::view-transition-old(tm-theme-control),
+html[data-tm-reduced-motion='true']::view-transition-new(tm-theme-control),
+html[data-tm-reduced-motion='true']::view-transition-group(tm-theme-control),
+html[data-tm-reduced-motion='true']::view-transition-group(tm-theme-aura) {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(tm-theme-control),
+  ::view-transition-new(tm-theme-control),
+  ::view-transition-group(tm-theme-control),
+  ::view-transition-group(tm-theme-aura) {
+    animation: none !important;
+  }
+}

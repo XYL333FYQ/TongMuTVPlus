@@ -16,7 +16,7 @@ import { CSSProperties } from 'react';
 
 import './RoomView.css';
 import './RoomView-room-view-now.css';
-import './RoomView-room-view-chat.css';
+import './RoomView-room-view-ep.css';
 import './RoomView-room-view-tabs.css';
 
 import { processImageUrl } from '@/lib/utils';
