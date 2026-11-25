@@ -4,8 +4,6 @@
  * 播放页状态（十）：换集、快捷键、播放器设置变化。
  */
 
-'use client';
-
 import { useEffect, useRef } from 'react';
 
 import { isEpisodeHiddenByFilter } from '@/lib/episode-filter';

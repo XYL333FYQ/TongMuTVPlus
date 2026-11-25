@@ -16,8 +16,6 @@ import PosterMotion from '@/components/catalog/PosterMotion';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import VideoCard from '@/components/VideoCard';
 
-// 首页模块配置接口
-
 export interface HomeModuleData {
   hotMovies: DoubanItem[];
   hotTvShows: DoubanItem[];

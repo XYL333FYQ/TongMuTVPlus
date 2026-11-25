@@ -4,8 +4,6 @@
  * 播放页状态（九）：详情 / 集数变了重新取地址、换源。
  */
 
-'use client';
-
 import { useEffect } from 'react';
 
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';

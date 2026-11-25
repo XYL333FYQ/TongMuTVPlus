@@ -1,7 +1,7 @@
 'use client';
 
 /*
- * 房间页的状态和动作集中在这里：权限、排版档位、面板 / 侧栏标签、选片、邀请、设置、复制链接、发命令。画面各块（RoomViewSections）只读它。
+ * 房间页的状态和动作集中在这里：权限、排版档位、面板 / 侧栏标签、选片、邀请、设置、复制链接、发命令。画面各块（RoomHeader / RoomMain / RoomSide / RoomDialogs）只读它。
  */
 
 import { Headphones, Mic, MicOff, VolumeOff } from 'lucide-react';

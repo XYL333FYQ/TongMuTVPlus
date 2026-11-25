@@ -29,8 +29,6 @@ import { renderHomeModule } from './HomeModule';
 import { useHomeCatalogue } from './useHomeCatalogue';
 import { useHomeLayoutSettings } from './useHomeLayoutSettings';
 
-// 首页模块配置接口
-
 function HomeClient() {
   const reduced = useReducedMotionSetting();
   const router = useRouter();

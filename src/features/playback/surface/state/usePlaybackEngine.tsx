@@ -4,8 +4,6 @@
  * 播放页状态（六）：进度保存、播放器内核（完整 / 小窗 / 收起共用一个实例）、切集写回地址。
  */
 
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
 
 import { useLatest } from '@/hooks/useLatest';

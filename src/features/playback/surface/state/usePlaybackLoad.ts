@@ -4,8 +4,6 @@
  * 播放页状态（八）：进入页面时取详情和全部源。
  */
 
-'use client';
-
 import { useEffect } from 'react';
 
 import { getSkipConfig } from '@/lib/db.client';

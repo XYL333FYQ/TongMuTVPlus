@@ -4,8 +4,6 @@
  * 播放页主体：标题、画面和选集、电脑右侧图标栏、详情 / 评论 / 推荐、手机底部操作坞。
  */
 
-'use client';
-
 import EpisodeSelector from '@/components/EpisodeSelector';
 import SmartRecommendations from '@/components/SmartRecommendations';
 

@@ -4,8 +4,6 @@
  * 播放页状态（二）：豆瓣信息、纠错描述、当前源和 ID、搜索参数、集数标题设置、是否优选、当前集。
  */
 
-'use client';
-
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildEpisodeProgressContentKey } from '@/lib/episode-progress';

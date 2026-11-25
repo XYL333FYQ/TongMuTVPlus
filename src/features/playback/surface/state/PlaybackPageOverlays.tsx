@@ -4,8 +4,6 @@
  * 播放页浮在上面的东西：提示、下载选集、弹幕过滤、快捷键说明、网盘搜索、抽屉（AI / 纠错 / 详情）。
  */
 
-'use client';
-
 import { CUSTOM_SUBTITLE_ACCEPT } from '@/lib/subtitle-converter';
 
 import DanmakuFilterSettings from '@/components/DanmakuFilterSettings';

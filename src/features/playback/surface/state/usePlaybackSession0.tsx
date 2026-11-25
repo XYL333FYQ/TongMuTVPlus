@@ -4,8 +4,6 @@
  * 播放页状态（一）：播放会话、加载阶段和文案、影片基本信息、TMDB 背景与分集名、面板模式、网页全屏、弹幕控制器。
  */
 
-'use client';
-
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 

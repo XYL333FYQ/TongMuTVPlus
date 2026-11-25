@@ -4,8 +4,6 @@
  * 播放页状态（四）：网盘 / 鸿蒙原生 HLS、清晰度、链接续期、源代理、本机转码、播放器跳转进度。
  */
 
-'use client';
-
 import { useRef, useState } from 'react';
 
 import { isNetdiskSource } from '@/lib/netdisk/source';

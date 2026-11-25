@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { readSetting } from '@/lib/settings';
 
+// 首页模块配置接口
 export interface HomeModule {
   id: string;
   name: string;

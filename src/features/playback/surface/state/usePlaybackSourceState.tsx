@@ -4,8 +4,6 @@
  * 播放页状态（五）：换源和优选的状态、测速结果、面板开合、下载选集、换源加载、直链代理记忆。
  */
 
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
 
 import { pruneLocalEpisodeProgressStorage } from '@/lib/episode-progress';

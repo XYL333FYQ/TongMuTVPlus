@@ -4,8 +4,6 @@
  * 播放页状态（三）：换集 / 换片时的同步和弹幕、豆瓣评分、TMDB 背景、分集名、播放地址和来源角标。
  */
 
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
 
 import { logger } from '@/lib/logger';

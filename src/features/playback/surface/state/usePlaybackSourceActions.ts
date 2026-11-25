@@ -4,8 +4,6 @@
  * 播放页状态（七）：工具函数、优选、更新播放地址、销毁播放器。
  */
 
-'use client';
-
 import { useEffect } from 'react';
 
 import { logger } from '@/lib/logger';

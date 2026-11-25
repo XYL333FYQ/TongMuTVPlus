@@ -267,23 +267,27 @@
    弹窗挂在 body 下，不在 .tm-admin-page 里面，用 body:has(.tm-admin-page) 认出后台。
    开关零件（role=switch）自己有 44 的点按范围，不动它；复选框靠包着它的 label 点。 */
 @media (pointer: coarse) {
-  :is(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
-    :is(
-      button:not([role='switch']):not(.tm-switch-btn),
+  /* 具体度为 0（全包在 :where 里）：只给没写最小尺寸的控件兜底 44px，控件自己写了 min-height / min-width 的照它自己的 */
+  :where(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
+    :where(
+      button:not([role='switch'], .tm-switch-btn),
       select,
       textarea,
-      input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not(
+      input:not(
+          [type='checkbox'],
+          [type='radio'],
+          [type='hidden'],
           [type='range']
         )
     ) {
     min-height: 44px;
   }
-  :is(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
-    button:not([role='switch']):not(.tm-switch-btn) {
+  :where(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
+    :where(button:not([role='switch'], .tm-switch-btn)) {
     min-width: 44px;
   }
-  :is(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
-    label:has(> input:is([type='checkbox'], [type='radio'])) {
+  :where(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
+    :where(label:has(> input:is([type='checkbox'], [type='radio']))) {
     min-height: 44px;
   }
   .tm-admin-hit {

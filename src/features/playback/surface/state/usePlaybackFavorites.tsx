@@ -4,8 +4,6 @@
  * 播放页状态（十一）：收藏、卸载时清理播放器。
  */
 
-'use client';
-
 import { useEffect } from 'react';
 
 import { logger } from '@/lib/logger';

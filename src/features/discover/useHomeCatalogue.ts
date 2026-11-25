@@ -21,8 +21,6 @@ import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import type { HomeModule } from './useHomeLayoutSettings';
 
-// 首页模块配置接口
-
 export function useHomeCatalogue(homeModules: HomeModule[]) {
   const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
   const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
