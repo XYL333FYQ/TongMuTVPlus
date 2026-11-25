@@ -6,60 +6,26 @@ import { logger } from '@/lib/logger';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import {
+  type ScreenShareCaptureSettings,
+  type ScreenShareQualityPreset,
+  captureScreen,
+  captureSettingsOf,
+  iceServers,
+} from './screen-share-media';
+import { bindScreenSignaling } from './screen-share-signaling';
+
+// 屏幕共享页从这里拿画质选项（页面测试也按这个模块打桩）
+export {
+  type ScreenShareCaptureSettings,
+  type ScreenShareQualityPreset,
+  screenShareQualityOptions,
+} from './screen-share-media';
+
 import type { Member, ScreenState } from '@/types/watch-room';
 
 // 没有房间时的成员表：固定一个空数组，依赖它的 effect 不会每次渲染都重跑
 const NO_MEMBERS: Member[] = [];
-
-const iceServers = [
-  { urls: 'stun:stun.cloudflare.com:3478' },
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-];
-
-export type ScreenShareQualityPreset = 'smooth' | 'hd' | 'ultra';
-
-const SCREEN_SHARE_CONSTRAINTS: Record<
-  ScreenShareQualityPreset,
-  {
-    label: string;
-    frameRate: number;
-    width: number;
-    height: number;
-  }
-> = {
-  smooth: {
-    label: '流畅 720p / 15fps',
-    frameRate: 15,
-    width: 1280,
-    height: 720,
-  },
-  hd: {
-    label: '高清 1080p / 30fps',
-    frameRate: 30,
-    width: 1920,
-    height: 1080,
-  },
-  ultra: {
-    label: '超清 1440p / 30fps',
-    frameRate: 30,
-    width: 2560,
-    height: 1440,
-  },
-};
-
-export const screenShareQualityOptions = Object.entries(
-  SCREEN_SHARE_CONSTRAINTS
-).map(([value, preset]) => ({
-  value: value as ScreenShareQualityPreset,
-  label: preset.label,
-}));
-
-export interface ScreenShareCaptureSettings {
-  width: number | null;
-  height: number | null;
-  frameRate: number | null;
-}
 
 /**
  * 屏幕共享和房间的连接：
@@ -256,15 +222,7 @@ export function useScreenShare(
 
     let stream: MediaStream | null = null;
     try {
-      const constraints = SCREEN_SHARE_CONSTRAINTS[qualityPreset];
-      stream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          frameRate: constraints.frameRate,
-          width: { ideal: constraints.width },
-          height: { ideal: constraints.height },
-        },
-        audio: true,
-      });
+      stream = await captureScreen(qualityPreset);
 
       // 选屏幕期间房间换了、或本设备不再有资格：不把画面共享进新房间
       if (latest.current.roomId !== roomId || !latest.current.canShare) {
@@ -280,13 +238,7 @@ export function useScreenShare(
 
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
-        const settings = videoTrack.getSettings();
-        setCaptureSettings({
-          width: typeof settings.width === 'number' ? settings.width : null,
-          height: typeof settings.height === 'number' ? settings.height : null,
-          frameRate:
-            typeof settings.frameRate === 'number' ? settings.frameRate : null,
-        });
+        setCaptureSettings(captureSettingsOf(videoTrack));
         videoTrack.onended = () => {
           stopSharing(true);
         };
@@ -336,92 +288,16 @@ export function useScreenShare(
   useEffect(() => {
     if (!socket || !currentRoom) return;
 
-    const handleOffer = async (data: {
-      userId: string;
-      offer: RTCSessionDescriptionInit;
-    }) => {
-      // 共享者只发不收；其余设备都是观众
-      if (localSharingRef.current) return;
-
-      try {
-        const pc = createPeerConnection(data.userId, false);
-        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('screen:answer', {
-          targetUserId: data.userId,
-          answer,
-        });
-      } catch (err) {
-        logger.error('[ScreenShare] Failed to handle offer:', err);
-        setError('接收共享画面失败');
-      }
-    };
-
-    const handleAnswer = async (data: {
-      userId: string;
-      answer: RTCSessionDescriptionInit;
-    }) => {
-      if (!localSharingRef.current) return;
-
-      const pc = peerConnectionsRef.current.get(data.userId);
-      if (!pc) return;
-
-      try {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      } catch (err) {
-        logger.error('[ScreenShare] Failed to handle answer:', err);
-      }
-    };
-
-    const handleIce = async (data: {
-      userId: string;
-      candidate: RTCIceCandidateInit;
-    }) => {
-      const pc = peerConnectionsRef.current.get(data.userId);
-      if (!pc) return;
-
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch (err) {
-        logger.error('[ScreenShare] Failed to handle ICE:', err);
-      }
-    };
-
-    const handleScreenStop = () => {
-      if (!localSharingRef.current) {
-        closeAllPeerConnections();
-        clearRemoteVideo();
-      }
-    };
-
-    const handleSocketDisconnect = () => {
-      if (!localSharingRef.current) {
-        closeAllPeerConnections();
-        clearRemoteVideo();
-      }
-    };
-
-    const handleViewerReady = (data: { userId: string }) => {
-      if (!localSharingRef.current || !displayStreamRef.current) return;
-      sendOfferToMember(data.userId);
-    };
-
-    socket.on('screen:offer', handleOffer);
-    socket.on('screen:answer', handleAnswer);
-    socket.on('screen:ice', handleIce);
-    socket.on('screen:stop', handleScreenStop);
-    socket.on('screen:viewer-ready', handleViewerReady);
-    socket.on('disconnect', handleSocketDisconnect);
-
-    return () => {
-      socket.off('screen:offer', handleOffer);
-      socket.off('screen:answer', handleAnswer);
-      socket.off('screen:ice', handleIce);
-      socket.off('screen:stop', handleScreenStop);
-      socket.off('screen:viewer-ready', handleViewerReady);
-      socket.off('disconnect', handleSocketDisconnect);
-    };
+    return bindScreenSignaling(socket, {
+      localSharingRef,
+      peerConnectionsRef,
+      displayStreamRef,
+      createPeerConnection,
+      closeAllPeerConnections,
+      clearRemoteVideo,
+      sendOfferToMember,
+      setError,
+    });
   }, [
     clearRemoteVideo,
     closeAllPeerConnections,
