@@ -3,32 +3,16 @@
 import { motion } from 'framer-motion';
 import { Bot, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
-import type { BangumiCalendarData } from '@/lib/bangumi.client';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 import { directPlayHref } from '@/lib/direct-play-link';
-import {
-  type HomeCatalogueData,
-  HOME_CACHE_KEYS,
-  HOME_MODULE_KEYS,
-  loadHomeCatalogue,
-} from '@/lib/home-catalogue';
-import { logger } from '@/lib/logger';
 import { useReducedMotionSetting } from '@/lib/motion';
-import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
-import type { TMDBItem } from '@/lib/tmdb.client';
-import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
-import { type SearchResult, DoubanItem } from '@/lib/types';
-import { processImageUrl } from '@/lib/utils';
-import { usePageRefresh } from '@/hooks/usePageRefresh';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import AIChatPanel, { preloadAIChatPanel } from '@/components/AIChatPanel.lazy';
-import PosterGrid from '@/components/catalog/PosterGrid';
-import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
-import SectionHeader from '@/components/catalog/SectionHeader';
 import ContinueWatching from '@/components/ContinueWatching';
 import { notify } from '@/components/feedback/AppDialogs';
 import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
@@ -37,87 +21,33 @@ import ReleaseNoticeDialog from '@/components/feedback/ReleaseNoticeDialog';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
-import VideoCard from '@/components/VideoCard';
 
 import BannerCarousel from '@/features/discover/banner/BannerCarousel';
 import HomeRooms from '@/features/room/HomeRooms';
 
+import { renderHomeModule } from './HomeModule';
+import { useHomeCatalogue } from './useHomeCatalogue';
+import { useHomeLayoutSettings } from './useHomeLayoutSettings';
+
 // 首页模块配置接口
-interface HomeModule {
-  id: string;
-  name: string;
-  enabled: boolean;
-  order: number;
-}
 
 function HomeClient() {
   const reduced = useReducedMotionSetting();
   const router = useRouter();
   const searchParams = useSearchParams();
   // 移除了 activeTab 状态，收藏夹功能已移到 UserMenu
-  const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
-  const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
-  const [hotVarietyShows, setHotVarietyShows] = useState<DoubanItem[]>([]);
-  const [hotDuanju, setHotDuanju] = useState<SearchResult[]>([]);
-  const [upcomingContent, setUpcomingContent] = useState<TMDBItem[]>([]);
-  const [bangumiCalendarData, setBangumiCalendarData] = useState<
-    BangumiCalendarData[]
-  >([]);
-  const [loading, setLoading] = useState(true);
   const { announcement, announcementDisplayMode } = useSite();
-  // 首页模块配置状态
-  const [homeModules, setHomeModules] = useState<HomeModule[]>([
-    { id: 'hotMovies', name: '热门电影', enabled: true, order: 0 },
-    { id: 'hotDuanju', name: '热播短剧', enabled: true, order: 1 },
-    { id: 'bangumiCalendar', name: '新番放送', enabled: true, order: 2 },
-    { id: 'hotTvShows', name: '热门剧集', enabled: true, order: 3 },
-    { id: 'hotVarietyShows', name: '热门综艺', enabled: true, order: 4 },
-    { id: 'upcomingContent', name: '即将上映', enabled: true, order: 5 },
-  ]);
-  const [homeBannerEnabled, setHomeBannerEnabled] = useState(true);
-  const [homeContinueWatchingEnabled, setHomeContinueWatchingEnabled] =
-    useState(true);
-  const homeLoadGeneration = useRef(0);
-  const applyHomeCatalogue = useCallback((data: Partial<HomeCatalogueData>) => {
-    if (data.movies) setHotMovies(data.movies);
-    if (data.tvshows) setHotTvShows(data.tvshows);
-    if (data.variety) setHotVarietyShows(data.variety);
-    if (data.bangumi) setBangumiCalendarData(data.bangumi);
-    if (data.duanju) setHotDuanju(data.duanju);
-    if (data.upcoming) setUpcomingContent(data.upcoming);
-    for (const key of Object.keys(
-      HOME_CACHE_KEYS
-    ) as (keyof HomeCatalogueData)[]) {
-      if (!data[key]?.length) continue;
-      try {
-        writeSetting(
-          HOME_CACHE_KEYS[key],
-          JSON.stringify({ data: data[key], timestamp: Date.now() })
-        );
-      } catch {
-        /* Optional catalogue cache must not block rendering. */
-      }
-    }
-  }, []);
-  useEffect(
-    () => () => {
-      homeLoadGeneration.current += 1;
-    },
-    []
-  );
-  usePageRefresh('/', async (signal) => {
-    const generation = ++homeLoadGeneration.current;
-    setLoading(false);
-    const keys = homeModules
-      .filter((module) => module.enabled)
-      .map((module) => HOME_MODULE_KEYS[module.id])
-      .filter(Boolean);
-    const result = await loadHomeCatalogue(keys, signal);
-    if (signal.aborted || generation !== homeLoadGeneration.current) return;
-    applyHomeCatalogue(result.data);
-    if (result.failed.length)
-      throw new Error('Some homepage sections could not refresh');
-  });
+  const { homeModules, homeBannerEnabled, homeContinueWatchingEnabled } =
+    useHomeLayoutSettings();
+  const {
+    hotMovies,
+    hotTvShows,
+    hotVarietyShows,
+    hotDuanju,
+    upcomingContent,
+    bangumiCalendarData,
+    loading,
+  } = useHomeCatalogue(homeModules);
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [showHttpWarning, setShowHttpWarning] = useState(true);
@@ -125,9 +55,6 @@ function HomeClient() {
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiDefaultMessageNoVideo, setAiDefaultMessageNoVideo] =
     useState(AI_WELCOME_MESSAGE);
-  const [_musicEnabled, setMusicEnabled] = useState(false);
-  const [_mangaEnabled, setMangaEnabled] = useState(false);
-  const [_booksEnabled, setBooksEnabled] = useState(false);
   const [netdiskTempPlayEnabled, setNetdiskTempPlayEnabled] = useState(false);
   const [showDirectPlayDialog, setShowDirectPlayDialog] = useState(false);
   const [directPlayUrl, setDirectPlayUrl] = useState('');
@@ -164,54 +91,6 @@ function HomeClient() {
     }
   };
 
-  const loadHomeLayoutSettings = () => {
-    if (typeof window === 'undefined') return;
-
-    const savedHomeModules = readSetting('homeModules');
-    if (savedHomeModules) {
-      try {
-        setHomeModules(JSON.parse(savedHomeModules));
-      } catch (error) {
-        // 存的首页模块配置坏了就用默认的；原始错误留给排查
-        logger.error('解析首页模块配置失败:', error);
-      }
-    }
-
-    const savedHomeBannerEnabled = readSetting('homeBannerEnabled');
-    if (savedHomeBannerEnabled !== null) {
-      setHomeBannerEnabled(savedHomeBannerEnabled === 'true');
-    }
-
-    const savedHomeContinueWatchingEnabled = readSetting(
-      'homeContinueWatchingEnabled'
-    );
-    if (savedHomeContinueWatchingEnabled !== null) {
-      setHomeContinueWatchingEnabled(
-        savedHomeContinueWatchingEnabled === 'true'
-      );
-    }
-  };
-
-  // 加载首页模块配置
-  useEffect(() => {
-    loadHomeLayoutSettings();
-  }, []);
-
-  // 监听首页模块配置更新事件
-  useEffect(() => {
-    const handleHomeModulesUpdated = () => {
-      loadHomeLayoutSettings();
-    };
-
-    window.addEventListener('homeModulesUpdated', handleHomeModulesUpdated);
-    return () => {
-      window.removeEventListener(
-        'homeModulesUpdated',
-        handleHomeModulesUpdated
-      );
-    };
-  }, []);
-
   // 检查AI功能是否启用
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -227,30 +106,6 @@ function HomeClient() {
       if (defaultMsg) {
         setAiDefaultMessageNoVideo(defaultMsg);
       }
-    }
-  }, []);
-
-  // 检查音乐功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled = !!window.RUNTIME_CONFIG?.MUSIC_ENABLED;
-      setMusicEnabled(enabled);
-    }
-  }, []);
-
-  // 检查漫画功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled = !!window.RUNTIME_CONFIG?.SUWAYOMI_ENABLED;
-      setMangaEnabled(enabled);
-    }
-  }, []);
-
-  // 检查电子书功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled = !!window.RUNTIME_CONFIG?.BOOKS_ENABLED;
-      setBooksEnabled(enabled);
     }
   }, []);
 
@@ -285,320 +140,9 @@ function HomeClient() {
     }
   }, [announcement, announcementDisplayMode]);
 
-  useEffect(() => {
-    const CACHE_DURATION = 60 * 60 * 1000; // 1小时
-
-    const getCache = (key: SettingKey) => {
-      try {
-        const cached = readSetting(key);
-        if (!cached) return null;
-        const { data, timestamp } = JSON.parse(cached);
-        return { data, expired: Date.now() - timestamp > CACHE_DURATION };
-      } catch {
-        return null;
-      }
-    };
-
-    const moviesCache = getCache('homepage_movies');
-    const tvShowsCache = getCache('homepage_tvshows');
-    const varietyCache = getCache('homepage_variety');
-    const bangumiCache = getCache('homepage_bangumi');
-    const duanjuCache = getCache('homepage_duanju');
-    const upcomingCache = getCache('homepage_upcoming');
-
-    if (moviesCache?.data) setHotMovies(moviesCache.data);
-    if (tvShowsCache?.data) setHotTvShows(tvShowsCache.data);
-    if (varietyCache?.data) setHotVarietyShows(varietyCache.data);
-    if (bangumiCache?.data) setBangumiCalendarData(bangumiCache.data);
-    if (duanjuCache?.data) setHotDuanju(duanjuCache.data);
-    if (upcomingCache?.data) setUpcomingContent(upcomingCache.data);
-
-    const hasCache =
-      moviesCache ||
-      tvShowsCache ||
-      varietyCache ||
-      bangumiCache ||
-      duanjuCache ||
-      upcomingCache;
-    if (hasCache) setLoading(false);
-
-    const needsRefresh =
-      !moviesCache ||
-      moviesCache.expired ||
-      !tvShowsCache ||
-      tvShowsCache.expired ||
-      !varietyCache ||
-      varietyCache.expired ||
-      !bangumiCache ||
-      bangumiCache.expired ||
-      !duanjuCache ||
-      duanjuCache.expired ||
-      !upcomingCache ||
-      upcomingCache.expired;
-
-    const generation = ++homeLoadGeneration.current;
-    let cancelled = false;
-    if (needsRefresh) {
-      void loadHomeCatalogue().then((result) => {
-        if (cancelled || generation !== homeLoadGeneration.current) return;
-        applyHomeCatalogue(result.data);
-        if (result.failed.length) {
-          // 拿到的几块照常显示，没拿到的留给排查
-          logger.error('首页部分内容暂时无法获取:', result.failed.join(', '));
-        }
-        setLoading(false);
-      });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [applyHomeCatalogue]);
-
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
     writeSetting('hasSeenAnnouncement', announcement); // 记录已查看弹窗
-  };
-
-  // 渲染模块的函数
-  const renderModule = (moduleId: string) => {
-    switch (moduleId) {
-      case 'hotMovies':
-        return (
-          <section key='hotMovies' className='tm-section tm-home-section'>
-            <SectionHeader
-              variant='home'
-              title='热门电影'
-              href='/douban?type=movie'
-            />
-            <PosterGrid className='tm-home-grid'>
-              {loading
-                ? Array.from({ length: 12 }).map((_, index) => (
-                    <PosterMotion key={index}>
-                      <div className='tm-home-skeleton tm-skeleton' />
-                    </PosterMotion>
-                  ))
-                : hotMovies.slice(0, 12).map((movie) => (
-                    <PosterMotion key={movie.id}>
-                      <VideoCard
-                        detailOnTouch
-                        id={movie.id}
-                        poster={movie.poster}
-                        title={movie.title}
-                        year={movie.year}
-                        rate={movie.rate}
-                        type='movie'
-                        from='douban'
-                        douban_id={movie.id ? parseInt(movie.id) : undefined}
-                      />
-                    </PosterMotion>
-                  ))}
-            </PosterGrid>
-          </section>
-        );
-
-      case 'hotDuanju':
-        if (hotDuanju.length === 0) return null;
-        return (
-          <section key='hotDuanju' className='tm-section tm-home-section'>
-            <SectionHeader variant='home' title='热播短剧' href='/duanju' />
-            <PosterGrid className='tm-home-grid'>
-              {loading
-                ? Array.from({ length: 12 }).map((_, index) => (
-                    <PosterMotion key={index}>
-                      <div className='tm-home-skeleton tm-skeleton' />
-                    </PosterMotion>
-                  ))
-                : hotDuanju.slice(0, 12).map((duanju) => (
-                    <PosterMotion key={duanju.id + duanju.source}>
-                      <VideoCard
-                        detailOnTouch
-                        id={duanju.id}
-                        source={duanju.source}
-                        poster={duanju.poster}
-                        title={duanju.title}
-                        year={duanju.year}
-                        type='tv'
-                        from='search'
-                        source_name={duanju.source_name}
-                        episodes={duanju.episodes?.length}
-                        douban_id={duanju.douban_id}
-                        cmsData={{
-                          desc: duanju.desc,
-                          episodes: duanju.episodes,
-                          episodes_titles: duanju.episodes_titles,
-                        }}
-                      />
-                    </PosterMotion>
-                  ))}
-            </PosterGrid>
-          </section>
-        );
-
-      case 'bangumiCalendar':
-        return (
-          <section key='bangumiCalendar' className='tm-section tm-home-section'>
-            <SectionHeader
-              variant='home'
-              title='新番放送'
-              href='/douban?type=anime'
-            />
-            <PosterGrid className='tm-home-grid'>
-              {loading
-                ? Array.from({ length: 12 }).map((_, index) => (
-                    <PosterMotion key={index}>
-                      <div className='tm-home-skeleton tm-skeleton' />
-                    </PosterMotion>
-                  ))
-                : (() => {
-                    const today = new Date();
-                    const weekdays = [
-                      'Sun',
-                      'Mon',
-                      'Tue',
-                      'Wed',
-                      'Thu',
-                      'Fri',
-                      'Sat',
-                    ];
-                    const currentWeekday = weekdays[today.getDay()];
-                    const todayAnimes =
-                      bangumiCalendarData
-                        .find((item) => item.weekday.en === currentWeekday)
-                        ?.items.filter((anime) => anime.images) || [];
-
-                    return todayAnimes.slice(0, 12).map((anime, index) => (
-                      <PosterMotion key={`${anime.id}-${index}`}>
-                        <VideoCard
-                          detailOnTouch
-                          from='douban'
-                          title={anime.name_cn || anime.name}
-                          poster={
-                            anime.images?.large ||
-                            anime.images?.common ||
-                            anime.images?.medium ||
-                            anime.images?.small ||
-                            anime.images?.grid ||
-                            ''
-                          }
-                          douban_id={anime.id}
-                          rate={anime.rating?.score?.toFixed(1) || ''}
-                          year={anime.air_date?.split('-')?.[0] || ''}
-                          isBangumi={true}
-                        />
-                      </PosterMotion>
-                    ));
-                  })()}
-            </PosterGrid>
-          </section>
-        );
-
-      case 'hotTvShows':
-        return (
-          <section key='hotTvShows' className='tm-section tm-home-section'>
-            <SectionHeader
-              variant='home'
-              title='热门剧集'
-              href='/douban?type=tv'
-            />
-            <PosterGrid className='tm-home-grid'>
-              {loading
-                ? Array.from({ length: 12 }).map((_, index) => (
-                    <PosterMotion key={index}>
-                      <div className='tm-home-skeleton tm-skeleton' />
-                    </PosterMotion>
-                  ))
-                : hotTvShows.slice(0, 12).map((tvShow) => (
-                    <PosterMotion key={tvShow.id}>
-                      <VideoCard
-                        detailOnTouch
-                        id={tvShow.id}
-                        poster={tvShow.poster}
-                        title={tvShow.title}
-                        year={tvShow.year}
-                        rate={tvShow.rate}
-                        type='tv'
-                        from='douban'
-                        douban_id={tvShow.id ? parseInt(tvShow.id) : undefined}
-                      />
-                    </PosterMotion>
-                  ))}
-            </PosterGrid>
-          </section>
-        );
-
-      case 'hotVarietyShows':
-        return (
-          <section key='hotVarietyShows' className='tm-section tm-home-section'>
-            <SectionHeader
-              variant='home'
-              title='热门综艺'
-              href='/douban?type=show'
-            />
-            <PosterGrid className='tm-home-grid'>
-              {loading
-                ? Array.from({ length: 12 }).map((_, index) => (
-                    <PosterMotion key={index}>
-                      <div className='tm-home-skeleton tm-skeleton' />
-                    </PosterMotion>
-                  ))
-                : hotVarietyShows.slice(0, 12).map((varietyShow) => (
-                    <PosterMotion key={varietyShow.id}>
-                      <VideoCard
-                        detailOnTouch
-                        id={varietyShow.id}
-                        poster={varietyShow.poster}
-                        title={varietyShow.title}
-                        year={varietyShow.year}
-                        rate={varietyShow.rate}
-                        type='tv'
-                        from='douban'
-                        douban_id={
-                          varietyShow.id ? parseInt(varietyShow.id) : undefined
-                        }
-                      />
-                    </PosterMotion>
-                  ))}
-            </PosterGrid>
-          </section>
-        );
-
-      case 'upcomingContent':
-        if (upcomingContent.length === 0) return null;
-        return (
-          <section key='upcomingContent' className='tm-section tm-home-section'>
-            <SectionHeader
-              variant='home'
-              title='即将上映'
-              href='/douban?type=movie'
-            />
-            <PosterGrid className='tm-home-grid'>
-              {upcomingContent.slice(0, 12).map((item) => (
-                <PosterMotion key={`${item.media_type}-${item.id}`}>
-                  <VideoCard
-                    detailOnTouch
-                    title={item.title}
-                    poster={processImageUrl(getTMDBImageUrl(item.poster_path))}
-                    year={item.release_date?.split('-')?.[0] || ''}
-                    rate={
-                      item.vote_average && item.vote_average > 0
-                        ? item.vote_average.toFixed(1)
-                        : ''
-                    }
-                    type={item.media_type === 'tv' ? 'tv' : 'movie'}
-                    from='douban'
-                    tmdb_id={item.id}
-                    releaseDate={item.release_date}
-                    isUpcoming={true}
-                  />
-                </PosterMotion>
-              ))}
-            </PosterGrid>
-          </section>
-        );
-
-      default:
-        return null;
-    }
   };
 
   return (
@@ -638,7 +182,17 @@ function HomeClient() {
           {homeModules
             .filter((module) => module.enabled)
             .sort((a, b) => a.order - b.order)
-            .map((module) => renderModule(module.id))}
+            .map((module) =>
+              renderHomeModule(module.id, {
+                hotMovies,
+                hotTvShows,
+                hotVarietyShows,
+                hotDuanju,
+                upcomingContent,
+                bangumiCalendarData,
+                loading,
+              })
+            )}
         </PageContainer>
       </div>
 
