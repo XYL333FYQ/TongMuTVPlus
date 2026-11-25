@@ -1,8 +1,10 @@
 import { act, cleanup, render } from '@testing-library/react';
 
+import { setGlobal } from '@/test/set-global';
+
 import { useVoiceChat } from './useVoiceChat';
 
-type Handler = (data: any) => unknown;
+type Handler = (data: Record<string, unknown>) => unknown;
 function makeSocket() {
   const handlers = new Map<string, Handler>();
   return {
@@ -121,14 +123,17 @@ beforeEach(() => {
     configurable: true,
     value: { getUserMedia },
   });
-  (global as any).RTCPeerConnection = FakePeer;
-  (global as any).RTCSessionDescription = class {
-    constructor(init: unknown) {
-      Object.assign(this, init);
+  setGlobal('RTCPeerConnection', FakePeer);
+  setGlobal(
+    'RTCSessionDescription',
+    class {
+      constructor(init: unknown) {
+        Object.assign(this, init);
+      }
     }
-  };
-  (global as any).RTCIceCandidate = class {};
-  (global as any).AudioContext = FakeAudioContext;
+  );
+  setGlobal('RTCIceCandidate', class {});
+  setGlobal('AudioContext', FakeAudioContext);
   jest.spyOn(console, 'log').mockImplementation(() => undefined);
   jest.spyOn(console, 'error').mockImplementation(() => undefined);
 });

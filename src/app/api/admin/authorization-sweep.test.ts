@@ -100,8 +100,7 @@ describe.each(files.map((file) => [path.relative(ADMIN_DIR, file), file]))(
   '%s',
   (_name, file) => {
     test('rejects visitors and regular members', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const mod = require(file) as Record<string, unknown>;
+      const mod = (await import(file)) as Record<string, unknown>;
       const handlers = METHODS.filter((m) => typeof mod[m] === 'function');
       expect(handlers.length).toBeGreaterThan(0);
       for (const method of handlers) {

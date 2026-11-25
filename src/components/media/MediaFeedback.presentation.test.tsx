@@ -1,16 +1,15 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import EmptyState from './EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
+
 import MediaActionButton from './MediaActionButton';
 import ShelfChipButton from './ShelfChipButton';
 
 test('an error is announced and its existing retry action remains usable', () => {
   const retry = jest.fn();
   render(
-    <EmptyState
-      tone='error'
-      title='加载失败'
-      description='请重试'
+    <RetryNotice
+      message='请重试'
       action={<button onClick={retry}>重试</button>}
     />
   );

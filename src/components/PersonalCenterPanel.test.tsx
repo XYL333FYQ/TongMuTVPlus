@@ -13,7 +13,6 @@ test('the personal center opens in the shared modal layer and closes on Escape',
       roleText='成员'
       showRoleBadge={false}
       avatarText='A'
-      roleBadgeClassName=''
       showDeviceManagement
       showChangePassword
       onOpenEmailSettings={jest.fn()}

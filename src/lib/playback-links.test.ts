@@ -1,5 +1,3 @@
-import { parseAudioLease } from '@/hooks/useAudioFocus';
-
 import {
   anchoredPlaybackTime,
   normalizePlaybackHref,
@@ -8,6 +6,7 @@ import {
   queueItemFromHref,
   queuePlaybackHref,
 } from '@/lib/playback-links';
+import { parseAudioLease } from '@/hooks/useAudioFocus';
 
 import type { PlayState } from '@/types/watch-room';
 

@@ -17,26 +17,38 @@ jest.mock('@/lib/watch-room-socket', () => ({
 }));
 
 type Ack = (timeout: Error | null, reply: Record<string, unknown>) => void;
+/** 还没收到请求时的回调：测试要是在请求发出前就回复，这里直接报错 */
+const notSent: Ack = () => {
+  throw new Error('the request this test replies to was never sent');
+};
+type Listener = (data: unknown) => void;
+/** 测试会读的请求字段；其余字段原样记下 */
+type Payload = Record<string, unknown> & {
+  roomId?: string;
+  afterSeq?: number;
+  beforeSeq?: number;
+  limit?: number;
+};
 class MockSocket {
   connected = true;
   id = 'alice-connection';
-  listeners = new Map<string, Set<(...args: any[]) => void>>();
-  calls: Array<{ event: string; payload: Record<string, any> }> = [];
-  replies = new Map<string, (payload: Record<string, any>, ack: Ack) => void>();
-  on(event: string, handler: (...args: any[]) => void) {
+  listeners = new Map<string, Set<Listener>>();
+  calls: Array<{ event: string; payload: Payload }> = [];
+  replies = new Map<string, (payload: Payload, ack: Ack) => void>();
+  on(event: string, handler: Listener) {
     const listeners = this.listeners.get(event) || new Set();
     listeners.add(handler);
     this.listeners.set(event, listeners);
     return this;
   }
-  off(event: string, handler: (...args: any[]) => void) {
+  off(event: string, handler: Listener) {
     this.listeners.get(event)?.delete(handler);
     return this;
   }
   timeout() {
     return this;
   }
-  emit(event: string, payload: Record<string, any> = {}, ack?: Ack) {
+  emit(event: string, payload: Payload = {}, ack?: Ack) {
     this.calls.push({ event, payload });
     if (ack) {
       const handler = this.replies.get(event);
@@ -357,8 +369,8 @@ test('reconnect fills an offline gap longer than the 100-message join window wit
       success: true,
       messages: messages(
         'A',
-        payload.afterSeq + 1,
-        Math.min(payload.afterSeq + payload.limit, 260)
+        Number(payload.afterSeq) + 1,
+        Math.min(Number(payload.afterSeq) + Number(payload.limit), 260)
       ),
     })
   );
@@ -456,7 +468,7 @@ test('older beforeSeq history is merged in ascending order while retaining the l
 test('an old room manual-history reply cannot enter the newly joined room', async () => {
   const view = await setup();
   await join(view, room('A', { lastMessageSeq: 100 }), messages('A', 100, 100));
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   let pending!: Promise<ChatMessage[]>;
   view.socket.replies.set('chat:history', (_payload, ack) => {
     reply = ack;
@@ -465,9 +477,9 @@ test('an old room manual-history reply cannot enter the newly joined room', asyn
     pending = view.result.current.loadChatHistory(undefined, 100);
   });
   await join(view, room('B', { lastMessageSeq: 10 }), messages('B', 1, 10));
-  expect(reply).toBeDefined();
+  expect(reply).not.toBe(notSent);
   await act(async () => {
-    reply!(null, { success: true, messages: messages('A', 50, 99) });
+    reply(null, { success: true, messages: messages('A', 50, 99) });
     await pending.catch(() => []);
   });
   expect(view.result.current.currentRoom?.id).toBe('B');
@@ -491,7 +503,7 @@ test('an old room reconnect-history reply cannot enter a room joined while the r
       )
     )
   );
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   view.socket.replies.set('chat:history', (_payload, ack) => {
     reply = ack;
   });
@@ -500,10 +512,10 @@ test('an old room reconnect-history reply cannot enter a room joined while the r
     view.socket.deliver('connect');
   });
   await settle();
-  expect(reply).toBeDefined();
+  expect(reply).not.toBe(notSent);
   await join(view, room('B', { lastMessageSeq: 10 }), messages('B', 1, 10));
   await act(async () => {
-    reply!(null, { success: true, messages: messages('A', 11, 110) });
+    reply(null, { success: true, messages: messages('A', 11, 110) });
   });
   expect(view.result.current.currentRoom?.id).toBe('B');
   expect(
@@ -517,7 +529,7 @@ test('an old room reconnect-history reply cannot enter a room joined while the r
 test('disconnect tears down the manager and late history cannot repopulate logged-out room state', async () => {
   const view = await setup();
   await join(view, room('A', { lastMessageSeq: 100 }), messages('A', 100, 100));
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   let pending!: Promise<ChatMessage[]>;
   view.socket.replies.set('chat:history', (_payload, ack) => {
     reply = ack;
@@ -532,7 +544,7 @@ test('disconnect tears down the manager and late history cannot repopulate logge
   expect(view.result.current.isConnected).toBe(false);
   expect(view.result.current.currentRoom).toBeNull();
   await act(async () => {
-    reply!(null, { success: true, messages: messages('A', 50, 99) });
+    reply(null, { success: true, messages: messages('A', 50, 99) });
     await pending.catch(() => []);
   });
   expect(view.result.current.chatMessages.length).toBe(0);
@@ -576,8 +588,8 @@ test('a failed reconnect-history page is retried on the next reconnect instead o
       success: true,
       messages: messages(
         'A',
-        payload.afterSeq + 1,
-        Math.min(payload.afterSeq + payload.limit, 270)
+        Number(payload.afterSeq) + 1,
+        Math.min(Number(payload.afterSeq) + Number(payload.limit), 270)
       ),
     })
   );
@@ -599,7 +611,7 @@ test('a failed reconnect-history page is retried on the next reconnect instead o
 test('a former room read acknowledgement cannot clear unread in the newly joined room', async () => {
   const view = await setup();
   await join(view, room('A', { lastMessageSeq: 10, unreadCount: 10 }));
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   let pending!: Promise<void>;
   view.socket.replies.set('chat:read', (_payload, ack) => {
     reply = ack;
@@ -609,7 +621,7 @@ test('a former room read acknowledgement cannot clear unread in the newly joined
   });
   await join(view, room('B', { lastMessageSeq: 7, unreadCount: 7 }));
   await act(async () => {
-    reply!(null, {
+    reply(null, {
       success: true,
       revision: 1,
       controllerEpoch: 3,
@@ -624,7 +636,7 @@ test('a former room read acknowledgement cannot clear unread in the newly joined
 
 test('a join acknowledgement arriving after disconnect cannot restore logged-out room state', async () => {
   const view = await setup();
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   let pending!: Promise<unknown>;
   view.socket.replies.set('room:join', (_payload, ack) => {
     reply = ack;
@@ -636,7 +648,7 @@ test('a join acknowledgement arriving after disconnect cannot restore logged-out
     view.result.current.disconnect();
   });
   await act(async () => {
-    reply!(null, snapshot(room('A'), messages('A', 1, 10)));
+    reply(null, snapshot(room('A'), messages('A', 1, 10)));
     await pending.catch(() => undefined);
   });
   expect(view.result.current.currentRoom).toBeNull();
@@ -647,7 +659,7 @@ test('a join acknowledgement arriving after disconnect cannot restore logged-out
 test('A to B to A invalidates history from the previous visit even when the room id matches again', async () => {
   const view = await setup();
   await join(view, room('A', { lastMessageSeq: 100 }), messages('A', 100, 100));
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   let pending!: Promise<ChatMessage[]>;
   view.socket.replies.set('chat:history', (_payload, ack) => {
     reply = ack;
@@ -662,7 +674,7 @@ test('A to B to A invalidates history from the previous visit even when the room
     messages('A', 201, 210)
   );
   await act(async () => {
-    reply!(null, { success: true, messages: messages('A', 50, 99) });
+    reply(null, { success: true, messages: messages('A', 50, 99) });
     await pending.catch(() => []);
   });
   expect(view.result.current.currentRoom?.id).toBe('A');
@@ -674,7 +686,7 @@ test('A to B to A invalidates history from the previous visit even when the room
 test('A to B to A invalidates a read acknowledgement from the previous visit', async () => {
   const view = await setup();
   await join(view, room('A', { lastMessageSeq: 10, unreadCount: 10 }));
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   let pending!: Promise<void>;
   view.socket.replies.set('chat:read', (_payload, ack) => {
     reply = ack;
@@ -688,7 +700,7 @@ test('A to B to A invalidates a read acknowledgement from the previous visit', a
     room('A', { revision: 2, lastMessageSeq: 19, unreadCount: 9 })
   );
   await act(async () => {
-    reply!(null, {
+    reply(null, {
       success: true,
       revision: 1,
       controllerEpoch: 3,
@@ -704,7 +716,7 @@ test('A to B to A invalidates a read acknowledgement from the previous visit', a
 
 test('a newer join supersedes an older pending join and keeps the newer room remembered', async () => {
   const view = await setup();
-  let olderReply: Ack | undefined;
+  let olderReply: Ack = notSent;
   let pending!: Promise<unknown>;
   view.socket.replies.set('room:join', (payload, ack) => {
     if (payload.roomId === 'older') olderReply = ack;
@@ -720,7 +732,7 @@ test('a newer join supersedes an older pending join and keeps the newer room rem
     await view.result.current.joinRoom({ roomId: 'newer', userName: 'alice' });
   });
   await act(async () => {
-    olderReply!(null, snapshot(room('older'), messages('older', 1, 1)));
+    olderReply(null, snapshot(room('older'), messages('older', 1, 1)));
     await pending.catch(() => undefined);
   });
   expect(view.result.current.currentRoom?.id).toBe('newer');
@@ -769,7 +781,7 @@ test('a connect promise resolving after logout cannot restore the socket or conn
 test('logging in again can rejoin while the previous connection still has an unfinished rejoin request', async () => {
   const view = await setup();
   await join(view, room('A', { lastMessageSeq: 10 }), messages('A', 1, 10));
-  let oldReply: Ack | undefined;
+  let oldReply: Ack = notSent;
   view.socket.replies.set('room:join', (_payload, ack) => {
     oldReply = ack;
   });
@@ -778,7 +790,7 @@ test('logging in again can rejoin while the previous connection still has an unf
     view.socket.deliver('connect');
   });
   await settle();
-  expect(oldReply).toBeDefined();
+  expect(oldReply).not.toBe(notSent);
   act(() => {
     view.result.current.disconnect();
   });
@@ -803,7 +815,7 @@ test('logging in again can rejoin while the previous connection still has an unf
     });
   });
   await act(async () => {
-    oldReply!(null, snapshot(room('A'), messages('A', 1, 10)));
+    oldReply(null, snapshot(room('A'), messages('A', 1, 10)));
   });
   await settle();
   expect(
@@ -816,7 +828,7 @@ test('logging in again can rejoin while the previous connection still has an unf
 test('a manual-history acknowledgement from before a transport reconnect is ignored on the same socket object', async () => {
   const view = await setup();
   await join(view, room('A', { lastMessageSeq: 100 }), messages('A', 100, 100));
-  let oldReply: Ack | undefined;
+  let oldReply: Ack = notSent;
   let pending!: Promise<ChatMessage[]>;
   view.socket.replies.set('chat:history', (payload, ack) => {
     if (payload.beforeSeq === 100) oldReply = ack;
@@ -825,8 +837,8 @@ test('a manual-history acknowledgement from before a transport reconnect is igno
         success: true,
         messages: messages(
           'A',
-          payload.afterSeq + 1,
-          Math.min(payload.afterSeq + payload.limit, 300)
+          Number(payload.afterSeq) + 1,
+          Math.min(Number(payload.afterSeq) + Number(payload.limit), 300)
         ),
       });
   });
@@ -848,7 +860,7 @@ test('a manual-history acknowledgement from before a transport reconnect is igno
   });
   await settle();
   await act(async () => {
-    oldReply!(null, { success: true, messages: messages('A', 50, 99) });
+    oldReply(null, { success: true, messages: messages('A', 50, 99) });
     await pending.catch(() => []);
   });
   expect(view.result.current.chatMessages[0]?.seq).toBe(100);
@@ -863,7 +875,7 @@ test('a read acknowledgement from before a transport reconnect cannot overwrite 
     room('A', { lastMessageSeq: 10, unreadCount: 10 }),
     messages('A', 1, 10)
   );
-  let oldReply: Ack | undefined;
+  let oldReply: Ack = notSent;
   let pending!: Promise<void>;
   view.socket.replies.set('chat:read', (_payload, ack) => {
     oldReply = ack;
@@ -889,7 +901,7 @@ test('a read acknowledgement from before a transport reconnect cannot overwrite 
   });
   await settle();
   await act(async () => {
-    oldReply!(null, {
+    oldReply(null, {
       success: true,
       revision: 1,
       unreadCount: 0,
@@ -951,7 +963,7 @@ test('a late read acknowledgement cannot roll back a newer snapshot revision on 
     view,
     room('A', { revision: 1, lastMessageSeq: 1, unreadCount: 1 })
   );
-  let reply: Ack | undefined;
+  let reply: Ack = notSent;
   let pending!: Promise<void>;
   view.socket.replies.set('chat:read', (_payload, ack) => {
     reply = ack;
@@ -985,7 +997,7 @@ test.each(['room:sync-applied', 'room:ready', 'chat:read'])(
   async (event) => {
     const view = await setup();
     await join(view, room('A'));
-    let oldReply: Ack | undefined;
+    let oldReply: Ack = notSent;
     view.socket.replies.set(event, (_payload, ack) => {
       oldReply = ack;
     });
@@ -1000,7 +1012,7 @@ test.each(['room:sync-applied', 'room:ready', 'chat:read'])(
       view.socket.deliver('error', '当前房间的真实错误');
     });
     await act(async () => {
-      oldReply!(null, { success: true, revision: 99, unreadCount: 0 });
+      oldReply(null, { success: true, revision: 99, unreadCount: 0 });
       await rejected;
     });
     expect(view.result.current.currentRoom?.id).toBe('B');

@@ -170,16 +170,6 @@ function Harness({ dock = false }: { dock?: boolean }) {
   );
 }
 
-function deferred() {
-  let resolve: () => void = () => {
-    throw new Error('deferred promise was not initialized');
-  };
-  const promise = new Promise<void>((done) => {
-    resolve = done;
-  });
-  return { promise, resolve };
-}
-
 it('keeps the docked player aligned when an inner page container scrolls without remounting media', async () => {
   mockPathname = '/watch-room';
   render(<Harness dock />);

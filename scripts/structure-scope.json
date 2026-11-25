@@ -4,7 +4,10 @@
     "src/features/",
     "src/components/mini-player/",
     "src/components/detail/",
-    "src/components/VideoCard.css"
+    "src/components/VideoCard.css",
+    "src/components/VideoCard-video-card-art.css",
+    "src/components/VideoCard-video-card-badge.css",
+    "src/components/VideoCard-video-horizontal.css"
   ],
   "coreCode": [
     "src/features/",

@@ -293,7 +293,9 @@ it('changing route during a drag cancels queued paint from the old gesture', () 
       clientX: 150,
     });
     mockPath = '/search';
-    render(<MobileBottomNav />, { container: nav.parentElement! });
+    render(<MobileBottomNav />, {
+      container: nav.parentElement as HTMLElement,
+    });
     act(() => paint?.(10));
     expect(nav).not.toHaveAttribute('data-scrubbing');
     expect(cancel).toHaveBeenCalledWith(42);

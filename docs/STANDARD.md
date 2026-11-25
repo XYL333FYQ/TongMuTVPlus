@@ -304,7 +304,7 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 
 ## 允许的例外
 
-确实拆不开或必须破例的，在这里写明文件和理由。检查范围同步排除（`scripts/structure-scope.json` 的 `excluded`）。
+确实拆不开或必须破例的，在这里写明文件和理由。整个文件破例的，检查范围同步排除（`scripts/structure-scope.json` 的 `excluded`）；“超过约 400 行但不拆”的只让 S6 行数提醒跳过（`check:structure` 直接读下面那条），其余检查照常。
 
 - `src/features/room/MusicPage.tsx`（`/watch-room/music`，房间里一起听音乐）：界面沿用上游音乐页，282 个 Tailwind 类，和音乐模块其他页面一个样子。它属于房间的入口所以放在 `features/room`，但样式按上游页面对待；以后整理音乐模块时一起改成 `tm-` 类。
 

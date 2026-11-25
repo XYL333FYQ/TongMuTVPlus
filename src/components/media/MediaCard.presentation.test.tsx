@@ -9,7 +9,6 @@ jest.mock('@/components/ProxyImage', () => ({
     originalSrc,
     ...props
   }: ImgHTMLAttributes<HTMLImageElement> & { originalSrc: string }) => (
-    // eslint-disable-next-line @next/next/no-img-element
     <img src={originalSrc} {...props} alt={props.alt} />
   ),
 }));

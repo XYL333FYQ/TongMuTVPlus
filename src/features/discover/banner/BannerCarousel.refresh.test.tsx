@@ -78,7 +78,8 @@ test('app refresh bypasses the 24-hour banner cache while retaining the working 
   expect(await pending).toBe('success');
   expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('新推荐');
   expect(
-    JSON.parse(localStorage.getItem('banner_trending_cache_TX')!).data[0].title
+    JSON.parse(localStorage.getItem('banner_trending_cache_TX') ?? 'null')
+      .data[0].title
   ).toBe('新推荐');
 });
 
@@ -96,7 +97,8 @@ test('late banner responses after leaving cannot publish content or cache writes
   expect(await pending).toBe('cancelled');
   await act(async () => finish(response('迟到推荐')));
   expect(
-    JSON.parse(localStorage.getItem('banner_trending_cache_TX')!).data[0].title
+    JSON.parse(localStorage.getItem('banner_trending_cache_TX') ?? 'null')
+      .data[0].title
   ).toBe('原推荐');
 });
 
@@ -129,6 +131,7 @@ test('an old initial request cannot overwrite a completed explicit refresh', asy
     '刷新推荐'
   );
   expect(
-    JSON.parse(localStorage.getItem('banner_trending_cache_TX')!).data[0].title
+    JSON.parse(localStorage.getItem('banner_trending_cache_TX') ?? 'null')
+      .data[0].title
   ).toBe('刷新推荐');
 });

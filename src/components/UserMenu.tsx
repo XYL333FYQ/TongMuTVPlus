@@ -2811,8 +2811,6 @@ export const UserMenu: React.FC = () => {
   const shouldShowRoleBadge = currentRole !== 'user';
   const avatarText = currentUsername.trim().charAt(0).toUpperCase() || 'D';
 
-  const roleBadgeClassName = 'bg-raised text-fg';
-
   const handleOpenProfileCenter = () => {
     setIsOpen(false);
     setIsProfileCenterOpen(true);
@@ -3335,7 +3333,6 @@ export const UserMenu: React.FC = () => {
           roleText={currentRoleText}
           showRoleBadge={shouldShowRoleBadge}
           avatarText={avatarText}
-          roleBadgeClassName={roleBadgeClassName}
           showDeviceManagement={storageType !== 'localstorage'}
           showChangePassword={showChangePassword}
           onOpenEmailSettings={() => {

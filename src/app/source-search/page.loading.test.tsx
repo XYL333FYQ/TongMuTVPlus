@@ -73,7 +73,9 @@ beforeEach(() => {
     requested.push(url);
     const queue = routes[url];
     if (!queue || queue.length === 0) throw new Error(`unexpected ${url}`);
-    const next = queue.length > 1 ? queue.shift()! : queue[0];
+    // 最后一个回复留着，后面的同一请求都用它
+    const next = queue[0];
+    if (queue.length > 1) queue.shift();
     const reply = typeof next === 'function' ? await next() : await next;
     return {
       ok: reply.ok,

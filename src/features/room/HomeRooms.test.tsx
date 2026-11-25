@@ -13,6 +13,9 @@ const mockContext = {
     lifecycle: string;
     currentState: { type: string; videoName: string };
   },
+  config: undefined as
+    | undefined
+    | { enabled: boolean; serverType: 'internal' | 'external' },
 };
 const originalFetch = global.fetch;
 let mockFetch: jest.Mock;
@@ -27,7 +30,7 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 test('with an external room server the homepage does not ask the local REST endpoint and says why', async () => {
-  (mockContext as any).config = { enabled: true, serverType: 'external' };
+  mockContext.config = { enabled: true, serverType: 'external' };
   render(<HomeRooms />);
   await waitFor(() =>
     expect(screen.getByRole('status')).toHaveTextContent(
@@ -35,7 +38,7 @@ test('with an external room server the homepage does not ask the local REST endp
     )
   );
   expect(mockFetch).not.toHaveBeenCalled();
-  delete (mockContext as any).config;
+  mockContext.config = undefined;
 });
 test('guest homepage omits personal rooms and never requests private room data', () => {
   const { container } = render(<HomeRooms guest />);

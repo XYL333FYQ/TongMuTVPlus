@@ -4,10 +4,12 @@ import { useRoomMusicActivity } from './useRoomMusicActivity';
 
 import type { MusicSyncState } from '@/types/watch-room';
 
-let mockRoom: any;
-let mockSession: any;
+let mockRoom: ReturnType<typeof makeRoom>;
+// 不在房间里：上下文给 null
+let mockInRoom = true;
+let mockSession: ReturnType<typeof makeSession>;
 jest.mock('@/components/WatchRoomProvider', () => ({
-  useWatchRoomContextSafe: () => mockRoom,
+  useWatchRoomContextSafe: () => (mockInRoom ? mockRoom : null),
 }));
 jest.mock('@/hooks/usePlaybackSession', () => ({
   usePlaybackSessionSafe: () => mockSession,
@@ -51,24 +53,35 @@ function setup() {
   };
 }
 
-beforeEach(() => {
-  mockSession = {
-    controller: { pause: jest.fn(), video: { paused: false } },
-  };
-  mockRoom = {
+function makeSession() {
+  return { controller: { pause: jest.fn(), video: { paused: false } } };
+}
+
+function makeRoom() {
+  return {
     isConnected: true,
     isOwner: true,
     canControl: true,
-    roomCommand: jest.fn(async () => ({ success: true })),
+    roomCommand: jest.fn(
+      async (_event: string, _payload?: Record<string, unknown>) => ({
+        success: true,
+      })
+    ),
     socket: { id: 'device-1' },
     currentRoom: {
       id: 'room-a',
       roomType: 'sync',
       revision: 4,
       controllerEpoch: 2,
-      currentState: null,
+      currentState: null as MusicSyncState | { type: string } | null,
     },
   };
+}
+
+beforeEach(() => {
+  mockSession = makeSession();
+  mockInRoom = true;
+  mockRoom = makeRoom();
 });
 afterEach(cleanup);
 
@@ -84,7 +97,7 @@ describe('room music activity', () => {
     expect(film.api.active).toBe(false);
     cleanup();
 
-    mockRoom = null;
+    mockInRoom = false;
     const none = setup();
     expect(none.api.hasRoom).toBe(false);
     expect(none.api.active).toBe(false);
@@ -186,7 +199,7 @@ describe('room music activity', () => {
     });
 
     it('outside a room it only makes sure a playing film is not heard together with the music', async () => {
-      mockRoom = null;
+      mockInRoom = false;
       const view = setup();
       let ok = false;
       await act(async () => {
@@ -202,7 +215,10 @@ describe('room music activity', () => {
       mockRoom.currentRoom.currentState = musicState();
       let release!: () => void;
       mockRoom.roomCommand.mockImplementationOnce(
-        () => new Promise<void>((done) => (release = done))
+        () =>
+          new Promise<{ success: boolean }>(
+            (done) => (release = () => done({ success: true }))
+          )
       );
       const view = setup();
       let first!: Promise<boolean>;
@@ -219,9 +235,10 @@ describe('room music activity', () => {
         await second;
       });
       expect(mockRoom.roomCommand).toHaveBeenCalledTimes(2);
-      expect(
-        mockRoom.roomCommand.mock.calls.map((call: any[]) => call[0])
-      ).toEqual(['music:change', 'music:update']);
+      expect(mockRoom.roomCommand.mock.calls.map((call) => call[0])).toEqual([
+        'music:change',
+        'music:update',
+      ]);
     });
 
     it('a rejected command does not block the ones after it', async () => {

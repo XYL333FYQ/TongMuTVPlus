@@ -3,16 +3,14 @@
  * 以后要统一加前缀、采样或上报，只改这里。级别和原来的 console 方法一一对应：
  * info 对应原来的 console.log，照样输出。
  *
- * ESLint 的 no-console 是为了把别处的输出都引到这里；这里是控制台的主人，
- * 从 globalThis 取控制台，调用时再取方法（测试里替换 console 方法照样生效）。
+ * ESLint 的 no-console 是为了把别处的输出都引到这里；.eslintrc.js 只给这个文件关掉它。
+ * 调用时再取 console 的方法，测试里替换 console 方法照样生效。
  */
 type LogArgs = unknown[];
 
-const sink = (): Console => globalThis.console;
-
 export const logger = {
-  debug: (...args: LogArgs) => sink().debug(...args),
-  info: (...args: LogArgs) => sink().log(...args),
-  warn: (...args: LogArgs) => sink().warn(...args),
-  error: (...args: LogArgs) => sink().error(...args),
+  debug: (...args: LogArgs) => console.debug(...args),
+  info: (...args: LogArgs) => console.log(...args),
+  warn: (...args: LogArgs) => console.warn(...args),
+  error: (...args: LogArgs) => console.error(...args),
 };

@@ -80,6 +80,26 @@ export function readPartsRegistry(markdown) {
   return { rows, problems };
 }
 
+const SIZE_EXCEPTIONS_ITEM = '- 超过约 400 行但不拆（S6）：';
+
+/**
+ * “允许的例外”一节里登记的“超过约 400 行但不拆”的文件：那一条下面缩进的每个子项，
+ * 取第一个反引号里的路径。只有 S6 的行数提醒跳过它们，别的检查照常。
+ * @returns {string[]}
+ */
+export function readSizeExceptions(markdown) {
+  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+  const start = lines.findIndex((line) => line.trim() === SIZE_EXCEPTIONS_ITEM);
+  if (start === -1) return [];
+  const files = [];
+  for (const line of lines.slice(start + 1)) {
+    if (!/^\s+- /.test(line)) break;
+    const [file] = backticked(line);
+    if (file) files.push(file);
+  }
+  return files;
+}
+
 const PATH_ROOTS = /^(?:src|scripts|docs|server)\//;
 
 /**

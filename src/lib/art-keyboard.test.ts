@@ -1,5 +1,12 @@
 import { enableArtKeyboardAccess } from './art-keyboard';
 
+/** 找不到就让测试直接失败，不用非空断言 */
+function el(root: ParentNode, selector: string): HTMLElement {
+  const found = root.querySelector<HTMLElement>(selector);
+  if (!found) throw new Error(`missing ${selector}`);
+  return found;
+}
+
 function buildPlayer() {
   document.body.innerHTML = `
     <div class="art-bottom">
@@ -12,8 +19,8 @@ function buildPlayer() {
     </div>
     <div class="art-settings"></div>`;
   return {
-    bottom: document.querySelector<HTMLElement>('.art-bottom')!,
-    settings: document.querySelector<HTMLElement>('.art-settings')!,
+    bottom: el(document, '.art-bottom'),
+    settings: el(document, '.art-settings'),
   };
 }
 
@@ -21,22 +28,18 @@ test('toolbar buttons become tabbable buttons, display-only parts do not', () =>
   const { bottom, settings } = buildPlayer();
   const cleanup = enableArtKeyboardAccess([bottom, settings]);
 
-  const setting = bottom.querySelector<HTMLElement>('.art-control-setting')!;
+  const setting = el(bottom, '.art-control-setting');
   expect(setting.tabIndex).toBe(0);
   expect(setting.getAttribute('role')).toBe('button');
+  expect(el(bottom, '.art-control-progress').hasAttribute('tabindex')).toBe(
+    false
+  );
+  expect(el(bottom, '.art-control-time').hasAttribute('tabindex')).toBe(false);
+  expect(el(bottom, '.art-control-thumbnails').hasAttribute('tabindex')).toBe(
+    false
+  );
   expect(
-    bottom.querySelector('.art-control-progress')!.hasAttribute('tabindex')
-  ).toBe(false);
-  expect(
-    bottom.querySelector('.art-control-time')!.hasAttribute('tabindex')
-  ).toBe(false);
-  expect(
-    bottom.querySelector('.art-control-thumbnails')!.hasAttribute('tabindex')
-  ).toBe(false);
-  expect(
-    bottom
-      .querySelector('.art-control-playAndPause')!
-      .getAttribute('aria-label')
+    el(bottom, '.art-control-playAndPause').getAttribute('aria-label')
   ).toBe('播放或暂停');
   expect(setting.getAttribute('aria-label')).toBe('设置');
   cleanup();
@@ -45,7 +48,7 @@ test('toolbar buttons become tabbable buttons, display-only parts do not', () =>
 test('Enter and Space click the focused control and do not reach the player hotkeys', () => {
   const { bottom, settings } = buildPlayer();
   const cleanup = enableArtKeyboardAccess([bottom, settings]);
-  const shot = bottom.querySelector<HTMLElement>('.art-control-screenshot')!;
+  const shot = el(bottom, '.art-control-screenshot');
   const clicks = jest.fn();
   shot.addEventListener('click', clicks);
   const hotkeys = jest.fn();
@@ -82,7 +85,7 @@ test('Escape inside the settings panel closes it and returns focus to the settin
   item.className = 'art-setting-item';
   settings.appendChild(item);
   const cleanup = enableArtKeyboardAccess([bottom, settings]);
-  const toggle = bottom.querySelector<HTMLElement>('.art-control-setting')!;
+  const toggle = el(bottom, '.art-control-setting');
   const toggled = jest.fn();
   toggle.addEventListener('click', toggled);
 

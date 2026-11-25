@@ -32,9 +32,12 @@ import { POST as exportBackup } from './export/route';
 import { POST as importBackup } from './import/route';
 
 const resolved = (value: unknown) => jest.fn(async () => value);
-// 路由里按 any 调用 db 和 db.storage，测试替身同样不限定类型
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockDb: Record<string, any> = {};
+// 测试替身：db 上每个方法都是 jest.fn，db.storage 下面同样
+type MockDb = {
+  storage: Record<string, jest.Mock>;
+  [method: string]: jest.Mock | Record<string, jest.Mock>;
+};
+const mockDb: MockDb = { storage: {} };
 
 function resetDb() {
   Object.assign(mockDb, {

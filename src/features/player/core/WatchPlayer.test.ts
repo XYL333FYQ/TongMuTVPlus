@@ -1,15 +1,29 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ArtplayerConstructor } from './art-types';
 import { resetPlayerEnvironmentForTest } from './env';
-import { WatchPlayer } from './WatchPlayer';
+import { type WatchSource, WatchPlayer } from './WatchPlayer';
 
-const instances: any[] = [];
+type ArtOption = ConstructorParameters<ArtplayerConstructor>[0];
+type Handler = (...args: unknown[]) => void;
+/** 假 Artplayer 实例：测试会读写的那几样 */
+interface FakeArtInstance {
+  option: ArtOption;
+  handlers: Map<string, Handler[]>;
+  video: HTMLVideoElement;
+  currentTime: number;
+  paused: boolean;
+  destroyed: boolean;
+  switchedTo: string;
+  play?: () => Promise<void>;
+  emit(event: string, ...args: unknown[]): void;
+}
+const instances: FakeArtInstance[] = [];
 
 jest.mock('artplayer', () => {
   class FakeArt {
-    option: any;
-    handlers = new Map<string, Array<(...args: any[]) => void>>();
-    video: any;
-    template: any = {};
+    option: ArtOption;
+    handlers = new Map<string, Handler[]>();
+    video: HTMLVideoElement;
+    template: Record<string, unknown> = {};
     notice = { show: '' };
     currentTime = 0;
     duration = 100;
@@ -19,12 +33,12 @@ jest.mock('artplayer', () => {
     switchedTo = '';
     static PLAYBACK_RATE: number[] = [];
     static USE_RAF = false;
-    constructor(option: any) {
+    constructor(option: ArtOption) {
       this.option = option;
       this.video = document.createElement('video');
       instances.push(this);
     }
-    on(event: string, handler: (...args: any[]) => void) {
+    on(event: string, handler: Handler) {
       const list = this.handlers.get(event) || [];
       list.push(handler);
       this.handlers.set(event, list);
@@ -32,7 +46,7 @@ jest.mock('artplayer', () => {
     off() {
       return undefined;
     }
-    emit(event: string, ...args: any[]) {
+    emit(event: string, ...args: unknown[]) {
       (this.handlers.get(event) || []).forEach((handler) => handler(...args));
     }
     set switch(url: string) {
@@ -60,7 +74,7 @@ beforeEach(() => {
   jest.useRealTimers();
 });
 
-const source = (url: string, extra: any = {}) => ({
+const source = (url: string, extra: Partial<WatchSource> = {}) => ({
   url,
   source: 'ffzy',
   title: '测试',
@@ -112,7 +126,7 @@ test('private sources load with CORS and fall back once on error', async () => {
     source('https://cdn/v.mkv', { source: 'xiaoya', mediaType: 'file' })
   );
   const art = instances[0];
-  expect(art.option.moreVideoAttr.crossOrigin).toBe('anonymous');
+  expect(art.option.moreVideoAttr?.crossOrigin).toBe('anonymous');
   art.video.crossOrigin = 'anonymous';
   art.video.load = jest.fn();
   art.video.play = jest.fn(() => Promise.resolve());

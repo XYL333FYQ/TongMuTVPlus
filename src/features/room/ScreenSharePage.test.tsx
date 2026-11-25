@@ -16,8 +16,8 @@ const stopSharing = jest.fn();
 const localVideoRef = { current: null };
 const remoteVideoRef = { current: null };
 let mockShare: Record<string, unknown>;
-let mockRoom: any;
-let mockSession: any;
+let mockRoom: Record<string, unknown>;
+let mockSession: Record<string, unknown>;
 
 jest.mock('next/navigation', () => ({ useRouter: () => mockRouter }));
 jest.mock('@/components/PageContainer', () => ({
@@ -61,9 +61,13 @@ beforeEach(() => {
     configurable: true,
     value: { getDisplayMedia: jest.fn() },
   });
-  (window as any).RTCPeerConnection = function RTCPeerConnection() {
-    return undefined;
-  };
+  Object.defineProperty(window, 'RTCPeerConnection', {
+    configurable: true,
+    writable: true,
+    value: function RTCPeerConnection() {
+      return undefined;
+    },
+  });
   mockSession = {};
   mockRoom = {
     currentRoom: room(),

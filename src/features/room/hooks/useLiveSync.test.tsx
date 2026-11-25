@@ -3,8 +3,26 @@ import { act, cleanup, render } from '@testing-library/react';
 import { useLiveSync } from './useLiveSync';
 import { useWebLiveSync } from './useWebLiveSync';
 
-let mockRoom: any;
-let mockSession: any;
+type RoomCommand = jest.Mock<
+  Promise<{ success: boolean }>,
+  [string, Record<string, unknown>]
+>;
+interface MockRoom {
+  isConnected: boolean;
+  isOwner: boolean;
+  canControl: boolean;
+  changeLiveChannel: jest.Mock;
+  roomCommand: RoomCommand;
+  socket: { id: string; on: jest.Mock; off: jest.Mock };
+  currentRoom: {
+    id: string;
+    revision: number;
+    controllerEpoch: number;
+    currentState: object | null;
+  };
+}
+let mockRoom: MockRoom;
+let mockSession: Record<string, unknown>;
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
@@ -41,7 +59,11 @@ beforeEach(() => {
     isOwner: true,
     canControl: true,
     changeLiveChannel: jest.fn(),
-    roomCommand: jest.fn(async () => ({ success: true })),
+    roomCommand: jest.fn(
+      async (_event: string, _payload: Record<string, unknown>) => ({
+        success: true,
+      })
+    ),
     socket: { id: 'device-1', on: jest.fn(), off: jest.fn() },
     currentRoom: {
       id: 'room-a',
@@ -58,35 +80,38 @@ afterEach(() => {
 
 describe.each(['iptv', 'web'] as const)('%s room live activity', (kind) => {
   function setup() {
-    let api: any;
+    let share: () => Promise<unknown> = async () => {
+      throw new Error('the hook has not rendered yet');
+    };
     const apply = jest.fn();
-    const options: any =
-      kind === 'iptv'
-        ? {
-            currentChannelId: direct.channelId,
-            currentChannelName: direct.channelName,
-            currentChannelUrl: direct.channelUrl,
-            onChannelChange: apply,
-            isReady: () => true,
-          }
-        : {
-            currentSourceKey: web.channelId,
-            currentSourceName: web.channelName,
-            currentSourcePlatform: 'huya',
-            currentSourceRoomId: '123',
-            onSourceChange: apply,
-            isReady: () => true,
-          };
-    const hook = kind === 'iptv' ? useLiveSync : useWebLiveSync;
-    function Harness() {
-      api = hook(options);
+    const iptvOptions: Parameters<typeof useLiveSync>[0] = {
+      currentChannelId: direct.channelId,
+      currentChannelName: direct.channelName,
+      currentChannelUrl: direct.channelUrl,
+      onChannelChange: apply,
+      isReady: () => true,
+    };
+    const webOptions: Parameters<typeof useWebLiveSync>[0] = {
+      currentSourceKey: web.channelId,
+      currentSourceName: web.channelName,
+      currentSourcePlatform: 'huya',
+      currentSourceRoomId: '123',
+      onSourceChange: apply,
+      isReady: () => true,
+    };
+    function IptvHarness() {
+      share = useLiveSync(iptvOptions).broadcastChannelChange;
+      return null;
+    }
+    function WebHarness() {
+      share = useWebLiveSync(webOptions).broadcastSourceChange;
       return null;
     }
     return {
-      Harness,
+      Harness: kind === 'iptv' ? IptvHarness : WebHarness,
       apply,
-      options,
-      getApi: () => api,
+      options: kind === 'iptv' ? iptvOptions : webOptions,
+      share: () => share(),
       state: kind === 'iptv' ? direct : web,
     };
   }
@@ -106,34 +131,30 @@ describe.each(['iptv', 'web'] as const)('%s room live activity', (kind) => {
     expect(mockRoom.changeLiveChannel).not.toHaveBeenCalled();
     expect(
       mockRoom.roomCommand.mock.calls.filter(
-        ([event]: [string]) => event === 'live:change'
+        ([event]) => event === 'live:change'
       )
     ).toHaveLength(0);
   });
 
   it('explicit share uses current device permission, a canonical ACK, and a target room', async () => {
-    const { Harness, getApi } = setup();
+    const { Harness, share } = setup();
     const view = render(<Harness />);
     mockRoom.canControl = false;
     view.rerender(<Harness />);
-    await expect(
-      getApi()[
-        kind === 'iptv' ? 'broadcastChannelChange' : 'broadcastSourceChange'
-      ]()
-    ).rejects.toThrow();
+    await expect(share()).rejects.toThrow();
     expect(mockRoom.roomCommand).not.toHaveBeenCalled();
     mockRoom.canControl = true;
     view.rerender(<Harness />);
     await act(async () => {
-      await getApi()[
-        kind === 'iptv' ? 'broadcastChannelChange' : 'broadcastSourceChange'
-      ]();
+      await share();
     });
     expect(mockRoom.roomCommand).toHaveBeenCalledWith(
       'live:change',
       expect.objectContaining({ roomId: 'room-a', type: 'live' })
     );
-    const reference = mockRoom.roomCommand.mock.calls.at(-1)[1].channelUrl;
+    const reference = String(
+      mockRoom.roomCommand.mock.calls.at(-1)?.[1].channelUrl
+    );
     expect(new URL(reference).protocol).toMatch(/^https?:$/);
     if (kind === 'web')
       expect(new URL(reference).searchParams.get('roomId')).toBe('123');
@@ -179,7 +200,7 @@ describe.each(['iptv', 'web'] as const)('%s room live activity', (kind) => {
 
   it('a pending old-room sync ACK cannot ready a new room', async () => {
     const { Harness, state } = setup();
-    let finish: (value: any) => void = () => undefined;
+    let finish: (value: { success: boolean }) => void = () => undefined;
     mockRoom.roomCommand.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
@@ -203,7 +224,7 @@ describe.each(['iptv', 'web'] as const)('%s room live activity', (kind) => {
     });
     expect(
       mockRoom.roomCommand.mock.calls.filter(
-        ([event]: [string]) => event === 'room:ready'
+        ([event]) => event === 'room:ready'
       )
     ).toHaveLength(0);
   });
@@ -238,7 +259,7 @@ describe.each(['iptv', 'web'] as const)('%s room live activity', (kind) => {
     await settle(500);
     expect(
       mockRoom.roomCommand.mock.calls.filter(
-        ([event]: [string]) => event === 'room:ready'
+        ([event]) => event === 'room:ready'
       )
     ).toHaveLength(2);
   });
@@ -258,7 +279,7 @@ describe.each(['iptv', 'web'] as const)('%s room live activity', (kind) => {
     expect(apply).toHaveBeenCalledTimes(2);
     expect(
       mockRoom.roomCommand.mock.calls.filter(
-        ([event]: [string]) => event === 'room:ready'
+        ([event]) => event === 'room:ready'
       )
     ).toHaveLength(2);
   });

@@ -154,6 +154,17 @@ module.exports = {
       excludedFiles: ['**/*.test.ts', '**/*.test.tsx', ...scope.excluded],
       rules: { '@typescript-eslint/no-explicit-any': 'error' },
     },
+    // 日志的主人：全站只有 logger.ts 直接用 console，别处都经 logger（STANDARD 公共零件登记表）
+    {
+      files: ['src/lib/logger.ts'],
+      rules: { 'no-console': 'off' },
+    },
+    // 图片的主人：页面里只有 ProxyImage 直接渲染 <img>（它自己做代理和懒加载）；
+    // 测试里的 <img> 是代替 ProxyImage 的替身，这条规则管的是页面加载速度，和测试无关
+    {
+      files: ['src/components/ProxyImage.tsx', '**/*.test.tsx'],
+      rules: { '@next/next/no-img-element': 'off' },
+    },
   ],
   globals: {
     React: true,

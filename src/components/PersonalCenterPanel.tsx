@@ -14,7 +14,6 @@ interface PersonalCenterPanelProps {
   roleText: string;
   showRoleBadge: boolean;
   avatarText: string;
-  roleBadgeClassName: string;
   showDeviceManagement: boolean;
   showChangePassword: boolean;
   onOpenEmailSettings: () => void;
@@ -30,7 +29,6 @@ export function PersonalCenterPanel({
   roleText,
   showRoleBadge,
   avatarText,
-  roleBadgeClassName,
   showDeviceManagement,
   showChangePassword,
   onOpenEmailSettings,
@@ -62,9 +60,7 @@ export function PersonalCenterPanel({
               {avatarText}
             </div>
             {showRoleBadge && (
-              <span
-                className={`tm-profile-role mb-2 inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-medium ${roleBadgeClassName} `}
-              >
+              <span className='tm-profile-role mb-2 inline-flex items-center rounded-full bg-raised px-2.5 py-1 text-[13px] font-medium text-fg'>
                 {roleText}
               </span>
             )}

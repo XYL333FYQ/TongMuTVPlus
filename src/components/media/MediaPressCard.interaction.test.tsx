@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 
 import MediaPressCard from './MediaPressCard';
 
@@ -6,7 +7,15 @@ const push = jest.fn();
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 jest.mock('./MediaCard', () => ({
   __esModule: true,
-  default: ({ href, item, overlayAction }: any) => (
+  default: ({
+    href,
+    item,
+    overlayAction,
+  }: {
+    href: string;
+    item: { title: string };
+    overlayAction?: ReactNode;
+  }) => (
     <div>
       <a href={href}>{item.title}</a>
       {overlayAction}
@@ -15,10 +24,18 @@ jest.mock('./MediaCard', () => ({
 }));
 jest.mock('@/components/feedback/MobileActionSheet', () => ({
   __esModule: true,
-  default: ({ isOpen, actions, onClose }: any) =>
+  default: ({
+    isOpen,
+    actions,
+    onClose,
+  }: {
+    isOpen: boolean;
+    actions: { id: string; label: string; onClick: () => void }[];
+    onClose: () => void;
+  }) =>
     isOpen ? (
       <div role='dialog' aria-label='作品操作'>
-        {actions.map((action: any) => (
+        {actions.map((action) => (
           <button key={action.id} onClick={action.onClick}>
             {action.label}
           </button>

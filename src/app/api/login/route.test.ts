@@ -25,8 +25,10 @@ process.env.USERNAME = 'boss';
 process.env.PASSWORD = 'boss-password';
 
 // 路由在加载时就读取存储类型，必须先设环境变量再加载
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { POST } = require('./route') as typeof import('./route');
+let POST: typeof import('./route').POST;
+beforeAll(async () => {
+  ({ POST } = await import('./route'));
+});
 
 function login(body: Record<string, unknown>, ip = '203.0.113.30') {
   return POST(

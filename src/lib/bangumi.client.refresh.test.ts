@@ -45,7 +45,7 @@ test('explicit refresh bypasses the inner calendar cache and stores only complet
   expect(await GetBangumiCalendarData({ force: true })).toEqual(newData);
   expect(global.fetch).toHaveBeenCalledTimes(1);
   expect((global.fetch as jest.Mock).mock.calls[0][1].cache).toBe('no-store');
-  expect(JSON.parse(localStorage.getItem(key)!).data).toEqual(newData);
+  expect(JSON.parse(localStorage.getItem(key) ?? 'null').data).toEqual(newData);
 });
 
 test('cancelled requests cannot retry a backup or overwrite the usable old cache', async () => {
@@ -77,7 +77,7 @@ test('cancelled requests cannot retry a backup or overwrite the usable old cache
     await pending.catch(() => undefined);
   }
   expect(global.fetch).toHaveBeenCalledTimes(1);
-  expect(JSON.parse(localStorage.getItem(key)!).data).toEqual(oldData);
+  expect(JSON.parse(localStorage.getItem(key) ?? 'null').data).toEqual(oldData);
 });
 
 test('a late initial load cannot overwrite the calendar cache after a newer explicit refresh', async () => {
@@ -97,7 +97,7 @@ test('a late initial load cannot overwrite the calendar cache after a newer expl
   await GetBangumiCalendarData({ force: true });
   finish(oldData);
   await initial;
-  expect(JSON.parse(localStorage.getItem(key)!).data).toEqual(newData);
+  expect(JSON.parse(localStorage.getItem(key) ?? 'null').data).toEqual(newData);
 });
 
 test('ordinary uncached calendar requests retain their normal HTTP cache policy', async () => {

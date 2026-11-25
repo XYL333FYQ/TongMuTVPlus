@@ -2,7 +2,13 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import RoomActivityActions from './RoomActivityActions';
 
-let mockRoom: any;
+let mockRoom: {
+  isConnected: boolean;
+  canControl: boolean;
+  isOwner?: boolean;
+  currentRoom: { id: string } | null;
+  createRoom: jest.Mock;
+};
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));

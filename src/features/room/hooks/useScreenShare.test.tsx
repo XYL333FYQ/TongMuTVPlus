@@ -1,9 +1,11 @@
 import { act, cleanup, render } from '@testing-library/react';
 
+import { setGlobal } from '@/test/set-global';
+
 import { useScreenShare } from './useScreenShare';
 
-let mockRoom: any;
-let mockSession: any;
+let mockRoom: ReturnType<typeof makeRoom>;
+let mockSession: Record<string, unknown>;
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
@@ -102,23 +104,38 @@ beforeEach(() => {
     configurable: true,
     value: { getDisplayMedia },
   });
-  (global as any).RTCPeerConnection = FakePeer;
-  (global as any).RTCSessionDescription = class {
-    constructor(init: unknown) {
-      Object.assign(this, init);
+  setGlobal('RTCPeerConnection', FakePeer);
+  setGlobal(
+    'RTCSessionDescription',
+    class {
+      constructor(init: unknown) {
+        Object.assign(this, init);
+      }
     }
-  };
-  (global as any).RTCIceCandidate = class {
-    constructor(init: unknown) {
-      Object.assign(this, init);
+  );
+  setGlobal(
+    'RTCIceCandidate',
+    class {
+      constructor(init: unknown) {
+        Object.assign(this, init);
+      }
     }
-  };
+  );
   mockSession = {};
-  mockRoom = {
+  mockRoom = makeRoom();
+});
+afterEach(cleanup);
+
+function makeRoom() {
+  return {
     isConnected: true,
     isOwner: false,
     canControl: true,
-    roomCommand: jest.fn(async () => ({ success: true })),
+    roomCommand: jest.fn(
+      async (_event: string, _payload?: Record<string, unknown>) => ({
+        success: true,
+      })
+    ),
     startScreenShare: jest.fn(),
     stopScreenShare: jest.fn(),
     members: [
@@ -128,8 +145,12 @@ beforeEach(() => {
     ],
     socket: {
       id: 'device-1',
-      emit: jest.fn(),
-      on: jest.fn(),
+      emit: jest.fn(
+        (_event: string, _payload: { targetUserId?: string }) => undefined
+      ),
+      on: jest.fn(
+        (_event: string, _listener: (data: unknown) => unknown) => undefined
+      ),
       off: jest.fn(),
     },
     currentRoom: {
@@ -137,16 +158,15 @@ beforeEach(() => {
       roomType: 'sync',
       ownerName: 'alice',
       revision: 3,
-      currentState: null,
+      currentState: null as ReturnType<typeof screenState> | null,
     },
   };
-});
-afterEach(cleanup);
+}
 
 const emitted = (event: string) =>
-  mockRoom.socket.emit.mock.calls.filter(([name]: [string]) => name === event);
+  mockRoom.socket.emit.mock.calls.filter(([name]) => name === event);
 const handler = (event: string) =>
-  mockRoom.socket.on.mock.calls.find(([name]: [string]) => name === event)?.[1];
+  mockRoom.socket.on.mock.calls.find(([name]) => name === event)?.[1];
 
 describe('screen sharing in a regular room', () => {
   it('a controlling device in a regular room can share: the capture is confirmed by the room before anyone is offered the picture', async () => {
@@ -165,7 +185,7 @@ describe('screen sharing in a regular room', () => {
     );
     // 只给自己以外的设备发画面，同账号的其他设备也是观众
     const targets = emitted('screen:offer').map(
-      ([, data]: [string, { targetUserId: string }]) => data.targetUserId
+      ([, data]) => data.targetUserId
     );
     expect(targets.sort()).toEqual(['device-2', 'device-3']);
     expect(api.isLocalSharing).toBe(true);
@@ -304,7 +324,7 @@ describe('watching a screen share', () => {
     mockRoom.isOwner = true;
     render(<Probe />);
     await act(async () =>
-      handler('screen:offer')({
+      handler('screen:offer')?.({
         userId: 'device-9',
         offer: { type: 'offer', sdp: 'x' },
       })

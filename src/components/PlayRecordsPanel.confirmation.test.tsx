@@ -29,7 +29,7 @@ test('clearing all records requires confirmation and cancel never deletes', asyn
   const clear = await screen.findByRole('button', { name: '清空全部' });
   fireEvent.click(clear);
   expect(
-    screen.getByText('清空全部观看记录？此操作不能撤销')
+    screen.getByText('清空全部播放记录？此操作不能撤销')
   ).toBeInTheDocument();
   expect(clearAllPlayRecords).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: '取消' }));

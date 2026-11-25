@@ -92,7 +92,7 @@ test('all five homepage categories are browse links and only choosing a work goe
   const login = new URL(mockPush.mock.calls[0][0], 'https://tongmu.test');
   expect(login.pathname).toBe('/login');
   const destination = new URL(
-    login.searchParams.get('redirect')!,
+    login.searchParams.get('redirect') ?? '',
     'https://tongmu.test'
   );
   expect(destination.pathname).toBe('/play');

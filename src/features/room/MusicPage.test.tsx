@@ -3,8 +3,8 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import RoomMusicPage from './MusicPage';
 
 const mockRouter = { replace: jest.fn(), push: jest.fn() };
-let mockRoom: any;
-let mockSession: any;
+let mockRoom: ReturnType<typeof makeRoom>;
+let mockSession: Record<string, unknown>;
 jest.mock('next/navigation', () => ({ useRouter: () => mockRouter }));
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContext: () => mockRoom,
@@ -46,7 +46,7 @@ const musicState = {
 
 function makeRoom(
   overrides: Record<string, unknown> = {},
-  state: any = musicState
+  state: typeof musicState | null = musicState
 ) {
   return {
     isConnected: true,

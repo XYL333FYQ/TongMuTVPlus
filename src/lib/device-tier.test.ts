@@ -1,3 +1,4 @@
+/** @jest-environment-options {"runScripts": "dangerously"} */
 import {
   computeDeviceTier,
   DEVICE_TIER_ATTRIBUTE,
@@ -9,6 +10,14 @@ import {
   viewportSize,
   watchMedia,
 } from './device-tier';
+
+/** 像页面那样把启动脚本放进 <script> 里执行（文件开头让 jsdom 执行内联脚本） */
+function runBootScript() {
+  const script = document.createElement('script');
+  script.textContent = DEVICE_TIER_BOOT_SCRIPT;
+  document.head.appendChild(script);
+  script.remove();
+}
 
 describe('computeDeviceTier', () => {
   test.each([
@@ -46,8 +55,7 @@ test('the boot script writes the tier and updates it on resize', () => {
       return 1;
     });
   Object.assign(window, { innerWidth: 390, innerHeight: 844 });
-  // eslint-disable-next-line no-new-func
-  new Function(DEVICE_TIER_BOOT_SCRIPT)();
+  runBootScript();
   expect(document.documentElement.getAttribute(DEVICE_TIER_ATTRIBUTE)).toBe(
     'phone'
   );
@@ -77,8 +85,7 @@ test('opening the on-screen keyboard does not change the tier', () => {
   })) as never;
   // 平板横屏
   Object.assign(window, { innerWidth: 1280, innerHeight: 800 });
-  // eslint-disable-next-line no-new-func
-  new Function(DEVICE_TIER_BOOT_SCRIPT)();
+  runBootScript();
   expect(getDeviceTier()).toBe('wide');
   // 点聊天输入框，App 壳把窗口压矮到 420：仍是平板横屏，不换成横屏手机
   const input = document.createElement('input');

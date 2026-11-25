@@ -83,7 +83,7 @@ test('dragging toward the top-left snaps to that corner and is remembered', () =
   // 左边距 24，顶部让开导航 72
   expect(offsetOf(host)).toEqual({ x: 24 - 896, y: 72 - 530 });
   expect(
-    JSON.parse(window.localStorage.getItem(MINI_PLAYER_OFFSET_KEY)!)
+    JSON.parse(window.localStorage.getItem(MINI_PLAYER_OFFSET_KEY) ?? 'null')
   ).toEqual({ x: 24 - 896, y: 72 - 530 });
 
   view.unmount();

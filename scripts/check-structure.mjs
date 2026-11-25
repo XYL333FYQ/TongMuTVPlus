@@ -25,6 +25,7 @@ import {
   findMissingPaths,
   ownedBy,
   readPartsRegistry,
+  readSizeExceptions,
 } from './lib/parts-registry.mjs';
 import { baseline, compareCounts } from './lib/ratchet.mjs';
 import {
@@ -38,6 +39,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const allowlistPath = path.join(root, 'scripts/structure-allowlist.json');
 const standardPath = path.join(root, 'docs/STANDARD.md');
 const TOKENS_FILE = 'src/styles/tokens.css';
+// STANDARD.md“允许的例外”里登记的不拆大文件：只有行数提醒跳过它们
+const SIZE_EXCEPTIONS = new Set(
+  readSizeExceptions(fs.readFileSync(standardPath, 'utf8'))
+);
+const tooLong = (file, lines) =>
+  lines > MAX_LINES && !SIZE_EXCEPTIONS.has(file);
 const MAX_LINES = 400;
 
 function walk(dir) {
@@ -216,7 +223,8 @@ function checkCode(file, violations, warnings) {
     }
   }
 
-  if (lines.length > MAX_LINES) warnings.push(`${file}（${lines.length} 行）`);
+  if (tooLong(file, lines.length))
+    warnings.push(`${file}（${lines.length} 行）`);
 }
 
 const TIERS = ['核心', '常用上游', '上游'];
@@ -288,7 +296,7 @@ function run() {
     if (file.endsWith('.css') && inScope(file, CORE_CSS)) {
       checkCss(file, owners, violations);
       const lines = read(file).split('\n').length;
-      if (lines > MAX_LINES) warnings.push(`${file}（${lines} 行）`);
+      if (tooLong(file, lines)) warnings.push(`${file}（${lines} 行）`);
     } else if (isCode(file) && inScope(file, CORE_CODE)) {
       checkCode(file, violations, warnings);
     }

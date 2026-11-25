@@ -38,21 +38,23 @@ process.env.NEXT_PUBLIC_STORAGE_TYPE = 'd1';
 process.env.USERNAME = 'boss';
 process.env.PASSWORD = 'boss-password';
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-const login = require('./login/route') as typeof import('./login/route');
-const reset =
-  require('./admin/reset/route') as typeof import('./admin/reset/route');
-const reload =
-  require('./admin/reload/route') as typeof import('./admin/reload/route');
-const transcoder =
-  require('./auth/transcoder-cookie/route') as typeof import('./auth/transcoder-cookie/route');
-const register =
-  require('./register/route') as typeof import('./register/route');
-const subscription =
-  require('./admin/config_subscription/fetch/route') as typeof import('./admin/config_subscription/fetch/route');
-const { middleware } =
-  require('../../middleware') as typeof import('../../middleware');
-/* eslint-enable @typescript-eslint/no-var-requires */
+// 路由在加载时就读取存储类型和站长账号，必须先设环境变量再加载
+let login: typeof import('./login/route');
+let reset: typeof import('./admin/reset/route');
+let reload: typeof import('./admin/reload/route');
+let transcoder: typeof import('./auth/transcoder-cookie/route');
+let register: typeof import('./register/route');
+let subscription: typeof import('./admin/config_subscription/fetch/route');
+let middleware: typeof import('../../middleware').middleware;
+beforeAll(async () => {
+  login = await import('./login/route');
+  reset = await import('./admin/reset/route');
+  reload = await import('./admin/reload/route');
+  transcoder = await import('./auth/transcoder-cookie/route');
+  register = await import('./register/route');
+  subscription = await import('./admin/config_subscription/fetch/route');
+  ({ middleware } = await import('../../middleware'));
+});
 
 function setCookies(response: Response): string[] {
   const headers = response.headers as Headers & {
@@ -112,8 +114,7 @@ test('login stores the credential out of reach of page scripts and exposes only 
 });
 
 test('logout clears both cookies', async () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const logout = require('./logout/route') as typeof import('./logout/route');
+  const logout = await import('./logout/route');
   const response = await logout.POST(
     new NextRequest('http://localhost/api/logout', { method: 'POST' })
   );

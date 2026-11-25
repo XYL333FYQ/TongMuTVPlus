@@ -11,7 +11,10 @@ jest.mock('@/lib/platform', () => ({ getPlatform: () => 'app' }));
 jest.mock('@/lib/page-refresh', () => ({ refreshPage: jest.fn() }));
 jest.mock('@/lib/shell-bridge', () => ({ haptic: jest.fn() }));
 jest.mock('@/components/feedback/AppDialogs', () => ({ notify: jest.fn() }));
-const originalLocation = Object.getOwnPropertyDescriptor(window, 'location')!;
+const originalLocation = Object.getOwnPropertyDescriptor(
+  window,
+  'location'
+) as PropertyDescriptor;
 const reload = jest.fn();
 
 // 手机外壳按设备档位（lib/device-tier.ts）：页面最早期的脚本写 html[data-tm-device]，变化时派发事件

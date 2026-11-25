@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { findMissingPaths, readPartsRegistry } from './parts-registry.mjs';
+import {
+  findMissingPaths,
+  readPartsRegistry,
+  readSizeExceptions,
+} from './parts-registry.mjs';
 
 test('reads rows with several owners and a dash', () => {
   const md =
@@ -69,4 +73,20 @@ test('checks every path inside a code span, ignores globs and placeholders', () 
     findMissingPaths(md, (p) => p === 'src/a/'),
     ['src/b/', 'server/x.cjs']
   );
+});
+
+test('reads the S6 size exceptions listed under their item, and nothing after it', () => {
+  const md = [
+    '## 允许的例外',
+    '',
+    '- `src/other.tsx`：别的例外',
+    '',
+    '- 超过约 400 行但不拆（S6）：',
+    '  - `src/a.ts`：理由，提到 `src/c.ts` 不算',
+    '  - `src/b.ts`：理由',
+    '',
+    '- `src/d.ts`：下一条',
+  ].join('\r\n');
+  assert.deepEqual(readSizeExceptions(md), ['src/a.ts', 'src/b.ts']);
+  assert.deepEqual(readSizeExceptions('## 允许的例外\n'), []);
 });
