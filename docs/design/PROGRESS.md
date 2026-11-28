@@ -24,6 +24,12 @@
 
 ## 最近的记录
 
+### 2026-11-28 依赖安全警报（用户要求处理）
+
+- **81 条打开的警报逐条对过锁文件**，全是真的（装着受影响的版本）。修掉 75 条：zod 直接依赖升到 4.6.7（只有 `lib/release-info.ts` 用，写法 zod 4 照样支持，测试通过）；其余是间接依赖，`package.json` 的 `pnpm.overrides` 按“受影响范围 → 修好的版本”写，大多同一大版本内（undici、fast-xml-parser、postcss、browserslist、js-yaml、svgo、ws、lodash 等）；跨大版本的只有 minimatch 9/10 → 11、serialize-javascript 4 → 7（next-pwa 构建用）、@tootallnate/once 1 → 2（Jest 用）、esbuild 0.27 → 0.28（tsx 用），这几个上游只在新大版本修。
+- **剩下 6 条**：EdgeOne 部署工具（`edgeone`，最新版仍然这样）带的 esbuild 0.19（开发服务器的问题）和 extract-zip 2.0.1（没有修好的版本）；Cloudflare 预览工具 wrangler 4.60 自带的 miniflare 用 zod 3（wrangler 是 `@opennextjs/cloudflare` 自动装的 peer，overrides 管不到，要换就得在 package.json 里写成开发依赖；它本来就不满足 opennext 要求的 ≥4.148）；桌面客户端 Rust 依赖 glib 0.18（Tauri 在 Linux 上经 gtk-rs 带进来，要等 Tauri 升级）。这些都只在 EdgeOne / Cloudflare 部署、或构建 Linux 桌面客户端时用到，Docker 镜像里没有。
+- **验证**：类型、lint、格式、结构、代码警告、设计检查、脚本测试 29 条全过；Jest 1441 × 两种存储模式、房间 42、运维 4 全过；端到端自己看 5/5、双账号同步 12/12、弹层检查全过；本机 `next build` 编译和 230 个页面生成成功，最后一步复制 standalone 目录因 Windows 不让普通用户建符号链接失败（本机权限，生产构建看 GitHub 的 Linux 构建）。
+
 ### 2026-11-28 清单最后三项：整文件关 lint 清零、heroicons 换掉、上游自画遮罩换公共弹层（63247bf 之后，未推送）
 
 - **整文件关 lint**：新探测器 `eslintDisableFile`（全站都数，和行内跳过并列），基线 175 → 0；118 个上游文件后面藏的约 960 条警告全部修掉，`pnpm lint` 0 警告、待清理名单 0 条、代码警告基线 0。做法是补类型（存储接口 V2 方法、SQL 行、迁移文件、TMDB、网盘客户端、AI、脚本源、Legado 等），依赖警告用 `useLatest` 保留原来的触发时机，不改行为。

@@ -89,7 +89,7 @@
     "tailwind-merge": "^2.6.0",
     "xml2js": "^0.6.2",
     "xpath": "^0.0.34",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.14",
@@ -127,5 +127,36 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.6.3"
   },
-  "packageManager": "pnpm@10.14.0"
+  "packageManager": "pnpm@10.14.0",
+  "pnpm": {
+    "overrides": {
+      "undici@>=7.0.0 <7.30.1": "^7.30.2",
+      "fast-xml-parser@>=5.0.0 <5.12.0": "^5.12.1",
+      "minimatch@<3.1.3": "^3.1.5",
+      "minimatch@>=7.0.0 <11.0.1": "^11.0.9",
+      "postcss-selector-parser@<6.1.5": "^6.1.6",
+      "serialize-javascript@<7.1.3": "^7.1.4",
+      "sharp@<0.35.5": "^0.35.5",
+      "source-map-js@<1.2.2": "^1.2.4",
+      "brace-expansion@<1.1.21": "^1.1.22",
+      "brace-expansion@>=2.0.0 <2.1.7": "^2.1.8",
+      "js-yaml@<3.15.2": "^3.15.2",
+      "js-yaml@>=4.0.0 <4.3.2": "^4.3.2",
+      "svgo@>=3.0.0 <3.3.5": "^3.3.5",
+      "baseline-browser-mapping@<2.11.0": "^2.11.0",
+      "browserslist@<4.28.7": "^4.28.7",
+      "postcss@<8.5.23": "^8.5.32",
+      "form-data@>=3.0.0 <3.0.5": "^3.0.5",
+      "@babel/core@<7.29.6": "^7.29.6",
+      "@babel/plugin-transform-modules-systemjs@<7.29.4": "^7.29.4",
+      "ws@>=8.0.0 <8.21.0": "^8.23.1",
+      "esbuild@>=0.27.3 <0.28.1": "^0.28.2",
+      "@tootallnate/once@<2.0.1": "^2.0.1",
+      "lodash@<4.18.0": "^4.18.1",
+      "picomatch@<2.3.2": "^2.3.2",
+      "picomatch@>=4.0.0 <4.0.4": "^4.0.7",
+      "flatted@<3.4.2": "^3.4.4",
+      "glob@>=10.2.0 <10.5.0": "^10.5.0"
+    }
+  }
 }
