@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { processSingleton } from './process-singleton';
 
 // 用户信息缓存
 interface CachedUserInfo {
@@ -101,35 +101,21 @@ class OwnerExistenceCache {
   }
 }
 
-// 全局单例
-const globalKey = Symbol.for('__MOONTV_USER_INFO_CACHE__');
-let _userInfoCache: UserInfoCache | undefined = (global as any)[globalKey];
+// 全局单例；建好时开始每分钟清理一次过期缓存（后台清理不阻止进程退出）
+export const userInfoCache = processSingleton(
+  Symbol.for('__MOONTV_USER_INFO_CACHE__'),
+  () => {
+    const cache = new UserInfoCache();
+    setInterval(() => cache.cleanup(), 60 * 1000).unref?.();
+    return cache;
+  }
+);
 
-if (!_userInfoCache) {
-  _userInfoCache = new UserInfoCache();
-  (global as any)[globalKey] = _userInfoCache;
-
-  // 每分钟清理一次过期缓存
-  setInterval(() => {
-    _userInfoCache?.cleanup();
-  }, 60 * 1000).unref?.(); // 后台清理不阻止进程退出
-}
-
-export const userInfoCache = _userInfoCache as UserInfoCache;
-
-const ownerExistenceGlobalKey = Symbol.for('__MOONTV_OWNER_EXISTENCE_CACHE__');
-let _ownerExistenceCache: OwnerExistenceCache | undefined = (global as any)[
-  ownerExistenceGlobalKey
-];
-
-if (!_ownerExistenceCache) {
-  _ownerExistenceCache = new OwnerExistenceCache();
-  (global as any)[ownerExistenceGlobalKey] = _ownerExistenceCache;
-
-  // 每分钟清理一次过期缓存
-  setInterval(() => {
-    _ownerExistenceCache?.cleanup();
-  }, 60 * 1000).unref?.(); // 后台清理不阻止进程退出
-}
-
-export const ownerExistenceCache = _ownerExistenceCache as OwnerExistenceCache;
+export const ownerExistenceCache = processSingleton(
+  Symbol.for('__MOONTV_OWNER_EXISTENCE_CACHE__'),
+  () => {
+    const cache = new OwnerExistenceCache();
+    setInterval(() => cache.cleanup(), 60 * 1000).unref?.();
+    return cache;
+  }
+);

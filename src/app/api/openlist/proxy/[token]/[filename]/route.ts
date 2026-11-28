@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { OpenListClient } from '@/lib/openlist.client';
+import { OpenListClient, pickPreviewQualities } from '@/lib/openlist.client';
 import {
   getCachedOpenListProxyUrl,
   setCachedOpenListProxyUrl,
@@ -110,7 +108,7 @@ async function getFinalUrl(url: string, maxRedirects = 5): Promise<string> {
 async function resolveFinalPlayUrl(
   client: OpenListClient,
   filePath: string,
-  openListConfig: any
+  openListConfig: { DisableVideoPreview?: boolean }
 ): Promise<string> {
   // 禁用预览视频时，直接使用直连链接
   if (openListConfig.DisableVideoPreview) {
@@ -131,24 +129,7 @@ async function resolveFinalPlayUrl(
       throw new Error('未找到可用的播放链接');
     }
 
-    const qualityOrder: Record<string, number> = {
-      FHD: 1,
-      HD: 2,
-      LD: 3,
-      SD: 4,
-    };
-
-    const qualities = taskList
-      .filter((task: any) => task.status === 'finished')
-      .map((task: any) => ({
-        name: task.template_id,
-        url: task.url,
-      }))
-      .filter((quality: any) => quality.url && quality.url.trim() !== '')
-      .sort(
-        (a: any, b: any) =>
-          (qualityOrder[a.name] || 999) - (qualityOrder[b.name] || 999)
-      );
+    const qualities = pickPreviewQualities(taskList);
 
     if (qualities.length === 0) {
       throw new Error('未找到已完成的播放链接');

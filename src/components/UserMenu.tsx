@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
-
 'use client';
 
 import {
@@ -64,6 +62,7 @@ import ModalLayer from '@/components/feedback/ModalLayer';
 import Popover from '@/components/feedback/Popover';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 
+import type { DeviceItem } from './DeviceManagementPanel';
 import { useVersionCheck } from './VersionCheckProvider';
 
 interface AuthInfo {
@@ -300,7 +299,7 @@ export const UserMenu: React.FC = () => {
   const [telegramBindingBusy, setTelegramBindingBusy] = useState(false);
 
   // 设备管理状态
-  const [devices, setDevices] = useState<any[]>([]);
+  const [devices, setDevices] = useState<DeviceItem[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
 
@@ -1455,7 +1454,7 @@ export const UserMenu: React.FC = () => {
       return;
     }
 
-    const BarcodeDetectorCtor = (window as any).BarcodeDetector;
+    const BarcodeDetectorCtor = window.BarcodeDetector;
     if (!BarcodeDetectorCtor) {
       setTvQrScannerError(
         '当前浏览器不支持网页内二维码识别，请使用系统相机扫描电视端二维码。'
@@ -1720,7 +1719,7 @@ export const UserMenu: React.FC = () => {
 
   const handleSelectSavePath = async () => {
     try {
-      const dirHandle = await (window as any).showDirectoryPicker();
+      const dirHandle = await window.showDirectoryPicker();
       setFilesystemSavePath(dirHandle.name);
       writeSetting('filesystemSavePath', dirHandle.name);
 
@@ -2078,24 +2077,6 @@ export const UserMenu: React.FC = () => {
   };
 
   // 获取感谢信息
-  const getThanksInfo = (dataSource: string) => {
-    switch (dataSource) {
-      case 'cors-proxy-zwei':
-        return {
-          text: 'Thanks to @Zwei',
-          url: 'https://github.com/bestzwei',
-        };
-      case 'cmliussss-cdn-tencent':
-      case 'cmliussss-cdn-ali':
-        return {
-          text: 'Thanks to @CMLiussss',
-          url: 'https://github.com/cmliu',
-        };
-      default:
-        return null;
-    }
-  };
-
   const handleResetSettings = () => {
     const defaultDoubanProxyType =
       window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
@@ -2225,11 +2206,9 @@ export const UserMenu: React.FC = () => {
 
     // 自动模式：同一用户在当前页面生命周期内只恢复一次，两个 UserMenu 实例共享同一请求。
     if (mode === 'auto' && enabled && username) {
-      const syncState = (window as any).__moontvLocalSettingsAutoPull as
-        | { username: string; promise: Promise<boolean> }
-        | undefined;
+      const syncState = window.__moontvLocalSettingsAutoPull;
       if (!syncState || syncState.username !== username) {
-        (window as any).__moontvLocalSettingsAutoPull = {
+        window.__moontvLocalSettingsAutoPull = {
           username,
           promise:
             pullRemoteSettingsRef.current?.(false) ?? Promise.resolve(false),
@@ -2442,7 +2421,7 @@ export const UserMenu: React.FC = () => {
           setDownloadSegmentTimeout(Number(value) || 10);
           break;
         case 'downloadMode':
-          setDownloadMode(value as any);
+          setDownloadMode(value as typeof downloadMode);
           break;
         case 'fluidSearch':
           setFluidSearch(value === 'true');
@@ -2493,7 +2472,7 @@ export const UserMenu: React.FC = () => {
           setTmdbImageBaseUrl(value);
           break;
         case 'bufferStrategy':
-          setBufferStrategy(value as any);
+          setBufferStrategy(value);
           break;
         case 'nextEpisodePreCache':
           setNextEpisodePreCache(value === 'true');
@@ -3021,7 +3000,6 @@ export const UserMenu: React.FC = () => {
       formatDownloadSegmentTimeout={formatDownloadSegmentTimeout}
       getBufferStrategyFromSlider={getBufferStrategyFromSlider}
       getSliderValueFromStrategy={getSliderValueFromStrategy}
-      getThanksInfo={getThanksInfo}
       handleAggregateToggle={handleAggregateToggle}
       handleAnimeCustomBaseUrlChange={handleAnimeCustomBaseUrlChange}
       handleAnimeDataSourceBackupChange={handleAnimeDataSourceBackupChange}

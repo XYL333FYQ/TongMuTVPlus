@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
-
 'use client';
 
+import type { SettingOption as ArtSettingOption } from 'artplayer';
 import {
   Download,
   Frown,
@@ -15,7 +14,7 @@ import {
   Tv,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
 import {
@@ -39,6 +38,7 @@ import { createRequestGate } from '@/lib/request-gate';
 import { readSetting, writeSetting } from '@/lib/settings';
 import { parseCustomTimeFormat } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
+import { useLatest } from '@/hooks/useLatest';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
@@ -58,18 +58,32 @@ import {
   useLiveSync,
 } from '@/features/room/activities';
 
-// 扩展 HTMLVideoElement 类型以支持 hls 和 flv 属性
-declare global {
-  interface HTMLVideoElement {
-    hls?: any;
-    flv?: any;
-  }
+// 动态导入浏览器专用库
+let Artplayer: typeof import('artplayer').default | null = null;
+let Hls: typeof import('hls.js').default | null = null;
+let flvjs: typeof import('flv.js').default | null = null;
+
+/** 直播源接口返回的频道（字段由 M3U 解析出来） */
+interface RawLiveChannel {
+  id: string;
+  tvgId?: string;
+  name: string;
+  logo?: string;
+  group?: string;
+  url: string;
 }
 
-// 动态导入浏览器专用库
-let Artplayer: any = null;
-let Hls: any = null;
-let flvjs: any = null;
+/** 本页自己的 Anime4K 超分运行状态 */
+interface LiveAnime4KRuntime {
+  /** render 的返回（库的类型写的是 void，运行时可能带 stop） */
+  controller: { stop?: () => void } | void;
+  stop?: () => void;
+  canvas: HTMLCanvasElement;
+  sourceCanvas: HTMLCanvasElement | null;
+  frameRequestId: number | null;
+  handleCanvasClick: (e: MouseEvent) => void;
+  handleCanvasDblClick: (e: MouseEvent) => void;
+}
 
 // 直播频道接口
 interface LiveChannel {
@@ -276,12 +290,14 @@ function LivePageClient() {
     currentChannelName: currentChannel?.name || '',
     currentChannelUrl: currentChannel?.url || '',
     isReady: () =>
-      Boolean(artPlayerRef.current?.video?.readyState >= 2 && !isVideoLoading),
+      Boolean(
+        (artPlayerRef.current?.video?.readyState ?? 0) >= 2 && !isVideoLoading
+      ),
     onChannelChange: (channelId, channelUrl) => {
       if (
         currentChannel?.id === channelId &&
         currentChannel?.url === channelUrl &&
-        artPlayerRef.current?.video?.readyState >= 2
+        (artPlayerRef.current?.video?.readyState ?? 0) >= 2
       )
         return;
       const state = watchRoom?.currentRoom?.currentState;
@@ -467,7 +483,7 @@ function LivePageClient() {
     }
     return 2.0;
   });
-  const anime4kRef = useRef<any>(null);
+  const anime4kRef = useRef<LiveAnime4KRuntime | null>(null);
   const anime4kEnabledRef = useRef(anime4kEnabled);
   const anime4kModeRef = useRef(anime4kMode);
   const anime4kScaleRef = useRef(anime4kScale);
@@ -478,7 +494,9 @@ function LivePageClient() {
   }, [anime4kEnabled, anime4kMode, anime4kScale]);
 
   // 播放器引用
-  const artPlayerRef = useRef<any>(null);
+  const artPlayerRef = useRef<InstanceType<
+    typeof import('artplayer').default
+  > | null>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
   const syncAnime4KCanvasFlip = (flip?: string) => {
     const canvas = anime4kRef.current?.canvas as HTMLCanvasElement | undefined;
@@ -496,6 +514,8 @@ function LivePageClient() {
 
   // 分组标签滚动相关
   const groupContainerRef = useRef<HTMLDivElement>(null);
+  // 鼠标在分组标签上时把竖向滚轮转成横向滚动
+  const groupWheelHandlerRef = useRef<((e: WheelEvent) => void) | null>(null);
   const groupButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const channelListRef = useRef<HTMLDivElement>(null);
 
@@ -606,14 +626,16 @@ function LivePageClient() {
       }
 
       // 转换频道数据格式
-      const channels: LiveChannel[] = channelsData.map((channel: any) => ({
-        id: channel.id,
-        tvgId: channel.tvgId || channel.name,
-        name: channel.name,
-        logo: channel.logo,
-        group: channel.group || '其他',
-        url: channel.url,
-      }));
+      const channels: LiveChannel[] = channelsData.map(
+        (channel: RawLiveChannel) => ({
+          id: channel.id,
+          tvgId: channel.tvgId || channel.name,
+          name: channel.name,
+          logo: channel.logo,
+          group: channel.group || '其他',
+          url: channel.url,
+        })
+      );
 
       setCurrentChannels(channels);
 
@@ -1093,7 +1115,8 @@ function LivePageClient() {
       video.style.position = 'absolute';
       video.style.zIndex = '-1';
 
-      container.insertBefore(outputCanvas, video);
+      // 播放器里的 video 一定有父元素
+      (container as HTMLElement).insertBefore(outputCanvas, video);
 
       // Firefox视频帧捕获
       if (isFirefox && sourceCtx && sourceCanvas) {
@@ -1131,7 +1154,7 @@ function LivePageClient() {
         'anime4k-webgpu'
       );
 
-      let ModeClass: any;
+      let ModeClass: typeof ModeA;
       const modeName = anime4kModeRef.current;
 
       switch (modeName) {
@@ -1157,8 +1180,9 @@ function LivePageClient() {
           ModeClass = ModeA;
       }
 
-      const renderConfig: any = {
-        video: isFirefox ? sourceCanvas : video,
+      const renderConfig: Parameters<typeof anime4kRender>[0] = {
+        // Firefox 下传的是逐帧画好的 canvas（库只从中取画面）
+        video: (isFirefox ? sourceCanvas : video) as HTMLVideoElement,
         canvas: outputCanvas,
         pipelineBuilder: (device: GPUDevice, inputTexture: GPUTexture) => {
           if (!outputCanvas) {
@@ -1239,7 +1263,8 @@ function LivePageClient() {
           cancelAnimationFrame(anime4kRef.current.frameRequestId);
         }
 
-        anime4kRef.current.controller?.stop?.();
+        const controller = anime4kRef.current.controller;
+        if (controller) controller.stop?.();
 
         if (anime4kRef.current.canvas) {
           if (anime4kRef.current.handleCanvasClick) {
@@ -1408,6 +1433,12 @@ function LivePageClient() {
       }
     }
   };
+  const cleanupLatest = useLatest(cleanupPlayer);
+  // 卸载时清理：用最后一次渲染的清理函数
+  const cleanupOnUnmount = useCallback(
+    () => cleanupLatest.current(),
+    [cleanupLatest]
+  );
 
   // 确保视频源正确设置
   const ensureVideoSource = (video: HTMLVideoElement | null, url: string) => {
@@ -1960,7 +1991,7 @@ function LivePageClient() {
       }
 
       try {
-        const adapter = await (navigator as any).gpu.requestAdapter();
+        const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
           setWebGPUSupported(false);
           logger.info('WebGPU不支持：无法获取GPU适配器');
@@ -1978,10 +2009,11 @@ function LivePageClient() {
     checkWebGPUSupport();
   }, []);
 
-  // 初始化
+  // 初始化：只在打开页面时拉一次直播源
+  const fetchLiveSourcesLatest = useLatest(fetchLiveSources);
   useEffect(() => {
-    fetchLiveSources();
-  }, []);
+    fetchLiveSourcesLatest.current();
+  }, [fetchLiveSourcesLatest]);
 
   // 检查收藏状态
   useEffect(() => {
@@ -2006,7 +2038,7 @@ function LivePageClient() {
 
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
-      (favorites: Record<string, any>) => {
+      (favorites: Record<string, unknown>) => {
         const key = generateStorageKey(
           `live_${currentSource.key}`,
           `live_${currentChannel.id}`
@@ -2058,23 +2090,30 @@ function LivePageClient() {
       logger.error('HLS.js 未加载');
       return;
     }
+    const HlsLib = Hls;
+    type LoaderArgs = Parameters<
+      InstanceType<typeof HlsLib.DefaultConfig.loader>['load']
+    >;
 
-    class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
-      constructor(config: any) {
+    class CustomHlsJsLoader extends HlsLib.DefaultConfig.loader {
+      constructor(
+        config: ConstructorParameters<typeof HlsLib.DefaultConfig.loader>[0]
+      ) {
         super(config);
         const load = this.load.bind(this);
-        this.load = function (context: any, config: any, callbacks: any) {
+        this.load = function (
+          context: LoaderArgs[0] & { type?: string },
+          config: LoaderArgs[1],
+          callbacks: LoaderArgs[2]
+        ) {
           // 判断当前直播源的代理模式
           const currentLiveSource = currentSourceRef.current;
           const proxyMode = currentLiveSource?.proxyMode || 'full';
 
           // 拦截manifest和level请求
-          if (
-            (context as any).type === 'manifest' ||
-            (context as any).type === 'level'
-          ) {
+          if (context.type === 'manifest' || context.type === 'level') {
             // manifest 请求处理
-            if ((context as any).type === 'manifest') {
+            if (context.type === 'manifest') {
               if (proxyMode === 'full') {
                 // 全量代理：添加 source 参数
                 try {
@@ -2105,7 +2144,7 @@ function LivePageClient() {
             }
 
             // level 请求（ts 分片）处理
-            if ((context as any).type === 'level') {
+            if (context.type === 'level') {
               if (proxyMode === 'full') {
                 // 全量代理：添加 source 参数
                 try {
@@ -2129,7 +2168,7 @@ function LivePageClient() {
       }
     }
 
-    const hls = attachHlsStream(Hls, video, url, {
+    const hls = attachHlsStream(HlsLib, video, url, {
       lowLatencyMode: true,
       maxBufferLength: 30,
       backBufferLength: 30,
@@ -2137,15 +2176,15 @@ function LivePageClient() {
       loader: CustomHlsJsLoader,
     });
 
-    hls.on(Hls.Events.ERROR, function (event: any, data: any) {
+    hls.on(HlsLib.Events.ERROR, function (event, data) {
       logger.error('HLS Error:', event, data);
 
       if (data.fatal) {
         switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR:
+          case HlsLib.ErrorTypes.NETWORK_ERROR:
             hls.startLoad();
             break;
-          case Hls.ErrorTypes.MEDIA_ERROR:
+          case HlsLib.ErrorTypes.MEDIA_ERROR:
             // hls.recoverMediaError();
             break;
           default:
@@ -2170,7 +2209,22 @@ function LivePageClient() {
   }
 
   // 播放器初始化
+  // 播放器在下面依赖变化时才重建；用到的函数和 WebGPU 支持情况读这一次渲染的
+  const playerSetup = useLatest({
+    changeAnime4KMode,
+    changeAnime4KScale,
+    cleanupPlayer,
+    toggleAnime4K,
+    webGPUSupported,
+  });
   useEffect(() => {
+    const {
+      changeAnime4KMode,
+      changeAnime4KScale,
+      cleanupPlayer,
+      toggleAnime4K,
+      webGPUSupported,
+    } = playerSetup.current;
     // 频道或地址变了 effect 会重跑，旧那次的预检查晚到时不能再创建播放器
     let cancelled = false;
     const preload = async () => {
@@ -2301,7 +2355,7 @@ function LivePageClient() {
                     html: 'Anime4K超分',
                     icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V9l7-3.5L19 9v4c0 4-3 7-7 7z" fill="currentColor"/><path d="M10 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
                     switch: anime4kEnabledRef.current,
-                    onSwitch: async function (item: any) {
+                    onSwitch: async function (item: ArtSettingOption) {
                       const newVal = !item.switch;
                       const result = await toggleAnime4K(newVal);
                       return result;
@@ -2342,7 +2396,7 @@ function LivePageClient() {
                         default: anime4kModeRef.current === 'ModeCA',
                       },
                     ],
-                    onSelect: async function (item: any) {
+                    onSelect: async function (item: ArtSettingOption) {
                       await changeAnime4KMode(item.value);
                       return item.html;
                     },
@@ -2372,7 +2426,7 @@ function LivePageClient() {
                         default: anime4kScaleRef.current === 4.0,
                       },
                     ],
-                    onSelect: async function (item: any) {
+                    onSelect: async function (item: ArtSettingOption) {
                       await changeAnime4KScale(parseFloat(item.value));
                       return item.html;
                     },
@@ -2407,7 +2461,7 @@ function LivePageClient() {
           setIsVideoLoading(true);
         });
 
-        artPlayerRef.current.on('error', (err: any) => {
+        artPlayerRef.current.on('error', (err: unknown) => {
           logger.error('播放器错误:', err);
         });
 
@@ -2426,28 +2480,26 @@ function LivePageClient() {
     return () => {
       cancelled = true;
     };
-  }, [playerLibsReady, videoUrl, currentChannel, loading]);
+  }, [playerLibsReady, videoUrl, currentChannel, loading, playerSetup]);
 
   // 清理播放器资源
   useEffect(() => {
-    return () => {
-      cleanupPlayer();
-    };
-  }, []);
+    return cleanupOnUnmount;
+  }, [cleanupOnUnmount]);
 
   // 页面卸载时的额外清理
   useEffect(() => {
     const handleBeforeUnload = () => {
-      cleanupPlayer();
+      cleanupOnUnmount();
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      cleanupPlayer();
+      cleanupOnUnmount();
     };
-  }, []);
+  }, [cleanupOnUnmount]);
 
   // 全局快捷键处理
   useEffect(() => {
@@ -3139,19 +3191,20 @@ function LivePageClient() {
                             container.addEventListener('wheel', handleWheel, {
                               passive: false,
                             });
-                            // 将事件处理器存储在容器上，以便后续移除
-                            (container as any)._wheelHandler = handleWheel;
+                            // 记下处理器，离开时移除
+                            groupWheelHandlerRef.current = handleWheel;
                           }
                         }}
                         onMouseLeave={() => {
                           // 鼠标离开分组标签区域时，移除滚轮事件监听
                           const container = groupContainerRef.current;
-                          if (container && (container as any)._wheelHandler) {
+                          const wheelHandler = groupWheelHandlerRef.current;
+                          if (container && wheelHandler) {
                             container.removeEventListener(
                               'wheel',
-                              (container as any)._wheelHandler
+                              wheelHandler
                             );
-                            delete (container as any)._wheelHandler;
+                            groupWheelHandlerRef.current = null;
                           }
                         }}
                       >

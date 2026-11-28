@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
-
 import { BRAND_NAME } from '@/lib/brand';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
@@ -77,7 +75,7 @@ export const API_CONFIG = {
 };
 
 // 在模块加载时根据环境决定配置来源
-let cachedConfig: AdminConfig;
+let cachedConfig: AdminConfig | null = null;
 let configInitPromise: Promise<AdminConfig> | null = null;
 
 // 从配置文件文本里读 special_source_apis（兼容驼峰写法）
@@ -322,7 +320,9 @@ async function getInitConfig(
         process.env.TMDB_IMAGE_BASE_URL || DEFAULT_TMDB_IMAGE_BASE_URL,
       // 动漫/Bangumi配置
       BangumiDataSource:
-        (process.env.NEXT_PUBLIC_BANGUMI_DATA_SOURCE as any) || 'direct',
+        (process.env.NEXT_PUBLIC_BANGUMI_DATA_SOURCE as
+          | AdminConfig['SiteConfig']['BangumiDataSource']
+          | undefined) || 'direct',
       BangumiApiBaseUrl:
         process.env.BANGUMI_API_BASE_URL ||
         process.env.NEXT_PUBLIC_BANGUMI_API_BASE_URL ||
@@ -516,7 +516,7 @@ export async function getConfig(): Promise<AdminConfig> {
     if (!dbReadFailed && nonOwnerUsers.length > 0) {
       try {
         // 检查是否支持V2存储
-        const storage = (db as any).storage;
+        const storage = db.storage;
         if (storage && typeof storage.createUserV2 === 'function') {
           logger.info('检测到配置中有用户，开始自动迁移...');
           await db.migrateUsersFromConfig(adminConfig);
@@ -792,7 +792,8 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   const ownerUser = process.env.USERNAME;
   adminConfig.UserConfig.Users = [
     {
-      username: ownerUser!,
+      // 站长账号来自环境变量 USERNAME（部署时必填）
+      username: ownerUser as string,
       role: 'owner',
       banned: false,
     },
@@ -996,10 +997,13 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     adminConfig.OPDSConfig.Sources = [];
   }
   adminConfig.OPDSConfig.Sources = adminConfig.OPDSConfig.Sources.filter(
-    (source: any) => (source?.type || 'opds') === 'opds'
-  ).map((source: any) => {
-    const { legado: _legado, ...rest } = source || {};
-    return { ...rest, type: 'opds' };
+    // 旧配置里可能还有 legado 类型的书源（已经改成单独的订阅），这里只留 OPDS
+    (source) => ((source?.type as string | undefined) || 'opds') === 'opds'
+  ).map((source) => {
+    const { legado: _legado, ...rest } = (source || {}) as typeof source & {
+      legado?: unknown;
+    };
+    return { ...rest, type: 'opds' as const };
   });
   if (!Array.isArray(adminConfig.OPDSConfig.LegadoSubscriptions)) {
     adminConfig.OPDSConfig.LegadoSubscriptions = [];
@@ -1358,6 +1362,6 @@ export async function setCachedConfig(config: AdminConfig) {
 }
 
 export async function clearConfigCache() {
-  cachedConfig = null as any;
+  cachedConfig = null;
   configInitPromise = null;
 }

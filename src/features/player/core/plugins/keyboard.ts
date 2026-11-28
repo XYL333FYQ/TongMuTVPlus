@@ -1,5 +1,5 @@
 /*
- * 键盘快捷键。只在页面焦点不在输入框 / 按钮上时生效。
+ * 键盘快捷键。只在页面焦点不在输入框 / 按钮上、也不在弹窗里时生效。
  */
 
 import { calculateSeekTime } from '@/lib/player-seek-settings';
@@ -8,29 +8,30 @@ import { formatDuration } from '@/lib/time';
 import { stepPlaybackRate } from './basics';
 import { PLAYBACK_RATES, WatchPlayer } from '../WatchPlayer';
 
+/** 快捷键说明（播放页的“播放快捷键”弹窗显示这份；改按键时一起改） */
 export const SHORTCUT_GROUPS = [
   {
-    title: '播放',
+    title: '播放控制',
     items: [
       { keys: ['空格'], description: '播放 / 暂停' },
-      { keys: ['←', '→'], description: '快退 / 快进' },
+      { keys: ['←', '→'], description: '快退 / 快进（快进/倒退时间）' },
       { keys: ['P'], description: '快捷快进' },
-      { keys: ['↑', '↓'], description: '音量加 / 减' },
-      { keys: ['F'], description: '全屏' },
+      { keys: ['↑', '↓'], description: '音量增加 / 减少' },
+      { keys: ['F'], description: '切换全屏' },
     ],
   },
   {
-    title: '选集',
+    title: '剧集切换',
     items: [
       { keys: ['Alt', '←'], description: '上一集' },
       { keys: ['Alt', '→'], description: '下一集' },
     ],
   },
   {
-    title: '倍速',
+    title: '倍速控制',
     items: [
-      { keys: ['小键盘 +'], description: '提高一档' },
-      { keys: ['小键盘 -'], description: '降低一档' },
+      { keys: ['小键盘 +'], description: '提高一档倍速' },
+      { keys: ['小键盘 -'], description: '降低一档倍速' },
       { keys: ['小键盘 /'], description: '恢复 1x' },
     ],
   },
@@ -59,6 +60,8 @@ export function bindKeyboard(options: KeyboardOptions) {
   const handler = (event: KeyboardEvent) => {
     const target = event.target instanceof HTMLElement ? event.target : null;
     if (target?.closest(EDITABLE)) return;
+    // 盖在页面上的弹窗（公共弹窗层是原生 <dialog>）开着时，按键归弹窗
+    if (target?.closest('dialog[open]')) return;
     if (options.active && !options.active()) return;
     const scope = options.scope?.();
     if (scope && target && target !== document.body && !scope.contains(target))

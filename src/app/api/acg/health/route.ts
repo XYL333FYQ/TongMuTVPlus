@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -58,14 +57,14 @@ export async function POST(req: NextRequest) {
       ...result,
       concurrency: getMagnetHealthConcurrency(),
     });
-  } catch (error: any) {
+  } catch (error) {
     if (
       error instanceof MagnetHealthBusyError ||
-      error?.code === 'MAGNET_HEALTH_BUSY'
+      (error as Error & { code?: string })?.code === 'MAGNET_HEALTH_BUSY'
     ) {
       return NextResponse.json(
         {
-          error: error.message || '测活繁忙，请稍后再试',
+          error: (error as Error).message || '测活繁忙，请稍后再试',
           code: 'MAGNET_HEALTH_BUSY',
           concurrency: getMagnetHealthConcurrency(),
         },
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     logger.error('磁力测活失败:', error);
     return NextResponse.json(
-      { error: error?.message || '测活失败' },
+      { error: (error as Error)?.message || '测活失败' },
       { status: 500 }
     );
   }

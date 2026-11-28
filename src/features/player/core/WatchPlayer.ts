@@ -408,7 +408,7 @@ export class WatchPlayer {
         // 忽略
       }
       try {
-        art.video?.hls?.destroy();
+        (art.video as VideoWithHls | undefined)?.hls?.destroy();
         art.destroy();
       } catch {
         // 忽略

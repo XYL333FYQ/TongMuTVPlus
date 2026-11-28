@@ -92,6 +92,7 @@ export interface AdminConfig {
       banned?: boolean;
       enabledApis?: string[]; // 优先级高于tags限制
       tags?: string[]; // 多 tags 取并集限制
+      oidcSub?: string; // 旧配置里 OIDC 登录的用户带着它，迁移到新版用户存储时沿用
     }[];
     Tags?: {
       name: string;

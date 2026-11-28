@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -234,10 +233,10 @@ export async function POST(req: NextRequest) {
 
         // 注册成功
         return NextResponse.json({ ok: true, message: '注册成功' });
-      } catch (err: any) {
+      } catch (err) {
         logger.error('创建用户失败', err);
         // 如果是用户已存在的错误，返回409
-        if (err.message === '用户已存在') {
+        if ((err as Error).message === '用户已存在') {
           return NextResponse.json({ error: '用户名已存在' }, { status: 409 });
         }
         return NextResponse.json(

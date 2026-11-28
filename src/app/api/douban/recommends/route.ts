@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCacheTime } from '@/lib/config';
@@ -51,7 +49,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '缺少必要参数: kind' }, { status: 400 });
   }
 
-  const selectedCategories = { 类型: category } as any;
+  const selectedCategories: Record<string, string | null> = {
+    类型: category,
+  };
   if (format) {
     selectedCategories['形式'] = format;
   }

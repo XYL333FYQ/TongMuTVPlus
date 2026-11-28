@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, react-hooks/exhaustive-deps, @typescript-eslint/no-empty-function */
-
 'use client';
 
 import {
+  type DragEndEvent,
   closestCenter,
   DndContext,
   PointerSensor,
@@ -36,7 +35,6 @@ import {
   Cloud,
   Copy,
   Database,
-  ExternalLink,
   FileText,
   FolderOpen,
   Globe,
@@ -86,11 +84,14 @@ import {
 import { logger } from '@/lib/logger';
 import { isAdminRole, isOwnerRole } from '@/lib/roles';
 import { readSetting, writeSetting } from '@/lib/settings';
+import type { MovieRequest } from '@/lib/types';
+import { useLatest } from '@/hooks/useLatest';
 import { useNotificationTargetFocus } from '@/hooks/useNotificationTargetFocus';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
+import { DataSourceThanks } from '@/components/DataSourceThanks';
 import { askConfirm } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
@@ -310,8 +311,103 @@ const useAlertModal = () => {
   return { alertModal, showAlert, hideAlert };
 };
 
+/** 弹窗的内容（类型、标题、正文、自动关闭、确认按钮） */
+type AlertConfig = Omit<
+  ReturnType<typeof useAlertModal>['alertModal'],
+  'isOpen'
+>;
+
+/** 私人影库里的一部（/api/openlist/list 的一项） */
+interface PrivateLibraryVideo {
+  id: string;
+  folder: string;
+  tmdbId?: number;
+  title: string;
+  poster: string;
+  releaseDate?: string;
+  overview?: string;
+  voteAverage?: number;
+  mediaType?: 'movie' | 'tv';
+  lastUpdated?: number;
+  failed: boolean;
+  seasonNumber?: number;
+  seasonName?: string;
+  doubanId?: string;
+  category?: string;
+  refresh14m?: boolean;
+}
+
+type EmbySourceConfig = NonNullable<
+  NonNullable<AdminConfig['EmbyConfig']>['Sources']
+>[number];
+
+type WebLiveSourceConfig = NonNullable<AdminConfig['WebLiveConfig']>[number];
+
+/** 上传的配置文件 / 输入框里的配置：只关心 api_site */
+interface ConfigFileJson {
+  api_site?: Record<string, { api?: string; [field: string]: unknown }>;
+  [field: string]: unknown;
+}
+
+/** 去广告代码的默认模板（站长没保存自定义代码时用） */
+const defaultAdFilterCode = `function filterAdsFromM3U8(type: string, m3u8Content: string): string {
+  if (!m3u8Content) return '';
+
+  // 广告关键字列表
+  const adKeywords = [
+    'sponsor',
+    '/ad/',
+    '/ads/',
+    'advert',
+    'advertisement',
+    '/adjump',
+    'redtraffic'
+  ];
+
+  // 按行分割M3U8内容
+  const lines = m3u8Content.split('\\n');
+  const filteredLines = [];
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // 跳过 #EXT-X-DISCONTINUITY 标识
+    if (line.includes('#EXT-X-DISCONTINUITY')) {
+      i++;
+      continue;
+    }
+
+    // 如果是 EXTINF 行，检查下一行 URL 是否包含广告关键字
+    if (line.includes('#EXTINF:')) {
+      // 检查下一行 URL 是否包含广告关键字
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1];
+        const containsAdKeyword = adKeywords.some(keyword =>
+          nextLine.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        if (containsAdKeyword) {
+          // 跳过 EXTINF 行和 URL 行
+          i += 2;
+          continue;
+        }
+      }
+    }
+
+    // 保留当前行
+    filteredLines.push(line);
+    i++;
+  }
+
+  return filteredLines.join('\\n');
+}`;
+
 // 统一弹窗方法（必须在首次使用前定义）
-const showError = (message: string, showAlert?: (config: any) => void) => {
+const showError = (
+  message: string,
+  showAlert?: (config: AlertConfig) => void
+) => {
   if (showAlert) {
     showAlert({ type: 'error', title: '错误', message, showConfirm: true });
   } else {
@@ -319,7 +415,10 @@ const showError = (message: string, showAlert?: (config: any) => void) => {
   }
 };
 
-const showSuccess = (message: string, showAlert?: (config: any) => void) => {
+const showSuccess = (
+  message: string,
+  showAlert?: (config: AlertConfig) => void
+) => {
   if (showAlert) {
     showAlert({ type: 'success', title: '成功', message, timer: 2000 });
   } else {
@@ -341,10 +440,10 @@ const useLoadingState = () => {
 
   const isLoading = (key: string) => loadingStates[key] || false;
 
-  const withLoading = async (
+  const withLoading = async <T,>(
     key: string,
-    operation: () => Promise<any>
-  ): Promise<any> => {
+    operation: () => Promise<T>
+  ): Promise<T> => {
     setLoading(key, true);
     try {
       const result = await operation();
@@ -649,8 +748,8 @@ const UserConfig = ({
 
   // 判断是否有旧版用户数据需要迁移
   const hasOldUserData =
-    config?.UserConfig?.Users?.filter((u: any) => !isOwnerRole(u.role))
-      .length ?? 0 > 0;
+    config?.UserConfig?.Users?.filter((u) => !isOwnerRole(u.role)).length ??
+    0 > 0;
 
   // 使用新版本用户列表（如果可用且没有旧数据），否则使用配置中的用户列表
   const displayUsers: Array<{
@@ -661,7 +760,11 @@ const UserConfig = ({
     tags?: string[];
     created_at?: number;
     oidcSub?: string;
-  }> = !hasOldUserData && usersV2 ? usersV2 : config?.UserConfig?.Users || [];
+  }> = useMemo(
+    () =>
+      !hasOldUserData && usersV2 ? usersV2 : config?.UserConfig?.Users || [],
+    [hasOldUserData, usersV2, config]
+  );
 
   // 使用 useMemo 计算全选状态，避免每次渲染都重新计算
   const selectAllUsers = useMemo(() => {
@@ -1245,13 +1348,14 @@ const UserConfig = ({
                               timer: 2000,
                             });
                             await refreshConfig();
-                          } catch (error: any) {
+                          } catch (error) {
                             logger.error('迁移用户数据失败:', error);
                             showAlert({
                               type: 'error',
                               title: '迁移失败',
                               message:
-                                error.message || '迁移用户数据时发生错误',
+                                (error as Error).message ||
+                                '迁移用户数据时发生错误',
                             });
                           }
                         });
@@ -3486,7 +3590,7 @@ const OpenListConfigComponent = ({
       proxyCacheMinutes: number;
     }>
   >([]);
-  const [videos, setVideos] = useState<any[]>([]);
+  const [videos, setVideos] = useState<PrivateLibraryVideo[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [scanProgress, setScanProgress] = useState<{
     current: number;
@@ -3494,7 +3598,8 @@ const OpenListConfigComponent = ({
     currentFolder?: string;
   } | null>(null);
   const [correctDialogOpen, setCorrectDialogOpen] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState<any | null>(null);
+  const [selectedVideo, setSelectedVideo] =
+    useState<PrivateLibraryVideo | null>(null);
   const [pathMetaDialogOpen, setPathMetaDialogOpen] = useState(false);
   const [pathMetaExpanded, setPathMetaExpanded] = useState<Set<number>>(
     new Set()
@@ -4572,8 +4677,8 @@ const OpenListConfigComponent = ({
                             : '-'}
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-muted)]'>
-                          {video.voteAverage > 0
-                            ? video.voteAverage.toFixed(1)
+                          {(video.voteAverage ?? 0) > 0
+                            ? (video.voteAverage ?? 0).toFixed(1)
                             : '-'}
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap text-right text-sm'>
@@ -5586,8 +5691,10 @@ const EmbyConfigComponent = ({
   const { isLoading, withLoading } = useLoadingState();
 
   // 源列表状态
-  const [sources, setSources] = useState<any[]>([]);
-  const [editingSource, setEditingSource] = useState<any | null>(null);
+  const [sources, setSources] = useState<EmbySourceConfig[]>([]);
+  const [editingSource, setEditingSource] = useState<EmbySourceConfig | null>(
+    null
+  );
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedSources, setSelectedSources] = useState<Set<string>>(
     new Set()
@@ -5663,8 +5770,9 @@ const EmbyConfigComponent = ({
   };
 
   // 开始编辑
-  const handleEdit = (source: any) => {
-    setFormData({ ...source });
+  const handleEdit = (source: EmbySourceConfig) => {
+    // 旧配置可能缺字段，原样放进表单（没有的就是空）
+    setFormData({ ...source } as typeof formData);
     // 根据现有配置判断认证方式
     if (source.ApiKey) {
       setAuthMode('apikey');
@@ -5752,7 +5860,7 @@ const EmbyConfigComponent = ({
   };
 
   // 删除源
-  const handleDelete = async (source: any) => {
+  const handleDelete = async (source: EmbySourceConfig) => {
     if (
       !(await askConfirm({
         message: `确定要删除 "${source.name}" 吗？`,
@@ -5793,7 +5901,7 @@ const EmbyConfigComponent = ({
   };
 
   // 切换启用状态
-  const handleToggleEnabled = async (source: any) => {
+  const handleToggleEnabled = async (source: EmbySourceConfig) => {
     await withLoading('toggleEmbySource', async () => {
       try {
         const newSources = sources.map((s) =>
@@ -5827,7 +5935,7 @@ const EmbyConfigComponent = ({
   };
 
   // 测试连接
-  const handleTest = async (source: any) => {
+  const handleTest = async (source: EmbySourceConfig) => {
     await withLoading('testEmbySource', async () => {
       try {
         const response = await apiFetch('/api/admin/emby', {
@@ -6657,8 +6765,8 @@ const VideoSourceConfig = ({
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: () => undefined,
+    onCancel: () => undefined,
   });
 
   // 有效性检测相关状态
@@ -6731,7 +6839,7 @@ const VideoSourceConfig = ({
   }, [config]);
 
   // 通用 API 请求
-  const callSourceApi = async (body: Record<string, any>) => {
+  const callSourceApi = async (body: Record<string, unknown>) => {
     try {
       const resp = await apiFetch('/api/admin/source', {
         method: 'POST',
@@ -6888,8 +6996,8 @@ const VideoSourceConfig = ({
             isOpen: false,
             title: '',
             message: '',
-            onConfirm: () => {},
-            onCancel: () => {},
+            onConfirm: () => undefined,
+            onCancel: () => undefined,
           });
         },
         onCancel: () => {
@@ -6897,8 +7005,8 @@ const VideoSourceConfig = ({
             isOpen: false,
             title: '',
             message: '',
-            onConfirm: () => {},
-            onCancel: () => {},
+            onConfirm: () => undefined,
+            onCancel: () => undefined,
           });
         },
       });
@@ -7013,7 +7121,7 @@ const VideoSourceConfig = ({
   }, [sources]);
 
   const handleWeightModalDragEnd = useCallback(
-    (event: any) => {
+    (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -7044,9 +7152,11 @@ const VideoSourceConfig = ({
     });
   }, [sources, weightDraftSources]);
 
+  // 保存权重时调最新的接口函数（它每次渲染都会重建）
+  const callSourceApiLatest = useLatest(callSourceApi);
   const handleSaveWeightConfig = useCallback(() => {
     withLoading('saveWeightConfig', async () => {
-      await callSourceApi({
+      await callSourceApiLatest.current({
         action: 'batch_update_weights',
         weights: weightDraftSources.map((source) => ({
           key: source.key,
@@ -7059,7 +7169,12 @@ const VideoSourceConfig = ({
     }).catch(() => {
       logger.error('操作失败', 'batch_update_weights');
     });
-  }, [callSourceApi, handleCloseWeightModal, weightDraftSources, withLoading]);
+  }, [
+    callSourceApiLatest,
+    handleCloseWeightModal,
+    weightDraftSources,
+    withLoading,
+  ]);
 
   // 有效性检测函数
   const handleValidateSources = async () => {
@@ -7591,8 +7706,8 @@ const VideoSourceConfig = ({
           isOpen: false,
           title: '',
           message: '',
-          onConfirm: () => {},
-          onCancel: () => {},
+          onConfirm: () => undefined,
+          onCancel: () => undefined,
         });
       },
       onCancel: () => {
@@ -7600,8 +7715,8 @@ const VideoSourceConfig = ({
           isOpen: false,
           title: '',
           message: '',
-          onConfirm: () => {},
-          onCancel: () => {},
+          onConfirm: () => undefined,
+          onCancel: () => undefined,
         });
       },
     });
@@ -7619,8 +7734,8 @@ const VideoSourceConfig = ({
         isOpen: false,
         title: '',
         message: '',
-        onConfirm: () => {},
-        onCancel: () => {},
+        onConfirm: () => undefined,
+        onCancel: () => undefined,
       });
 
     if (keys.length === 0) {
@@ -8571,7 +8686,7 @@ const CategoryConfig = ({
   }, [config]);
 
   // 通用 API 请求
-  const callCategoryApi = async (body: Record<string, any>) => {
+  const callCategoryApi = async (body: Record<string, unknown>) => {
     try {
       const resp = await apiFetch('/api/admin/category', {
         method: 'POST',
@@ -8633,7 +8748,7 @@ const CategoryConfig = ({
     });
   };
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = categories.findIndex(
@@ -9025,9 +9140,11 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
     }
   };
 
+  // 只在打开这一块时拉一次脚本列表
+  const loadScriptsLatest = useLatest(loadScripts);
   useEffect(() => {
-    loadScripts();
-  }, []);
+    loadScriptsLatest.current();
+  }, [loadScriptsLatest]);
 
   const handleCreateNew = () => {
     setSelectedScriptId(null);
@@ -9632,9 +9749,9 @@ const ConfigFileComponent = ({
         const fileContent = await file.text();
 
         // 验证JSON格式
-        let parsedConfig;
+        let parsedConfig: ConfigFileJson;
         try {
-          parsedConfig = JSON.parse(fileContent);
+          parsedConfig = JSON.parse(fileContent) as ConfigFileJson;
         } catch (parseError) {
           showError('JSON格式错误，请检查文件内容', showAlert);
           return;
@@ -9657,10 +9774,10 @@ const ConfigFileComponent = ({
         }
 
         // 合并模式：根据api字段进行去重
-        let existingConfig: any = { api_site: {} };
+        let existingConfig: ConfigFileJson = { api_site: {} };
         if (configContent.trim()) {
           try {
-            existingConfig = JSON.parse(configContent);
+            existingConfig = JSON.parse(configContent) as ConfigFileJson;
           } catch {
             showError(
               '输入框里的现有内容不是有效 JSON，无法合并；可切换到“覆盖”，或先修正输入框',
@@ -9672,7 +9789,7 @@ const ConfigFileComponent = ({
         const existingApis = new Set();
 
         // 收集现有配置中的所有api
-        Object.values(existingConfig.api_site || {}).forEach((site: any) => {
+        Object.values(existingConfig.api_site || {}).forEach((site) => {
           if (site.api) {
             existingApis.add(site.api);
           }
@@ -9682,16 +9799,14 @@ const ConfigFileComponent = ({
         const mergedApiSite = { ...existingConfig.api_site };
         let duplicateCount = 0;
 
-        Object.entries(parsedConfig.api_site || {}).forEach(
-          ([key, site]: [string, any]) => {
-            if (site.api && existingApis.has(site.api)) {
-              duplicateCount++;
-              // 跳过重复的api
-              return;
-            }
-            mergedApiSite[key] = site;
+        Object.entries(parsedConfig.api_site || {}).forEach(([key, site]) => {
+          if (site.api && existingApis.has(site.api)) {
+            duplicateCount++;
+            // 跳过重复的api
+            return;
           }
-        );
+          mergedApiSite[key] = site;
+        });
 
         // 已有的其他顶层字段保留，新文件里同名字段以新的为准
         const mergedConfig = {
@@ -11021,24 +11136,6 @@ const SiteConfigComponent = ({
   ];
 
   // 获取感谢信息
-  const getThanksInfo = (dataSource: string) => {
-    switch (dataSource) {
-      case 'cors-proxy-zwei':
-        return {
-          text: 'Thanks to @Zwei',
-          url: 'https://github.com/bestzwei',
-        };
-      case 'cmliussss-cdn-tencent':
-      case 'cmliussss-cdn-ali':
-        return {
-          text: 'Thanks to @CMLiussss',
-          url: 'https://github.com/cmliu',
-        };
-      default:
-        return null;
-    }
-  };
-
   useEffect(() => {
     apiFetch('/scripts/bangumi-proxy.worker.js')
       .then((response) => (response.ok ? response.text() : ''))
@@ -11358,25 +11455,7 @@ const SiteConfigComponent = ({
           </p>
 
           {/* 感谢信息 */}
-          {getThanksInfo(siteSettings.DoubanProxyType) && (
-            <div className='mt-3'>
-              <button
-                type='button'
-                onClick={() =>
-                  window.open(
-                    getThanksInfo(siteSettings.DoubanProxyType)!.url,
-                    '_blank'
-                  )
-                }
-                className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-[color:var(--tm-muted)] cursor-pointer min-h-[44px] tm-press'
-              >
-                <span className='font-medium'>
-                  {getThanksInfo(siteSettings.DoubanProxyType)!.text}
-                </span>
-                <ExternalLink className='w-3.5 opacity-70' />
-              </button>
-            </div>
-          )}
+          <DataSourceThanks dataSource={siteSettings.DoubanProxyType} />
         </div>
 
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
@@ -11469,25 +11548,7 @@ const SiteConfigComponent = ({
           </p>
 
           {/* 感谢信息 */}
-          {getThanksInfo(siteSettings.DoubanImageProxyType) && (
-            <div className='mt-3'>
-              <button
-                type='button'
-                onClick={() =>
-                  window.open(
-                    getThanksInfo(siteSettings.DoubanImageProxyType)!.url,
-                    '_blank'
-                  )
-                }
-                className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-[color:var(--tm-muted)] cursor-pointer min-h-[44px] tm-press'
-              >
-                <span className='font-medium'>
-                  {getThanksInfo(siteSettings.DoubanImageProxyType)!.text}
-                </span>
-                <ExternalLink className='w-3.5 opacity-70' />
-              </button>
-            </div>
-          )}
+          <DataSourceThanks dataSource={siteSettings.DoubanImageProxyType} />
         </div>
 
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
@@ -13483,58 +13544,6 @@ const CustomAdFilterConfig = ({
   const [adFilterCode, setAdFilterCode] = useState('');
 
   // 默认去广告代码
-  const defaultAdFilterCode = `function filterAdsFromM3U8(type: string, m3u8Content: string): string {
-  if (!m3u8Content) return '';
-
-  // 广告关键字列表
-  const adKeywords = [
-    'sponsor',
-    '/ad/',
-    '/ads/',
-    'advert',
-    'advertisement',
-    '/adjump',
-    'redtraffic'
-  ];
-
-  // 按行分割M3U8内容
-  const lines = m3u8Content.split('\\n');
-  const filteredLines = [];
-
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // 跳过 #EXT-X-DISCONTINUITY 标识
-    if (line.includes('#EXT-X-DISCONTINUITY')) {
-      i++;
-      continue;
-    }
-
-    // 如果是 EXTINF 行，检查下一行 URL 是否包含广告关键字
-    if (line.includes('#EXTINF:')) {
-      // 检查下一行 URL 是否包含广告关键字
-      if (i + 1 < lines.length) {
-        const nextLine = lines[i + 1];
-        const containsAdKeyword = adKeywords.some(keyword =>
-          nextLine.toLowerCase().includes(keyword.toLowerCase())
-        );
-
-        if (containsAdKeyword) {
-          // 跳过 EXTINF 行和 URL 行
-          i += 2;
-          continue;
-        }
-      }
-    }
-
-    // 保留当前行
-    filteredLines.push(line);
-    i++;
-  }
-
-  return filteredLines.join('\\n');
-}`;
 
   useEffect(() => {
     // 从数据库配置读取自定义去广告代码
@@ -15867,7 +15876,7 @@ const MovieRequestsComponent = ({
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<MovieRequest[]>([]);
   const [filter, setFilter] = useState<'pending' | 'fulfilled'>('pending');
   const [loading, setLoading] = useState(true);
   const notificationParams = useSearchParams();
@@ -15893,13 +15902,6 @@ const MovieRequestsComponent = ({
   );
   const [savingSettings, setSavingSettings] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    loadRequests(controller.signal);
-    loadCounts(controller.signal);
-    return () => controller.abort();
-  }, [filter, targetId, targetKey]);
-
   const loadCounts = async (signal?: AbortSignal) => {
     try {
       const response = await apiFetch('/api/movie-requests', { signal });
@@ -15907,17 +15909,17 @@ const MovieRequestsComponent = ({
       if (signal?.aborted) return;
       const allRequests = data.requests || [];
       const target = allRequests.find(
-        (request: any) => request.id === targetId
+        (request: MovieRequest) => request.id === targetId
       );
       if (target && locatedTarget.current !== targetNavigation) {
         locatedTarget.current = targetNavigation;
         setFilter(target.status === 'fulfilled' ? 'fulfilled' : 'pending');
       }
       setPendingCount(
-        allRequests.filter((r: any) => r.status === 'pending').length
+        allRequests.filter((r: MovieRequest) => r.status === 'pending').length
       );
       setFulfilledCount(
-        allRequests.filter((r: any) => r.status === 'fulfilled').length
+        allRequests.filter((r: MovieRequest) => r.status === 'fulfilled').length
       );
     } catch (error) {
       if (signal?.aborted) return;
@@ -15942,6 +15944,15 @@ const MovieRequestsComponent = ({
       if (!signal?.aborted) setLoading(false);
     }
   };
+
+  // 筛选条件变了才重新拉；拉取函数读这一次渲染的
+  const requestLoaders = useLatest({ loadRequests, loadCounts });
+  useEffect(() => {
+    const controller = new AbortController();
+    requestLoaders.current.loadRequests(controller.signal);
+    requestLoaders.current.loadCounts(controller.signal);
+    return () => controller.abort();
+  }, [filter, targetId, targetKey, requestLoaders]);
 
   const handleFulfill = async (id: string) => {
     await withLoading(`fulfill_${id}`, async () => {
@@ -16574,7 +16585,9 @@ const AIConfigComponent = ({
             </label>
             <Select
               value={newProtocol}
-              onChange={(e) => setNewProtocol(e.target.value as any)}
+              onChange={(e) =>
+                setNewProtocol(e.target.value as typeof newProtocol)
+              }
               className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             >
               <option value='openai-completions'>
@@ -16760,7 +16773,11 @@ const AIConfigComponent = ({
               </label>
               <Select
                 value={webSearchProvider}
-                onChange={(e) => setWebSearchProvider(e.target.value as any)}
+                onChange={(e) =>
+                  setWebSearchProvider(
+                    e.target.value as typeof webSearchProvider
+                  )
+                }
                 className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               >
                 <option value='tavily'>Tavily (推荐)</option>
@@ -17417,7 +17434,7 @@ const LiveSourceConfig = ({
   }, [config]);
 
   // 通用 API 请求
-  const callLiveSourceApi = async (body: Record<string, any>) => {
+  const callLiveSourceApi = async (body: Record<string, unknown>) => {
     try {
       const resp = await apiFetch('/api/admin/live', {
         method: 'POST',
@@ -17615,7 +17632,7 @@ const LiveSourceConfig = ({
     setEditingLiveSource(null);
   };
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = liveSources.findIndex((s) => s.key === active.id);
@@ -18166,9 +18183,12 @@ const WebLiveConfig = ({
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
-  const [webLiveSources, setWebLiveSources] = useState<any[]>([]);
+  const [webLiveSources, setWebLiveSources] = useState<WebLiveSourceConfig[]>(
+    []
+  );
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingSource, setEditingSource] = useState<any | null>(null);
+  const [editingSource, setEditingSource] =
+    useState<WebLiveSourceConfig | null>(null);
   const [newSource, setNewSource] = useState({
     name: '',
     platform: 'huya',
@@ -18192,7 +18212,7 @@ const WebLiveConfig = ({
     return () => clearTimeout(timer);
   }, [showDisclaimerModal, countdown]);
 
-  const callApi = async (body: Record<string, any>) => {
+  const callApi = async (body: Record<string, unknown>) => {
     try {
       const resp = await apiFetch('/api/admin/web-live', {
         method: 'POST',
@@ -18221,7 +18241,7 @@ const WebLiveConfig = ({
       });
       setNewSource({ name: '', platform: 'huya', roomId: '' });
       setShowAddForm(false);
-    }).catch(() => {});
+    }).catch(() => undefined);
   };
 
   const handleEdit = () => {
@@ -18235,7 +18255,7 @@ const WebLiveConfig = ({
         roomId: editingSource.roomId,
       });
       setEditingSource(null);
-    }).catch(() => {});
+    }).catch(() => undefined);
   };
 
   const handleToggle = (key: string) => {
@@ -18243,14 +18263,14 @@ const WebLiveConfig = ({
     if (!target) return;
     const action = target.disabled ? 'enable' : 'disable';
     withLoading(`toggleWebLive_${key}`, () => callApi({ action, key })).catch(
-      () => {}
+      () => undefined
     );
   };
 
   const handleDelete = (key: string) => {
     withLoading(`deleteWebLive_${key}`, () =>
       callApi({ action: 'delete', key })
-    ).catch(() => {});
+    ).catch(() => undefined);
   };
 
   const handleToggleWebLiveEnabled = async () => {
@@ -18262,7 +18282,7 @@ const WebLiveConfig = ({
     } else {
       await withLoading('toggleWebLiveEnabled', async () => {
         await callApi({ action: 'toggleEnabled', enabled: false });
-      }).catch(() => {});
+      }).catch(() => undefined);
     }
   };
 
@@ -18468,7 +18488,7 @@ const WebLiveConfig = ({
                 type='text'
                 value={editingSource.name}
                 onChange={(e) =>
-                  setEditingSource((prev: any) =>
+                  setEditingSource((prev) =>
                     prev ? { ...prev, name: e.target.value } : null
                   )
                 }
@@ -18482,7 +18502,7 @@ const WebLiveConfig = ({
               <Select
                 value={editingSource.platform}
                 onChange={(e) =>
-                  setEditingSource((prev: any) =>
+                  setEditingSource((prev) =>
                     prev ? { ...prev, platform: e.target.value } : null
                   )
                 }
@@ -18501,7 +18521,7 @@ const WebLiveConfig = ({
                 type='text'
                 value={editingSource.roomId}
                 onChange={(e) =>
-                  setEditingSource((prev: any) =>
+                  setEditingSource((prev) =>
                     prev ? { ...prev, roomId: e.target.value } : null
                   )
                 }
@@ -18736,36 +18756,41 @@ function AdminPageClient() {
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
-  const fetchConfig = useCallback(async (showLoading = false) => {
-    try {
-      if (showLoading) {
-        setLoading(true);
-      }
+  // 出错弹窗用最新的 showAlert；fetchConfig 本身保持不变，挂载时只拉一次
+  const showAlertLatest = useLatest(showAlert);
+  const fetchConfig = useCallback(
+    async (showLoading = false) => {
+      try {
+        if (showLoading) {
+          setLoading(true);
+        }
 
-      const response = await apiFetch(`/api/admin/config`);
+        const response = await apiFetch(`/api/admin/config`);
 
-      if (!response.ok) {
-        const data = (await response.json()) as any;
-        throw new Error(`获取配置失败: ${data.error}`);
-      }
+        if (!response.ok) {
+          const data = (await response.json()) as { error?: string };
+          throw new Error(`获取配置失败: ${data.error}`);
+        }
 
-      const data = (await response.json()) as AdminConfigResult;
-      setConfig(data.Config);
-      setRole(data.Role);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '获取配置失败';
-      // 只在首次加载时设置错误状态，避免弹窗和错误页面同时显示
-      if (showLoading) {
-        setError(msg);
-      } else {
-        showError(msg, showAlert);
+        const data = (await response.json()) as AdminConfigResult;
+        setConfig(data.Config);
+        setRole(data.Role);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '获取配置失败';
+        // 只在首次加载时设置错误状态，避免弹窗和错误页面同时显示
+        if (showLoading) {
+          setError(msg);
+        } else {
+          showError(msg, showAlertLatest.current);
+        }
+      } finally {
+        if (showLoading) {
+          setLoading(false);
+        }
       }
-    } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
-    }
-  }, []);
+    },
+    [showAlertLatest]
+  );
 
   // 新版本用户列表状态
   const [usersV2, setUsersV2] = useState<Array<{
@@ -18823,15 +18848,17 @@ function AdminPageClient() {
     await fetchUsersV2(userPage); // 保持当前页码
   }, [fetchConfig, fetchUsersV2, userPage]);
 
+  // 仅在挂载时执行：读当时恢复出来的区块和拉取函数
+  const mountInputs = useLatest({ activeKey, fetchUsersV2 });
   useEffect(() => {
     // 首次加载时显示骨架
     fetchConfig(true);
     // 若恢复的区块是用户管理，则补拉一次用户列表
+    const { activeKey, fetchUsersV2 } = mountInputs.current;
     if (activeKey === 'userConfig') {
       fetchUsersV2();
     }
-    // 仅在挂载时执行
-  }, [fetchConfig]);
+  }, [fetchConfig, mountInputs]);
 
   // PC 切换区块时，内容区滚动回顶部
   useEffect(() => {

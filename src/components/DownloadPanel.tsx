@@ -7,6 +7,7 @@ import { M3U8DownloadTask, M3U8SegmentLogStatus } from '@/lib/m3u8-downloader';
 import { formatLocalTime } from '@/lib/time';
 
 import EmptyState from '@/components/feedback/EmptyState';
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 import { useDownload } from '@/contexts/DownloadContext';
 
@@ -144,7 +145,10 @@ export function DownloadPanel() {
     : null;
 
   return (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-ink/60 p-3 backdrop-blur-sm sm:p-6'>
+    <ModalLayer
+      label='下载任务列表'
+      onClose={() => setShowDownloadPanel(false)}
+    >
       <div className='flex max-h-[86vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between border-b border-line bg-raised p-4'>
@@ -382,7 +386,7 @@ export function DownloadPanel() {
       </div>
 
       {logTask && (
-        <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-ink/50 p-3 backdrop-blur-sm sm:p-6'>
+        <ModalLayer label='分片下载日志' onClose={() => setLogTaskId(null)}>
           <div className='flex max-h-[82vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl'>
             <div className='border-b border-line bg-raised p-4'>
               <div className='flex items-start justify-between gap-4'>
@@ -517,8 +521,8 @@ export function DownloadPanel() {
               )}
             </div>
           </div>
-        </div>
+        </ModalLayer>
       )}
-    </div>
+    </ModalLayer>
   );
 }

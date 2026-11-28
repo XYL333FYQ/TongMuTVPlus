@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-constant-condition, @typescript-eslint/no-empty-function */
 /**
  * AI问片 新版：工具式（function-calling）调用引擎
  *
@@ -18,6 +17,7 @@
  */
 
 import {
+  type DoubanPayload,
   fetchDoubanData,
   fetchTMDBData,
   fetchWebSearch,
@@ -29,6 +29,48 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { guardedFetch, ProxyTargetBlockedError } from '@/lib/server/ssrf';
 import { getTMDBTrendingContent, searchTMDBMulti } from '@/lib/tmdb.client';
+
+/** 发给模型、从模型收回的 JSON（OpenAI / Responses / Claude 三种协议格式不同，读字段时自己判断） */
+type ProtocolJson = Record<string, unknown>;
+
+/** 模型给工具的参数（各工具只读自己用到的） */
+interface ToolArgs {
+  id?: number;
+  query?: string;
+  kind?: string;
+  category?: string;
+  type?: string;
+  url?: string;
+  trending?: boolean;
+  [field: string]: unknown;
+}
+
+/** OpenAI 协议里的一次工具调用 */
+interface OpenAIToolCallJson {
+  id?: string;
+  type?: string;
+  function?: { name?: string; arguments?: unknown };
+}
+
+/** Responses 协议输出里的一项（消息或函数调用） */
+interface ResponsesOutputItem {
+  type?: string;
+  id?: string;
+  call_id?: string;
+  name?: string;
+  arguments?: unknown;
+  content?: Array<{ type?: string; text?: string }>;
+  [field: string]: unknown;
+}
+
+/** Claude 协议内容里的一块（文字或工具调用） */
+interface ClaudeContentBlock {
+  type?: string;
+  text?: string;
+  id?: string;
+  name?: string;
+  input?: ToolArgs;
+}
 
 export type NewProtocol = 'openai-completions' | 'openai-responses' | 'claude';
 
@@ -48,14 +90,15 @@ export type ToolName =
 export interface AgentToolDef {
   name: ToolName;
   description: string;
-  parameters: Record<string, any>;
+  /** JSON Schema */
+  parameters: Record<string, unknown>;
 }
 
 /** 统一的中性工具调用（用于引擎调度） */
 interface ToolCall {
   id: string;
   name: string;
-  args: any;
+  args: ToolArgs;
 }
 
 /** 工具执行结果 */
@@ -70,7 +113,7 @@ interface RoundResult {
   /** 本轮文本（流式时为已累积文本，非流式时为 message.content） */
   assistantText: string;
   /** provider 原生的 assistant 消息/条目，直接 push 进 transcript */
-  assistantSegments: any[];
+  assistantSegments: ProtocolJson[];
   /** 本轮请求的工具调用（空 = 模型已结束） */
   toolCalls: ToolCall[];
   /** 本轮请求的输入 token 数（API 返回的真实用量，未返回则缺省） */
@@ -79,16 +122,16 @@ interface RoundResult {
 
 interface ProviderAdapter {
   name: NewProtocol;
-  buildTools(defs: AgentToolDef[]): any[];
+  buildTools(defs: AgentToolDef[]): ProtocolJson[];
   /** 构造首轮 transcript（含 system 提示；claude 的 system 走顶层字段，不入 transcript） */
   buildInitialTranscript(ctx: {
     systemPrompt: string;
     history: HistoryTurn[];
     message: string;
-  }): any[];
+  }): ProtocolJson[];
   runRound(opts: {
-    transcript: any[];
-    tools: any[];
+    transcript: ProtocolJson[];
+    tools: ProtocolJson[];
     apiKey: string;
     baseURL: string;
     model: string;
@@ -101,7 +144,10 @@ interface ProviderAdapter {
     onText: (delta: string) => void;
     onToolStart: (name: string) => void;
   }): Promise<RoundResult>;
-  buildToolResultMessages(toolCalls: ToolCall[], results: ToolResult[]): any[];
+  buildToolResultMessages(
+    toolCalls: ToolCall[],
+    results: ToolResult[]
+  ): ProtocolJson[];
 }
 
 /** 新版模式可用的数据源凭据（由路由从 AIConfig 组装） */
@@ -130,7 +176,7 @@ export interface HistoryTurn {
   toolCalls?: Array<{
     name: string;
     key?: string;
-    args?: any;
+    args?: ToolArgs;
     result?: string;
     ok?: boolean;
   }>;
@@ -355,11 +401,11 @@ export function buildAgentSystemPrompt(opts: {
 /* ------------------------------------------------------------------ */
 
 /** 精简豆瓣返回结构（对齐旧版 orchestrator 的摘要逻辑） */
-function formatDoubanResult(data: any): string {
+function formatDoubanResult(data: DoubanPayload | null | undefined): string {
   if (!data) return '';
   if (data.list) {
     return JSON.stringify(
-      data.list.slice(0, 10).map((item: any) => ({
+      data.list.slice(0, 10).map((item) => ({
         title: item.title,
         rating: item.rating,
         year: item.year,
@@ -441,7 +487,7 @@ export async function fetchPageText(urlStr: string): Promise<string> {
       if (done) break;
       collected += decoder.decode(value, { stream: true });
     }
-    reader?.cancel().catch(() => {});
+    reader?.cancel().catch(() => undefined);
     return htmlToText(collected).slice(0, 8000);
   } catch (error) {
     if (error instanceof ProxyTargetBlockedError)
@@ -457,7 +503,7 @@ export async function fetchPageText(urlStr: string): Promise<string> {
 
 async function dispatchTool(
   name: string,
-  args: any,
+  args: ToolArgs,
   dataSources: ToolDataSources
 ): Promise<ToolResult> {
   try {
@@ -567,7 +613,7 @@ async function dispatchTool(
         };
       }
       const raw = await fetchTMDBData(
-        { id: args.id, type: args.type },
+        { id: args.id, type: args.type as 'movie' | 'tv' },
         apiKey,
         proxy,
         reverseProxy
@@ -580,7 +626,8 @@ async function dispatchTool(
         vote_average: raw.vote_average,
         genres: raw.genres,
         keywords: raw.keywords,
-        similar: raw.similar?.slice(0, 5),
+        // TMDB 的 similar 是 { results: [...] }（原来当成数组 slice，查详情时会报错）
+        similar: raw.similar?.results?.slice(0, 5),
       });
       return { name, ok: true, text: text.slice(0, 4000) };
     }
@@ -654,8 +701,8 @@ async function dispatchTool(
 /* OpenAI 普通协议（/chat/completions）                                */
 /* ------------------------------------------------------------------ */
 
-function parseToolArgs(rawArgs: any, fallbackName: string): any {
-  if (rawArgs && typeof rawArgs === 'object') return rawArgs;
+function parseToolArgs(rawArgs: unknown, fallbackName: string): ToolArgs {
+  if (rawArgs && typeof rawArgs === 'object') return rawArgs as ToolArgs;
   if (typeof rawArgs !== 'string' || !rawArgs.trim()) return {};
 
   const source = rawArgs.trim();
@@ -695,7 +742,9 @@ const openaiCompletionsAdapter: ProviderAdapter = {
   },
 
   buildInitialTranscript({ systemPrompt, history, message }) {
-    const transcript: any[] = [{ role: 'system', content: systemPrompt }];
+    const transcript: ProtocolJson[] = [
+      { role: 'system', content: systemPrompt },
+    ];
     for (const h of history) {
       if (h.role === 'user') {
         transcript.push({ role: 'user', content: h.content });
@@ -747,7 +796,7 @@ const openaiCompletionsAdapter: ProviderAdapter = {
   },
 
   async runRound(opts) {
-    const body: any = {
+    const body: ProtocolJson = {
       model: opts.model,
       messages: opts.transcript,
       tools: opts.tools,
@@ -783,8 +832,8 @@ const openaiCompletionsAdapter: ProviderAdapter = {
       const data = await res.json();
       const msg = data.choices?.[0]?.message;
       const content = msg?.content || '';
-      const rawToolCalls: any[] = msg?.tool_calls || [];
-      const toolCalls: ToolCall[] = rawToolCalls.map((tc: any) => ({
+      const rawToolCalls: OpenAIToolCallJson[] = msg?.tool_calls || [];
+      const toolCalls: ToolCall[] = rawToolCalls.map((tc) => ({
         id: tc.id || `call_${rawToolCalls.indexOf(tc)}`,
         name: tc.function?.name || 'unknown',
         args: parseToolArgs(
@@ -820,7 +869,7 @@ const openaiCompletionsAdapter: ProviderAdapter = {
     > = {};
     const emittedToolStart = new Set<number>();
 
-    while (true) {
+    for (;;) {
       if (opts.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const { done: streamDone, value } = await reader.read();
       if (streamDone) break;
@@ -889,14 +938,14 @@ const openaiCompletionsAdapter: ProviderAdapter = {
       }
     }
 
-    const rawToolCalls: any[] = Object.entries(toolAcc)
+    const rawToolCalls = Object.entries(toolAcc)
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(([, tc]) => ({
         id: tc.id,
         type: 'function',
         function: { name: tc.name || 'unknown', arguments: tc.rawArgs || '{}' },
       }));
-    const toolCalls: ToolCall[] = rawToolCalls.map((tc: any) => ({
+    const toolCalls: ToolCall[] = rawToolCalls.map((tc) => ({
       id: tc.id,
       name: tc.function?.name || 'unknown',
       args: parseToolArgs(
@@ -931,27 +980,28 @@ const openaiCompletionsAdapter: ProviderAdapter = {
 /* OpenAI Response 协议（/responses）                                  */
 /* ------------------------------------------------------------------ */
 
-function parseResponsesOutput(output: any[]): {
+function parseResponsesOutput(output: ResponsesOutputItem[]): {
   assistantText: string;
-  assistantSegments: any[];
+  assistantSegments: ProtocolJson[];
   toolCalls: ToolCall[];
 } {
   let assistantText = '';
-  const assistantSegments: any[] = [];
+  const assistantSegments: ProtocolJson[] = [];
   const toolCalls: ToolCall[] = [];
 
   for (const item of output || []) {
     if (item.type === 'message') {
       const text = (item.content || [])
-        .filter((c: any) => c.type === 'output_text')
-        .map((c: any) => c.text || '')
+        .filter((c) => c.type === 'output_text')
+        .map((c) => c.text || '')
         .join('');
       assistantText += text;
       assistantSegments.push(item);
     } else if (item.type === 'function_call') {
       const args = parseToolArgs(item.arguments, item.name || 'unknown');
       toolCalls.push({
-        id: item.call_id || item.id,
+        // 协议规定函数调用一定带 call_id / id
+        id: (item.call_id || item.id) as string,
         name: item.name || 'unknown',
         args,
       });
@@ -977,7 +1027,7 @@ const openaiResponsesAdapter: ProviderAdapter = {
 
   buildInitialTranscript({ history, message }) {
     // system 走顶层 instructions，不入 input
-    const input: any[] = [];
+    const input: ProtocolJson[] = [];
     for (const h of history) {
       if (h.role === 'user') {
         input.push({
@@ -1038,7 +1088,7 @@ const openaiResponsesAdapter: ProviderAdapter = {
   },
 
   async runRound(opts) {
-    const body: any = {
+    const body: ProtocolJson = {
       model: opts.model,
       instructions: opts.systemPromptForRun || '',
       input: opts.transcript,
@@ -1093,10 +1143,10 @@ const openaiResponsesAdapter: ProviderAdapter = {
       { id: string; name: string; rawArgs: string }
     > = {};
     const emittedToolStart = new Set<string>();
-    let completedOutput: any[] | null = null;
+    let completedOutput: ResponsesOutputItem[] | null = null;
     let streamUsage: number | undefined;
 
-    while (true) {
+    for (;;) {
       if (opts.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const { done: streamDone, value } = await reader.read();
       if (streamDone) break;
@@ -1193,7 +1243,7 @@ const openaiResponsesAdapter: ProviderAdapter = {
     if (completedOutput) {
       // 兼容网关可能在 response.completed 中返回空 arguments 的情况：
       // 用前面 arguments delta 累积的完整参数补回完成事件。
-      const mergedOutput = completedOutput.map((item: any) => {
+      const mergedOutput = completedOutput.map((item) => {
         if (item?.type !== 'function_call') return item;
         const key = item.id || item.call_id;
         const accumulated = key ? toolAcc[key] : undefined;
@@ -1221,7 +1271,7 @@ const openaiResponsesAdapter: ProviderAdapter = {
     }
 
     // 兜底：用累积的 delta 构造（不理想但可用）
-    const rawToolCalls: any[] = Object.entries(toolAcc).map(([, tc]) => ({
+    const rawToolCalls = Object.entries(toolAcc).map(([, tc]) => ({
       id: tc.id,
       call_id: tc.id,
       name: tc.name || 'unknown',
@@ -1289,7 +1339,7 @@ const claudeAdapter: ProviderAdapter = {
   },
 
   buildInitialTranscript({ history, message }) {
-    const transcript: any[] = [];
+    const transcript: ProtocolJson[] = [];
     for (const h of history) {
       if (h.role === 'user') {
         transcript.push({ role: 'user', content: h.content });
@@ -1332,7 +1382,7 @@ const claudeAdapter: ProviderAdapter = {
   },
 
   async runRound(opts) {
-    const body: any = {
+    const body: ProtocolJson = {
       model: opts.model,
       // Anthropic 要求 system 为数组才能挂 cache_control 断点。
       // 在 system 末尾断点：system+tools 前缀跨轮命中 prompt cache。
@@ -1399,7 +1449,7 @@ const claudeAdapter: ProviderAdapter = {
     const emittedToolStart = new Set<number>();
     let streamUsage: number | undefined;
 
-    while (true) {
+    for (;;) {
       if (opts.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const { done: streamDone, value } = await reader.read();
       if (streamDone) break;
@@ -1495,9 +1545,12 @@ const claudeAdapter: ProviderAdapter = {
   },
 };
 
-function parseClaudeContent(content: any[], _stopReason?: string): RoundResult {
+function parseClaudeContent(
+  content: ClaudeContentBlock[],
+  _stopReason?: string
+): RoundResult {
   let text = '';
-  const blocks: any[] = [];
+  const blocks: ProtocolJson[] = [];
   const toolCalls: ToolCall[] = [];
 
   for (const block of content || []) {
@@ -1511,9 +1564,10 @@ function parseClaudeContent(content: any[], _stopReason?: string): RoundResult {
         name: block.name,
         input: block.input || {},
       });
+      // 协议规定 tool_use 块一定带 id、name
       toolCalls.push({
-        id: block.id,
-        name: block.name,
+        id: block.id as string,
+        name: block.name as string,
         args: block.input || {},
       });
     }
@@ -1530,7 +1584,7 @@ function buildClaudeRoundResult(
   text: string,
   toolBlocks: Record<number, { id: string; name: string; rawInput: string }>
 ): RoundResult {
-  const blocks: any[] = [];
+  const blocks: ProtocolJson[] = [];
   const toolCalls: ToolCall[] = [];
 
   if (text) blocks.push({ type: 'text', text });
@@ -1556,7 +1610,7 @@ function buildClaudeRoundResult(
 /* ------------------------------------------------------------------ */
 
 /** 约 4 字符 ≈ 1 token 的粗略估算（项目无 tokenizer 依赖） */
-function estimateTokens(value: any): number {
+function estimateTokens(value: unknown): number {
   return Math.ceil(JSON.stringify(value ?? '').length / 4);
 }
 
@@ -1567,13 +1621,13 @@ const SUMMARY_SYSTEM_PROMPT =
   '工具调用的详细原始返回可以省略，但关键数字与结论必须保留。直接输出摘要正文，不要客套，不超过300字。';
 
 /** 判断某个 transcript 元素是否属于"工具消息"（压缩时整体移除） */
-function isToolElement(el: any, protocol: NewProtocol): boolean {
+function isToolElement(el: ProtocolJson, protocol: NewProtocol): boolean {
   if (!el || typeof el !== 'object') return false;
   if (protocol === 'openai-responses') {
     return el.type === 'function_call' || el.type === 'function_call_output';
   }
   if (protocol === 'claude') {
-    const content: any[] = Array.isArray(el.content) ? el.content : [];
+    const content: ProtocolJson[] = Array.isArray(el.content) ? el.content : [];
     if (el.role === 'assistant' && content.some((b) => b?.type === 'tool_use'))
       return true;
     if (el.role === 'user' && content.some((b) => b?.type === 'tool_result'))
@@ -1592,7 +1646,7 @@ function isToolElement(el: any, protocol: NewProtocol): boolean {
 }
 
 /** 把一个工具元素转成可读文本（供摘要 LLM 阅读） */
-function toolElementToText(el: any, protocol: NewProtocol): string {
+function toolElementToText(el: ProtocolJson, protocol: NewProtocol): string {
   const lines: string[] = [];
   if (protocol === 'openai-responses') {
     if (el.type === 'function_call') {
@@ -1603,7 +1657,7 @@ function toolElementToText(el: any, protocol: NewProtocol): string {
     return lines.join('\n');
   }
   if (protocol === 'claude') {
-    const content: any[] = Array.isArray(el.content) ? el.content : [];
+    const content: ProtocolJson[] = Array.isArray(el.content) ? el.content : [];
     if (el.role === 'assistant') {
       const tools = content.filter((b) => b?.type === 'tool_use');
       const text = content
@@ -1638,7 +1692,7 @@ function toolElementToText(el: any, protocol: NewProtocol): string {
   if (el.role === 'assistant' && Array.isArray(el.tool_calls)) {
     const calls = el.tool_calls
       .map(
-        (tc: any) =>
+        (tc: OpenAIToolCallJson) =>
           `${tc.function?.name || ''}(${tc.function?.arguments || '{}'})`
       )
       .join('; ');
@@ -1649,7 +1703,10 @@ function toolElementToText(el: any, protocol: NewProtocol): string {
 }
 
 /** 构造摘要消息（写入 transcript，格式随协议） */
-function buildSummaryMessage(protocol: NewProtocol, summary: string): any {
+function buildSummaryMessage(
+  protocol: NewProtocol,
+  summary: string
+): ProtocolJson {
   const content = `【以下为较早对话的工具调用摘要】\n${summary}`;
   if (protocol === 'openai-responses') {
     return { role: 'user', content: [{ type: 'input_text', text: content }] };
@@ -1768,7 +1825,7 @@ async function summarizeWithProvider(
  * summarize=false 时跳过 LLM 直接丢弃（循环内已压过一次、又再次超限的兜底）。
  */
 async function compressTranscript(
-  transcript: any[],
+  transcript: ProtocolJson[],
   protocol: NewProtocol,
   providerOpts: {
     protocol: NewProtocol;
@@ -1873,7 +1930,7 @@ export async function runToolAgent(
   const runOptsBase = {
     ...opts,
     systemPromptForRun: opts.systemPrompt,
-  } as any;
+  };
 
   // 上下文预算：system + tools 是常量计入窗口。
   // 以 API 返回的真实 prompt tokens 为基准（上一轮），本轮新 push 用增量估算叠加；
@@ -1929,14 +1986,14 @@ export async function runToolAgent(
 
   if (!opts.streaming) {
     let allText = '';
-    while (true) {
+    for (;;) {
       await enforce();
       const round = await adapter.runRound({
         ...runOptsBase,
         transcript,
         tools: adapter.buildTools(opts.tools),
-        onText: () => {},
-        onToolStart: () => {},
+        onText: () => undefined,
+        onToolStart: () => undefined,
       });
       transcript.push(...round.assistantSegments);
       ctx.transcriptTokens += estimateTokens(round.assistantSegments);
@@ -1973,7 +2030,7 @@ export async function runToolAgent(
       };
 
       try {
-        while (true) {
+        for (;;) {
           await enforce();
           const round = await adapter.runRound({
             ...runOptsBase,
@@ -1983,7 +2040,7 @@ export async function runToolAgent(
             onText: (delta) => send(JSON.stringify({ text: delta })),
             // 工具 start 事件在整轮解析完成后统一发送（此时才拿到完整参数），
             // 因此流式过程中 onToolStart 仅作占位，不单独发事件。
-            onToolStart: () => {},
+            onToolStart: () => undefined,
           });
           transcript.push(...round.assistantSegments);
           ctx.transcriptTokens += estimateTokens(round.assistantSegments);

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film } from 'lucide-react';
@@ -509,9 +507,9 @@ export default function PrivateLibraryPage() {
             setHasMore(hasMoreData);
           }
         }
-      } catch (err: any) {
+      } catch (err) {
         // 忽略取消请求的错误
-        if (err.name === 'AbortError') {
+        if ((err as Error).name === 'AbortError') {
           return;
         }
         logger.error('获取视频列表失败:', err);

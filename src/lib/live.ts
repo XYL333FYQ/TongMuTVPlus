@@ -1,5 +1,3 @@
-/* eslint-disable no-constant-condition */
-
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -167,7 +165,7 @@ async function parseEpg(
       }
       // 需要将整个响应读取后再解压（因为 zlib 不支持流式 ReadableStream）
       const chunks: Uint8Array[] = [];
-      while (true) {
+      for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         chunks.push(value);
@@ -210,7 +208,7 @@ async function parseEpg(
       null;
     let shouldSkipCurrentProgram = false;
 
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
 

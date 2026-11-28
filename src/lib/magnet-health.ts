@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * 磁力/种子 Tracker scrape 测活
  * - 单条探测；全站并发上限由 slot / MAGNET_HEALTH_MAX_CONCURRENT 控制
@@ -11,6 +10,7 @@ import { createHash, randomBytes } from 'crypto';
 import dgram from 'dgram';
 
 import { hasControlChars } from '@/lib/control-chars';
+import { processSingleton } from '@/lib/process-singleton';
 
 import { safeFetch } from './safe-http';
 
@@ -60,14 +60,10 @@ export function resolveMagnetHealthMaxConcurrent(): number {
 }
 
 function getState(): HealthGlobalState {
-  const g = globalThis as any;
-  if (!g[GLOBAL_KEY]) {
-    g[GLOBAL_KEY] = {
-      active: 0,
-      cache: new Map(),
-    } satisfies HealthGlobalState;
-  }
-  return g[GLOBAL_KEY] as HealthGlobalState;
+  return processSingleton<HealthGlobalState>(GLOBAL_KEY, () => ({
+    active: 0,
+    cache: new Map(),
+  }));
 }
 
 /** 全站同时测活占用情况 */
@@ -122,7 +118,13 @@ export const DEFAULT_HTTP_TRACKERS = [
 
 // ---------- bencode ----------
 
-function bdecode(data: Buffer, idx = 0): [any, number] {
+/** bencode 解出来的值：整数、字符串（可打印的转成 string，其余保留字节）、列表、字典 */
+type BValue = number | string | Buffer | BValue[] | BDict;
+interface BDict {
+  [key: string]: BValue;
+}
+
+function bdecode(data: Buffer, idx = 0): [BValue, number] {
   const mark = data[idx];
   if (mark === 105) {
     // i...e
@@ -136,7 +138,7 @@ function bdecode(data: Buffer, idx = 0): [any, number] {
   if (mark === 108) {
     // l...e
     let i = idx + 1;
-    const list: any[] = [];
+    const list: BValue[] = [];
     while (data[i] !== 101) {
       const [v, next] = bdecode(data, i);
       list.push(v);
@@ -147,7 +149,7 @@ function bdecode(data: Buffer, idx = 0): [any, number] {
   if (mark === 100) {
     // d...e
     let i = idx + 1;
-    const dict: Record<string, any> = Object.create(null);
+    const dict: BDict = Object.create(null);
     while (data[i] !== 101) {
       const [k, kNext] = bdecode(data, i);
       const [v, vNext] = bdecode(data, kNext);
@@ -184,10 +186,10 @@ function bdecode(data: Buffer, idx = 0): [any, number] {
 }
 
 /** 解码并保留 info 字典原始字节，用于 infohash */
-function bdecodeTorrent(data: Buffer): { root: any; infoRaw: Buffer | null } {
+function bdecodeTorrent(data: Buffer): { root: BDict; infoRaw: Buffer | null } {
   if (data[0] !== 100) throw new Error('torrent 根节点不是 dict');
   let i = 1;
-  const root: Record<string, any> = Object.create(null);
+  const root: BDict = Object.create(null);
   let infoRaw: Buffer | null = null;
   while (data[i] !== 101) {
     const [k, kNext] = bdecode(data, i);
@@ -213,7 +215,7 @@ function bdecodeTorrent(data: Buffer): { root: any; infoRaw: Buffer | null } {
   return { root, infoRaw };
 }
 
-function bufferishToString(v: any): string {
+function bufferishToString(v: BValue | undefined): string {
   if (typeof v === 'string') return v;
   if (Buffer.isBuffer(v)) return v.toString('utf8');
   return String(v ?? '');
@@ -274,7 +276,9 @@ function normalizeInfoHash(input: string): string {
   throw new Error('无效的 infoHash');
 }
 
-function extractTrackersFromTorrentRoot(root: any): string[] {
+function extractTrackersFromTorrentRoot(
+  root: BDict | null | undefined
+): string[] {
   const out: string[] = [];
   const announce = root?.announce;
   if (announce) out.push(bufferishToString(announce));
@@ -310,14 +314,14 @@ async function fetchBinary(
     return Buffer.from(await resp.arrayBuffer());
   }
 
-  const init: any = {
+  const init: RequestInit = {
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     },
     signal: AbortSignal.timeout(timeoutMs),
   };
-  const resp = (await safeFetch(url, init, proxy)) as any;
+  const resp = await safeFetch(url, init, proxy);
   if (!resp.ok) throw new Error(`下载失败 HTTP ${resp.status}`);
   const ab = await resp.arrayBuffer();
   return Buffer.from(ab);
@@ -564,13 +568,13 @@ async function scrapeOneUdp(
             downloaded,
           });
         }
-      } catch (e: any) {
+      } catch (e) {
         finish({
           tracker: announceUrl,
           ok: false,
           ms: Date.now() - t0,
           proto: 'udp',
-          error: e?.message || 'UDP 解析失败',
+          error: (e as Error)?.message || 'UDP 解析失败',
         });
       }
     });
@@ -592,13 +596,13 @@ async function scrapeOneUdp(
           });
         }
       });
-    } catch (e: any) {
+    } catch (e) {
       finish({
         tracker: announceUrl,
         ok: false,
         ms: Date.now() - t0,
         proto: 'udp',
-        error: e?.message || 'UDP 初始化失败',
+        error: (e as Error)?.message || 'UDP 初始化失败',
       });
     }
   });
@@ -657,7 +661,7 @@ async function scrapeOneHttp(
   try {
     const bin = await fetchBinary(url, proxy, timeoutMs);
     const ms = Date.now() - t0;
-    let decoded: any;
+    let decoded: BValue;
     try {
       [decoded] = bdecode(bin);
     } catch {
@@ -670,7 +674,14 @@ async function scrapeOneHttp(
       };
     }
 
-    if (!decoded || typeof decoded !== 'object' || !decoded.files) {
+    const scrape =
+      decoded &&
+      typeof decoded === 'object' &&
+      !Array.isArray(decoded) &&
+      !Buffer.isBuffer(decoded)
+        ? decoded
+        : null;
+    if (!scrape || !scrape.files) {
       return {
         tracker: announceUrl,
         ok: false,
@@ -680,8 +691,8 @@ async function scrapeOneHttp(
       };
     }
 
-    const files = decoded.files as Record<string, any>;
-    let stats: any = null;
+    const files = scrape.files as BDict;
+    let stats: BValue | null = null;
     const hashLatin1 = infoHashRaw.toString('latin1');
     const hashHex = infoHashHex.toLowerCase();
 
@@ -711,9 +722,10 @@ async function scrapeOneHttp(
       };
     }
 
-    const seeders = Number(stats.complete ?? stats.seeders ?? 0) || 0;
-    const leechers = Number(stats.incomplete ?? stats.leechers ?? 0) || 0;
-    const downloaded = Number(stats.downloaded ?? 0) || 0;
+    const entry = stats as BDict;
+    const seeders = Number(entry.complete ?? entry.seeders ?? 0) || 0;
+    const leechers = Number(entry.incomplete ?? entry.leechers ?? 0) || 0;
+    const downloaded = Number(entry.downloaded ?? 0) || 0;
 
     return {
       tracker: announceUrl,
@@ -724,13 +736,13 @@ async function scrapeOneHttp(
       leechers,
       downloaded,
     };
-  } catch (e: any) {
+  } catch (e) {
     return {
       tracker: announceUrl,
       ok: false,
       ms: Date.now() - t0,
       proto: 'http',
-      error: e?.message || String(e),
+      error: (e as Error)?.message || String(e),
     };
   }
 }

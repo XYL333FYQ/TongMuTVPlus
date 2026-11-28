@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { parseStringPromise } from 'xml2js';
 
 import { stripXmlControlChars } from '@/lib/control-chars';
@@ -63,10 +62,23 @@ function asArray<T>(value: T | T[] | undefined | null): T[] {
   return Array.isArray(value) ? value : [value];
 }
 
-function textValue(value: any): string {
+/** xml2js（explicitArray）解析出的元素：文本在 _，属性在 $，子元素都是数组 */
+interface XmlNode {
+  _?: string;
+  $?: Record<string, string | undefined>;
+  [child: string]: unknown;
+}
+
+/** 子元素数组的第一个；不是数组时没有 */
+function firstOf(value: unknown): unknown {
+  return Array.isArray(value) ? value[0] : undefined;
+}
+
+function textValue(value: unknown): string {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number') return String(value);
-  if (value && typeof value._ === 'string') return value._.trim();
+  const text = (value as XmlNode | null | undefined)?._;
+  if (value && typeof text === 'string') return text.trim();
   return '';
 }
 
@@ -331,7 +343,7 @@ async function fetchText(url: string, headers: HeadersInit): Promise<string> {
   }
 }
 
-function parseLinks(value: any[], baseUrl: string): ParsedFeedLink[] {
+function parseLinks(value: XmlNode[], baseUrl: string): ParsedFeedLink[] {
   return value
     .map((item) => ({
       href: normalizeUrl(baseUrl, item?.$?.href),
@@ -342,25 +354,35 @@ function parseLinks(value: any[], baseUrl: string): ParsedFeedLink[] {
     .filter((item) => !!item.href);
 }
 
-function parseEntries(value: any[], baseUrl: string): ParsedFeedEntry[] {
-  return value.map((entry) => ({
-    id: textValue(entry.id?.[0] || entry.id),
-    title: textValue(entry.title?.[0] || entry.title),
-    author: textValue(
-      entry.author?.[0]?.name?.[0] ||
-        entry.author?.[0]?.name ||
-        entry.author?.name
-    ),
-    summary: textValue(entry.summary?.[0] || entry.summary),
-    content: textValue(entry.content?.[0] || entry.content),
-    language: textValue(entry.language?.[0] || entry['dc:language']?.[0]),
-    published: textValue(entry.published?.[0] || entry['dc:issued']?.[0]),
-    updated: textValue(entry.updated?.[0]),
-    categories: asArray(entry.category)
-      .map((item) => item?.$?.label || item?.$?.term)
-      .filter(Boolean),
-    links: parseLinks(asArray(entry.link), baseUrl),
-  }));
+function parseEntries(value: XmlNode[], baseUrl: string): ParsedFeedEntry[] {
+  return value.map((entry) => {
+    const author = firstOf(entry.author) as XmlNode | undefined;
+    return {
+      id: textValue(firstOf(entry.id) || entry.id),
+      title: textValue(firstOf(entry.title) || entry.title),
+      author: textValue(
+        firstOf(author?.name) ||
+          author?.name ||
+          (entry.author as XmlNode | undefined)?.name
+      ),
+      summary: textValue(firstOf(entry.summary) || entry.summary),
+      content: textValue(firstOf(entry.content) || entry.content),
+      language: textValue(
+        firstOf(entry.language) || firstOf(entry['dc:language'])
+      ),
+      published: textValue(
+        firstOf(entry.published) || firstOf(entry['dc:issued'])
+      ),
+      updated: textValue(firstOf(entry.updated)),
+      categories: asArray(entry.category as XmlNode | XmlNode[] | undefined)
+        .map((item) => item?.$?.label || item?.$?.term)
+        .filter((item): item is string => Boolean(item)),
+      links: parseLinks(
+        asArray(entry.link as XmlNode | XmlNode[] | undefined),
+        baseUrl
+      ),
+    };
+  });
 }
 
 async function parseFeed(xml: string, baseUrl: string): Promise<ParsedFeed> {

@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
+import {
+  type OpenListVideoPreview,
+  pickPreviewQualities,
+} from '@/lib/openlist.client';
 import { requireFeaturePermission } from '@/lib/permissions';
 import { XiaoyaClient } from '@/lib/xiaoya.client';
 
@@ -157,7 +159,7 @@ export async function GET(request: NextRequest) {
         throw new Error(`视频预览请求失败: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as OpenListVideoPreview;
 
       if (data.code !== 200) {
         throw new Error(`视频预览失败: ${data.message}`);
@@ -169,24 +171,7 @@ export async function GET(request: NextRequest) {
         throw new Error('未找到可用的播放链接');
       }
 
-      const qualityOrder: Record<string, number> = {
-        FHD: 1,
-        HD: 2,
-        LD: 3,
-        SD: 4,
-      };
-
-      const qualities = taskList
-        .filter((task: any) => task.status === 'finished')
-        .map((task: any) => ({
-          name: task.template_id,
-          url: task.url,
-        }))
-        .filter((quality: any) => quality.url && quality.url.trim() !== '') // 过滤空URL
-        .sort(
-          (a: any, b: any) =>
-            (qualityOrder[a.name] || 999) - (qualityOrder[b.name] || 999)
-        );
+      const qualities = pickPreviewQualities(taskList);
 
       if (qualities.length === 0) {
         throw new Error('未找到已完成的播放链接');

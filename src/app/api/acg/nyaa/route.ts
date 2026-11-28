@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { parseStringPromise } from 'xml2js';
 
@@ -7,17 +6,12 @@ import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
 import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
 import { hasFeaturePermission } from '@/lib/permissions';
+import { type RssXmlItem, pickRssText } from '@/lib/rss-xml';
 
 export const runtime = 'nodejs';
 
-const pickText = (value: any): string => {
-  if (value === undefined || value === null) return '';
-  const first = Array.isArray(value) ? value[0] : value;
-  if (first === undefined || first === null) return '';
-  if (typeof first === 'object')
-    return String(first._ ?? first.$?.url ?? first.$?.href ?? '');
-  return String(first);
-};
+// 这里一直不去首尾空白
+const pickText = (value: unknown) => pickRssText(value, { trim: false });
 
 /**
  * POST /api/acg/nyaa
@@ -108,9 +102,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const items = parsed.rss.channel[0].item;
+    const items: RssXmlItem[] = parsed.rss.channel[0].item;
 
-    const results = items.map((item: any) => {
+    const results = items.map((item) => {
       const title = pickText(item.title);
       // Nyaa RSS 的 link 是 .torrent 下载地址，guid 才是详情页（且 guid 带 isPermaLink 属性）
       const torrentUrl = pickText(item.link);
@@ -167,10 +161,10 @@ export async function POST(req: NextRequest) {
       total: results.length,
       items: results,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Nyaa 搜索失败:', error);
     return NextResponse.json(
-      { error: error.message || '搜索失败' },
+      { error: (error as Error).message || '搜索失败' },
       { status: 500 }
     );
   }

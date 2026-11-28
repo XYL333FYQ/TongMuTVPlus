@@ -20,7 +20,7 @@ export {
 } from './core/plugins/basics';
 export { type DanmakuState, DanmakuController } from './core/plugins/danmaku';
 export { heatmapPlugin, setHeatmapEnabled } from './core/plugins/heatmap';
-export { bindKeyboard } from './core/plugins/keyboard';
+export { bindKeyboard, SHORTCUT_GROUPS } from './core/plugins/keyboard';
 export { LinkRefresher } from './core/plugins/link-refresh';
 export {
   type SourceSubtitle,

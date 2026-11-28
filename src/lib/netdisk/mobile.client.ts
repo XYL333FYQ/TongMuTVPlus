@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 export interface MobileShareVideoFile {
@@ -142,11 +140,43 @@ async function postPlain(
   return text;
 }
 
+/** 分享目录：coLst 是文件（coType 3 为视频），caLst 是子目录 */
+interface MobileShareInfo {
+  coLst?: Array<{
+    coType?: number;
+    coName?: string;
+    path?: string;
+    coSize?: number | string;
+  } | null>;
+  caLst?: Array<{ path?: string } | null>;
+}
+
+/** 播放 / 下载接口返回里可能放地址的字段（不同节点字段名不一样） */
+interface MobileContentInfo {
+  presentURL?: string;
+  presentUrl?: string;
+  playUrl?: string;
+  url?: string;
+}
+
+interface MobileApiResponse {
+  message?: string;
+  msg?: string;
+  contentInfo?: MobileContentInfo;
+  data?: MobileContentInfo & {
+    contentInfo?: MobileContentInfo;
+    message?: string;
+    msg?: string;
+    redrUrl?: string;
+    downloadUrl?: string;
+  };
+}
+
 async function fetchShareInfo(
   linkId: string,
   pCaID: string,
   authorization?: string
-) {
+): Promise<MobileShareInfo | null> {
   const requestPayload = {
     getOutLinkInfoReq: {
       account: '',
@@ -176,7 +206,7 @@ async function fetchShareInfo(
       }
 
       const decrypted = decryptPayload(raw);
-      const parsed = JSON.parse(decrypted);
+      const parsed = JSON.parse(decrypted) as { data?: MobileShareInfo } | null;
       return parsed?.data ?? null;
     } catch (error) {
       lastError = error;
@@ -198,8 +228,11 @@ async function collectFiles(
 
   const currentFiles = Array.isArray(info.coLst)
     ? info.coLst
-        .filter((item: any) => item && item.coType === 3)
-        .map((item: any) => ({
+        .filter(
+          (item): item is NonNullable<typeof item> =>
+            Boolean(item) && item?.coType === 3
+        )
+        .map((item) => ({
           name: String(item.coName || '未命名视频'),
           contentId: String(item.path || ''),
           linkID: linkId,
@@ -209,7 +242,7 @@ async function collectFiles(
     : [];
 
   const childDirs = Array.isArray(info.caLst)
-    ? info.caLst.map((item: any) => String(item?.path || '')).filter(Boolean)
+    ? info.caLst.map((item) => String(item?.path || '')).filter(Boolean)
     : [];
 
   if (childDirs.length === 0) {
@@ -292,9 +325,11 @@ export async function getMobileSharePlayUrl(
       throw new Error(`移动云盘播放接口请求失败 (${response.status})`);
     }
 
-    let parsed: any;
+    let parsed: MobileApiResponse | null;
     try {
-      parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      parsed = (
+        typeof raw === 'string' ? JSON.parse(raw) : raw
+      ) as MobileApiResponse | null;
     } catch {
       throw new Error('移动云盘播放接口返回异常');
     }
@@ -362,10 +397,10 @@ export async function getMobileShareDownloadUrl(
     authorization
   );
 
-  let parsed: any;
+  let parsed: MobileApiResponse | null;
   try {
     const decrypted = decryptPayload(raw);
-    parsed = JSON.parse(decrypted);
+    parsed = JSON.parse(decrypted) as MobileApiResponse | null;
   } catch {
     throw new Error('移动云盘下载接口返回异常');
   }

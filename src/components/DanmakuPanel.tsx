@@ -1,6 +1,6 @@
 'use client';
 
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEpisodes, searchAnime } from '@/lib/danmaku/api';
@@ -356,7 +356,7 @@ export default function DanmakuPanel({
             {isSearching ? (
               <BusyDots />
             ) : (
-              <MagnifyingGlassIcon className='h-4 w-4' />
+              <Search aria-hidden='true' className='h-4 w-4' />
             )}
             <span className='hidden lg:inline'>
               {isSearching ? '搜索中...' : '搜索'}
@@ -691,7 +691,10 @@ export default function DanmakuPanel({
           {/* 空状态 */}
           {!selectedAnime && searchResults.length === 0 && !isSearching && (
             <div className='flex flex-col items-center justify-center py-12 text-center'>
-              <MagnifyingGlassIcon className='mb-3 h-12 w-12 text-muted' />
+              <Search
+                aria-hidden='true'
+                className='mb-3 h-12 w-12 text-muted'
+              />
               <p className='text-sm text-muted'>输入剧集名称搜索弹幕</p>
             </div>
           )}

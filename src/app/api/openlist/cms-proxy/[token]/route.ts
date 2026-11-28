@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
+import type { AdminConfig } from '@/lib/admin.types';
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
+import type { OpenListFile } from '@/lib/openlist.client';
+import type { MetaInfo } from '@/lib/openlist-cache';
 import { hasFeaturePermission } from '@/lib/permissions';
+
+type OpenListConfig = NonNullable<AdminConfig['OpenListConfig']>;
 
 export const runtime = 'nodejs';
 
@@ -189,18 +192,18 @@ export async function GET(
 /**
  * 处理搜索请求
  */
-async function handleSearch(metaInfo: any, query: string) {
+async function handleSearch(metaInfo: MetaInfo, query: string) {
   const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
 
   const lowerQuery = query.toLowerCase();
   const results = Object.entries(metaInfo.folders)
-    .filter(([folderName, info]: [string, any]) => {
+    .filter(([folderName, info]) => {
       if (!query) return true; // 空查询返回所有
       const matchFolder = folderName.toLowerCase().includes(lowerQuery);
       const matchTitle = info.title.toLowerCase().includes(lowerQuery);
       return matchFolder || matchTitle;
     })
-    .map(([folderKey, info]: [string, any]) => ({
+    .map(([folderKey, info]) => ({
       vod_id: folderKey,
       vod_name: info.title,
       vod_pic: getTMDBImageUrl(info.poster_path),
@@ -228,9 +231,9 @@ async function handleSearch(metaInfo: any, query: string) {
  * 处理通过搜索关键词获取详情的请求
  */
 async function handleDetailBySearch(
-  metaInfo: any,
+  metaInfo: MetaInfo,
   query: string,
-  openListConfig: any,
+  openListConfig: OpenListConfig,
   rootPath: string,
   token: string,
   request: NextRequest
@@ -239,7 +242,7 @@ async function handleDetailBySearch(
 
   // 搜索匹配的第一个文件夹
   const matchedEntry = Object.entries(metaInfo.folders).find(
-    ([folderName, info]: [string, any]) => {
+    ([folderName, info]) => {
       const matchFolder = folderName.toLowerCase().includes(lowerQuery);
       const matchTitle = info.title.toLowerCase().includes(lowerQuery);
       return matchFolder || matchTitle;
@@ -274,9 +277,9 @@ async function handleDetailBySearch(
  * 处理详情请求
  */
 async function handleDetail(
-  metaInfo: any,
+  metaInfo: MetaInfo,
   folderKey: string,
-  openListConfig: any,
+  openListConfig: OpenListConfig,
   rootPath: string,
   token: string,
   request: NextRequest
@@ -321,7 +324,7 @@ async function handleDetail(
   let videoInfo = getCachedVideoInfo(folderPath);
 
   // 获取所有分页的视频文件
-  const allFiles: any[] = [];
+  const allFiles: OpenListFile[] = [];
   let currentPage = 1;
   const pageSize = 100;
   let total = 0;

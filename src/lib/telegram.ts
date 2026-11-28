@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { NextRequest } from 'next/server';
 
 import { BRAND_NAME } from '@/lib/brand';
@@ -30,6 +28,34 @@ export interface TelegramConfig {
   registrationEnabled: boolean;
   notificationsEnabled: boolean;
   defaultNotifications: boolean;
+}
+
+/** Bot API 的返回外层 */
+interface TelegramApiResult {
+  ok?: boolean;
+  description?: string;
+  result?: unknown;
+}
+
+/** Webhook 收到的更新里我们读的部分（字段都可能缺，读的地方都先判断） */
+interface TelegramUser {
+  id?: number | string;
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+export interface TelegramUpdate {
+  message?: {
+    text?: string;
+    from?: TelegramUser;
+    chat?: { id?: number | string };
+  };
+  callback_query?: {
+    id?: string;
+    data?: string;
+    from?: TelegramUser;
+  };
 }
 
 export class TelegramApiError extends Error {
@@ -524,7 +550,7 @@ async function fetchTelegramApi(
     return fetch(requestUrl, init) as Promise<Response>;
   }
 
-  const fetchOptions: any = { ...init };
+  const fetchOptions: RequestInit = { ...init };
 
   return safeFetch(
     requestUrl,
@@ -552,9 +578,12 @@ export async function setTelegramWebhook(
 
   const rawText = await response.text().catch(() => '');
   const trimmed = rawText.trim();
-  let data: any = null;
+  let data: TelegramApiResult | null = null;
   try {
-    data = trimmed && trimmed.startsWith('{') ? JSON.parse(trimmed) : null;
+    data =
+      trimmed && trimmed.startsWith('{')
+        ? (JSON.parse(trimmed) as TelegramApiResult)
+        : null;
   } catch {
     data = null;
   }
@@ -609,7 +638,7 @@ export async function setTelegramBotCommands(
 export async function sendTelegramMessage(
   chatId: string,
   text: string,
-  replyMarkup?: any,
+  replyMarkup?: Record<string, unknown>,
   configOverride?: Partial<TelegramConfig>
 ): Promise<void> {
   const config = {
@@ -719,7 +748,7 @@ export function getTelegramConfigProblems(
   return problems;
 }
 
-function parseMessageText(update: any) {
+function parseMessageText(update: TelegramUpdate) {
   const message = update.message;
   if (!message?.text || !message.from || !message.chat) return null;
   return {
@@ -752,7 +781,9 @@ async function buildTelegramHelpText(config: TelegramConfig) {
   return commands.filter(Boolean).join('\n');
 }
 
-export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
+export async function handleTelegramWebhookUpdate(
+  update: TelegramUpdate
+): Promise<void> {
   const parsed = parseMessageText(update);
   if (parsed) {
     if (/^\/start$/i.test(parsed.text)) {

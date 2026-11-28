@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client';
 
 import {
@@ -22,6 +21,7 @@ import { logger } from '@/lib/logger';
 import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
 import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
+import { useLatest } from '@/hooks/useLatest';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -88,6 +88,8 @@ const consumeSnapshot = (): DuanjuSnapshot | null => {
 
 function DuanjuPageClient() {
   const [sources, setSources] = useState<DuanjuSource[]>([]);
+  // 拉分类时读最新的采集源列表，但采集源列表变了不重新拉分类
+  const sourcesLatest = useLatest(sources);
   const [selectedSource, setSelectedSource] = useState('');
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [selectedParentCategory, setSelectedParentCategory] = useState('');
@@ -282,7 +284,9 @@ function DuanjuPageClient() {
             : [];
           const multiParent = parents.length > 1;
           // 默认选中采集源标记的短剧分类，没有时取列表默认项
-          const source = sources.find((item) => item.key === selectedSource);
+          const source = sourcesLatest.current.find(
+            (item) => item.key === selectedSource
+          );
           const preferred = source?.typeId || '';
 
           if (preferred && ids.has(preferred)) {
@@ -312,7 +316,9 @@ function DuanjuPageClient() {
         if (cancelled) return;
         logger.error('Failed to load duanju categories:', error);
         // 分类加载失败时回退到采集源标记的短剧分类，保证列表可用
-        const source = sources.find((item) => item.key === selectedSource);
+        const source = sourcesLatest.current.find(
+          (item) => item.key === selectedSource
+        );
         if (source?.typeId) {
           setSelectedParentCategory('');
           setSelectedCategory(source.typeId);
@@ -324,7 +330,7 @@ function DuanjuPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [restoreChecked, selectedSource]);
+  }, [restoreChecked, selectedSource, sourcesLatest]);
 
   // 切换一级分类（类型）时，落到该类型下第一个子分类并重置到第一页
   const handleParentCategoryChange = (value: string) => {

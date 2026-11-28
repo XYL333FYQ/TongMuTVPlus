@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 interface EmbyConfig {

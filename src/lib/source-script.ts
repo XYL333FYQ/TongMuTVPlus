@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import * as cheerio from 'cheerio/slim';
 import { nanoid } from 'nanoid';
 
@@ -13,7 +11,81 @@ const DEFAULT_TIMEOUT_MS = 20000;
 let _registryCache: { data: SourceScriptRegistry; ts: number } | null = null;
 const REGISTRY_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
 
-const _compiledCache = new Map<string, any>();
+/** 脚本返回的对象：字段由脚本作者决定，读的时候逐个转换 */
+type ScriptRecord = Record<string, unknown>;
+
+/** 脚本自报的信息 */
+interface ScriptMeta {
+  name?: string;
+  [field: string]: unknown;
+}
+
+/** 脚本里的一个钩子（search、getSources、detail、resolvePlayUrl…） */
+type ScriptHookFn = (ctx: unknown, payload: Record<string, unknown>) => unknown;
+
+/** 脚本导出的对象：meta 加若干钩子 */
+interface CompiledScript {
+  meta?: ScriptMeta;
+  resolvePlayUrl?: ScriptHookFn;
+  [hook: string]: unknown;
+}
+
+/** 脚本里的一集：可以直接是地址，也可以带“要不要再解析” */
+export interface ScriptEpisode {
+  playUrl?: string;
+  url?: string;
+  needResolve?: boolean;
+  [field: string]: unknown;
+}
+
+/** 脚本列表 / 详情里的一部影片 */
+export interface ScriptVideoItem {
+  id?: unknown;
+  title?: unknown;
+  poster?: string;
+  year?: string;
+  desc?: string;
+  type_name?: string;
+  douban_id?: number;
+  vod_remarks?: string;
+  class?: unknown;
+  episodes?: Array<string | ScriptEpisode>;
+  episodes_titles?: string[];
+  [field: string]: unknown;
+}
+
+/** 详情里一条播放线路 */
+export interface ScriptPlayback {
+  sourceId?: string;
+  sourceName?: string;
+  episodes?: Array<string | ScriptEpisode>;
+  episodes_titles?: string[];
+  [field: string]: unknown;
+}
+
+/** 钩子的返回：不同钩子用到的字段不同，脚本可能缺字段，读的时候逐个转换 */
+export interface ScriptResult {
+  list?: ScriptVideoItem[];
+  page?: number;
+  pageCount?: number;
+  total?: number;
+  playbacks?: ScriptPlayback[];
+  episodes?: Array<string | ScriptEpisode>;
+  episodes_titles?: string[];
+  title?: unknown;
+  poster?: string;
+  class?: unknown;
+  year?: string;
+  desc?: string;
+  type_name?: string;
+  douban_id?: number;
+  vod_remarks?: string;
+  vod_total?: unknown;
+  url?: string;
+  [field: string]: unknown;
+}
+
+const _compiledCache = new Map<string, ReturnType<typeof normalizeScript>>();
 const MAX_COMPILED_CACHE_SIZE = 50;
 const _runtimeCache = new Map<string, { value: string; expiresAt: number }>();
 
@@ -45,8 +117,8 @@ export interface SourceScriptTestResult {
   ok: boolean;
   durationMs: number;
   logs: string[];
-  meta?: Record<string, any>;
-  result?: any;
+  meta?: ScriptMeta;
+  result?: ScriptResult | null;
   error?: string;
 }
 
@@ -192,7 +264,7 @@ function assertScriptKey(key: string) {
 function createLogCollector() {
   const logs: string[] = [];
 
-  const push = (level: string, args: any[]) => {
+  const push = (level: string, args: unknown[]) => {
     const rendered = args
       .map((arg) => {
         if (typeof arg === 'string') return arg;
@@ -213,9 +285,9 @@ function createLogCollector() {
   return {
     logs,
     log: {
-      info: (...args: any[]) => push('info', args),
-      warn: (...args: any[]) => push('warn', args),
-      error: (...args: any[]) => push('error', args),
+      info: (...args: unknown[]) => push('info', args),
+      warn: (...args: unknown[]) => push('warn', args),
+      error: (...args: unknown[]) => push('error', args),
     },
   };
 }
@@ -294,7 +366,7 @@ function createUtils() {
 function createScriptFactory(code: string) {
   return new Function('require', `"use strict";\n${code}`) as (
     req: NodeRequire
-  ) => any;
+  ) => ScriptRecord;
 }
 
 async function createScriptContext(
@@ -346,7 +418,7 @@ async function createScriptContext(
         url: response.url,
         headers: Object.fromEntries(response.headers.entries()),
         text: () => response.text(),
-        json: <T = any>() => response.json() as Promise<T>,
+        json: <T = unknown>() => response.json() as Promise<T>,
         arrayBuffer: () => response.arrayBuffer(),
       };
     } finally {
@@ -378,7 +450,7 @@ async function createScriptContext(
           const text = await response.text();
           return cheerio.load(text);
         },
-        async getJson<T = any>(
+        async getJson<T = unknown>(
           url: string,
           options?: Omit<Parameters<typeof fetcher>[0], 'url' | 'method'>
         ) {
@@ -394,7 +466,7 @@ async function createScriptContext(
         load: (html: string) => cheerio.load(html),
       },
       json: {
-        parse<T = any>(text: string, fallback?: T) {
+        parse<T = unknown>(text: string, fallback?: T) {
           try {
             return JSON.parse(text) as T;
           } catch {
@@ -430,11 +502,11 @@ async function createScriptContext(
   };
 }
 
-function normalizeScript(script: any) {
+function normalizeScript(script: ScriptRecord): CompiledScript {
   if (!script || typeof script !== 'object') {
     throw new Error('脚本必须返回对象');
   }
-  return script;
+  return script as CompiledScript;
 }
 
 async function getEnabledSourceScriptByKey(key: string) {
@@ -480,7 +552,7 @@ async function compileSourceScript(
 export async function executeSavedSourceScript(input: {
   key: string;
   hook: SourceScriptHook;
-  payload?: Record<string, any>;
+  payload?: Record<string, unknown>;
   configValues?: Record<string, string>;
 }): Promise<SourceScriptTestResult> {
   const startedAt = Date.now();
@@ -505,7 +577,7 @@ export async function executeSavedSourceScript(input: {
     durationMs: Date.now() - startedAt,
     logs,
     meta: compiled.meta,
-    result,
+    result: result as ScriptResult | null,
   };
 }
 
@@ -654,7 +726,7 @@ export async function toggleSourceScriptEnabled(id: string) {
 export async function testSourceScript(input: {
   code: string;
   hook: SourceScriptHook;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   name?: string;
   key?: string;
   configValues?: Record<string, string>;
@@ -696,7 +768,7 @@ export async function testSourceScript(input: {
       durationMs: Date.now() - startedAt,
       logs,
       meta: compiled.meta,
-      result,
+      result: result as ScriptResult | null,
     };
   } catch (error) {
     return {
@@ -736,7 +808,9 @@ export function parseScriptSourceValue(source: string) {
   };
 }
 
-export function normalizeScriptSources(result: any): ScriptSourceDescriptor[] {
+export function normalizeScriptSources(
+  result: unknown
+): ScriptSourceDescriptor[] {
   if (!Array.isArray(result)) {
     return [{ id: 'default', name: '默认源' }];
   }
@@ -754,15 +828,15 @@ export function normalizeScriptSearchResults(input: {
   scriptName: string;
   sourceId: string;
   sourceName: string;
-  result: any;
+  result: ScriptResult | null | undefined;
 }) {
   const list = Array.isArray(input.result?.list) ? input.result.list : [];
-  return list.map((item: any) => {
+  return list.map((item: ScriptVideoItem) => {
     const titles = Array.isArray(item.episodes_titles)
       ? item.episodes_titles
       : [];
     const episodes = Array.isArray(item.episodes)
-      ? item.episodes.map((episode: any, index: number) => {
+      ? item.episodes.map((episode: string | ScriptEpisode, index: number) => {
           const playUrl =
             typeof episode === 'string'
               ? episode
@@ -803,7 +877,7 @@ export function normalizeScriptSearchResults(input: {
 export function normalizeScriptRecommendResults(input: {
   scriptKey: string;
   scriptName: string;
-  result: any;
+  result: ScriptResult | null | undefined;
   sources?: ScriptSourceDescriptor[];
   defaultSourceId?: string;
 }) {
@@ -813,7 +887,7 @@ export function normalizeScriptRecommendResults(input: {
   );
   const fallbackSourceId = input.defaultSourceId || 'default';
 
-  return list.map((item: any) => {
+  return list.map((item: ScriptVideoItem) => {
     const sourceId = String(
       item?.sourceId || item?.source_id || item?.source || fallbackSourceId
     );
@@ -853,7 +927,7 @@ export function normalizeScriptDetailResult(input: {
   sourceId: string;
   sourceName: string;
   detailId: string;
-  result: any;
+  result: ScriptResult | null | undefined;
 }) {
   const playbacks = Array.isArray(input.result?.playbacks)
     ? input.result.playbacks
@@ -869,14 +943,14 @@ export function normalizeScriptDetailResult(input: {
   const flattenedEpisodes: string[] = [];
   const flattenedTitles: string[] = [];
 
-  playbacks.forEach((playback: any) => {
+  playbacks.forEach((playback: ScriptPlayback) => {
     const playbackSourceName = String(playback.sourceName || input.sourceName);
     const titles = Array.isArray(playback.episodes_titles)
       ? playback.episodes_titles
       : [];
     const episodes = Array.isArray(playback.episodes) ? playback.episodes : [];
 
-    episodes.forEach((episode: any, index: number) => {
+    episodes.forEach((episode: string | ScriptEpisode, index: number) => {
       const rawPlayUrl =
         typeof episode === 'string'
           ? episode
@@ -927,7 +1001,7 @@ export function normalizeScriptDetailResult(input: {
 export async function resolveScriptDetailPlaybacks(input: {
   scriptKey: string;
   sourceId: string;
-  result: any;
+  result: ScriptResult | null | undefined;
 }) {
   const playbacks = Array.isArray(input.result?.playbacks)
     ? input.result.playbacks
@@ -952,14 +1026,14 @@ export async function resolveScriptDetailPlaybacks(input: {
   const { ctx } = await createScriptContext(script);
 
   const resolvedPlaybacks = await Promise.all(
-    playbacks.map(async (playback: any) => {
+    playbacks.map(async (playback: ScriptPlayback) => {
       const playbackSourceId = String(playback.sourceId || input.sourceId);
       const episodes = Array.isArray(playback.episodes)
         ? playback.episodes
         : [];
 
       const resolvedEpisodes = await Promise.all(
-        episodes.map(async (episode: any, index: number) => {
+        episodes.map(async (episode: string | ScriptEpisode, index: number) => {
           const playUrl =
             typeof episode === 'string'
               ? episode
@@ -968,7 +1042,7 @@ export async function resolveScriptDetailPlaybacks(input: {
           try {
             const result = await withTimeout(
               Promise.resolve(
-                compiled.resolvePlayUrl(ctx, {
+                compiled.resolvePlayUrl?.(ctx, {
                   playUrl,
                   sourceId: playbackSourceId,
                   episodeIndex: index,
@@ -976,7 +1050,7 @@ export async function resolveScriptDetailPlaybacks(input: {
               ),
               DEFAULT_TIMEOUT_MS
             );
-            return result?.url || playUrl;
+            return (result as { url?: string } | null)?.url || playUrl;
           } catch {
             return playUrl;
           }
@@ -1062,9 +1136,14 @@ export async function resolveSavedScriptPlayUrl(input: {
     DEFAULT_TIMEOUT_MS
   );
 
+  const resolved = result as {
+    url?: string;
+    type?: string;
+    headers?: Record<string, string>;
+  } | null;
   return {
-    url: result?.url || input.playUrl,
-    type: result?.type || 'auto',
-    headers: result?.headers || {},
+    url: resolved?.url || input.playUrl,
+    type: resolved?.type || 'auto',
+    headers: resolved?.headers || {},
   };
 }

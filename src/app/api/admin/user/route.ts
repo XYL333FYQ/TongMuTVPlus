@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { invalidateUserAccessTokens } from '@/lib/access-token-invalidation';
+import type { AdminConfig } from '@/lib/admin.types';
 import { getConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
 import { sanitizeFeaturePermissions } from '@/lib/feature-permissions';
@@ -10,6 +9,7 @@ import { logger } from '@/lib/logger';
 import { revokeAllRefreshTokens } from '@/lib/refresh-token';
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 import { isAdminRole, isOwnerRole } from '@/lib/roles';
+import type { UserInfoV2 } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -101,13 +101,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 除用户组和批量操作外都带目标用户名（上面已经检查过）
+    const target = targetUsername ?? '';
+
     // 获取配置与存储
     const adminConfig = await getConfig();
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
-    let targetEntry: any = null;
+    let targetEntry:
+      | AdminConfig['UserConfig']['Users'][number]
+      | null
+      | undefined = null;
     let isTargetAdmin = false;
-    let targetUserV2: any = null;
+    let targetUserV2: UserInfoV2 | null = null;
 
     if (
       !['userGroup', 'batchUpdateUserGroups'].includes(action) &&
@@ -152,7 +158,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: '用户已存在' }, { status: 400 });
         }
         // 检查新版本中是否已存在
-        const existsV2 = await db.checkUserExistV2(targetUsername!);
+        const existsV2 = await db.checkUserExistV2(target);
         if (existsV2) {
           return NextResponse.json({ error: '用户已存在' }, { status: 400 });
         }
@@ -168,12 +174,12 @@ export async function POST(request: NextRequest) {
         const tags = userGroup && userGroup.trim() ? [userGroup] : undefined;
 
         // 使用新版本创建用户
-        await db.createUserV2(targetUsername!, targetPassword, 'user', tags);
+        await db.createUserV2(target, targetPassword, 'user', tags);
 
         // 不再更新配置，因为用户已经存储在新版本中
         // 构造一个虚拟的targetEntry用于后续逻辑
         targetEntry = {
-          username: targetUsername!,
+          username: target,
           role: 'user',
           tags,
         };
@@ -197,8 +203,8 @@ export async function POST(request: NextRequest) {
         }
 
         // 只更新V2存储
-        await db.updateUserInfoV2(targetUsername!, { banned: true });
-        await terminateUserSessions(targetUsername!, 'user banned');
+        await db.updateUserInfoV2(target, { banned: true });
+        await terminateUserSessions(target, 'user banned');
         break;
       }
       case 'unban': {
@@ -218,7 +224,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 只更新V2存储
-        await db.updateUserInfoV2(targetUsername!, { banned: false });
+        await db.updateUserInfoV2(target, { banned: false });
         break;
       }
       case 'setAdmin': {
@@ -242,7 +248,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 只更新V2存储
-        await db.updateUserInfoV2(targetUsername!, { role: 'admin' });
+        await db.updateUserInfoV2(target, { role: 'admin' });
         break;
       }
       case 'cancelAdmin': {
@@ -266,8 +272,8 @@ export async function POST(request: NextRequest) {
         }
 
         // 只更新V2存储
-        await db.updateUserInfoV2(targetUsername!, { role: 'user' });
-        await terminateUserSessions(targetUsername!, 'admin role revoked');
+        await db.updateUserInfoV2(target, { role: 'user' });
+        await terminateUserSessions(target, 'admin role revoked');
         break;
       }
       case 'changePassword': {
@@ -297,11 +303,8 @@ export async function POST(request: NextRequest) {
         }
 
         // 使用新版本修改密码（SHA256加密）
-        await db.changePasswordV2(targetUsername!, targetPassword);
-        await terminateUserSessions(
-          targetUsername!,
-          'password changed by admin'
-        );
+        await db.changePasswordV2(target, targetPassword);
+        await terminateUserSessions(target, 'password changed by admin');
         break;
       }
       case 'deleteUser': {
@@ -325,11 +328,11 @@ export async function POST(request: NextRequest) {
         }
 
         // 先终止目标用户所有会话，再删除V2存储中的用户
-        await terminateUserSessions(targetUsername!, 'user deleted');
-        await db.deleteUserV2(targetUsername!);
+        await terminateUserSessions(target, 'user deleted');
+        await db.deleteUserV2(target);
         // 同名账号以后重新注册时，不能继承已删用户的单独授权
-        if (adminConfig.FeatureGrants?.[targetUsername!]) {
-          delete adminConfig.FeatureGrants[targetUsername!];
+        if (adminConfig.FeatureGrants?.[target]) {
+          delete adminConfig.FeatureGrants[target];
         }
 
         break;
@@ -353,7 +356,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 更新V2存储中的采集源权限
-        await db.updateUserInfoV2(targetUsername!, {
+        await db.updateUserInfoV2(target, {
           enabledApis: enabledApis && enabledApis.length > 0 ? enabledApis : [],
         });
 
@@ -471,10 +474,10 @@ export async function POST(request: NextRequest) {
         // 更新用户的用户组
         if (userGroups && userGroups.length > 0) {
           // 只更新V2存储
-          await db.updateUserInfoV2(targetUsername!, { tags: userGroups });
+          await db.updateUserInfoV2(target, { tags: userGroups });
         } else {
           // 如果为空数组或未提供，则删除该字段，表示无用户组
-          await db.updateUserInfoV2(targetUsername!, { tags: [] });
+          await db.updateUserInfoV2(target, { tags: [] });
         }
 
         break;

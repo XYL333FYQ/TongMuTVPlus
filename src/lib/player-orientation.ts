@@ -7,8 +7,6 @@
  * 浏览器不支持 screen.orientation.lock（如 iOS Safari）时什么都不做。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 interface OrientationLike {
   type?: string;
   lock?: (orientation: string) => Promise<void>;
@@ -17,17 +15,26 @@ interface OrientationLike {
 
 function orientationApi(): OrientationLike | null {
   if (typeof screen === 'undefined') return null;
-  return ((screen as any).orientation as OrientationLike) || null;
+  return (screen.orientation as OrientationLike | undefined) || null;
+}
+
+/** 用到的播放器接口：全屏事件和 video 元素（Artplayer 实例满足它） */
+interface FullscreenSource {
+  template?: { $video?: HTMLVideoElement };
+  on?(event: 'fullscreen', handler: (entered: boolean) => void): unknown;
+  off?(event: 'fullscreen', handler: (entered: boolean) => void): unknown;
 }
 
 /** 返回取消监听的函数 */
-export function lockLandscapeInFullscreen(art: any): () => void {
+export function lockLandscapeInFullscreen(
+  art: FullscreenSource | null | undefined
+): () => void {
   let locked = false;
   const onFullscreen = async (entered: boolean) => {
     const orientation = orientationApi();
     if (!orientation?.lock) return;
     if (entered) {
-      const video = art?.template?.$video as HTMLVideoElement | undefined;
+      const video = art?.template?.$video;
       const landscapeVideo =
         !video || !video.videoWidth || video.videoWidth >= video.videoHeight;
       if (!landscapeVideo || orientation.type?.startsWith('landscape')) return;

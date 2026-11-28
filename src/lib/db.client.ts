@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-function */
 'use client';
 
 /**
@@ -150,7 +149,7 @@ class HybridCacheManager {
   private static instance: HybridCacheManager;
 
   // 正在进行的请求 Promise 缓存（彻底防止并发重复请求）
-  private pendingRequests: Map<string, Promise<any>> = new Map();
+  private pendingRequests: Map<string, Promise<unknown>> = new Map();
 
   static getInstance(): HybridCacheManager {
     if (!HybridCacheManager.instance) {
@@ -555,7 +554,10 @@ class HybridCacheManager {
             // 检查是否有任何缓存数据过期
             let hasValidData = false;
             for (const [, cacheData] of Object.entries(cache)) {
-              if (cacheData && this.isCacheValid(cacheData as CacheData<any>)) {
+              if (
+                cacheData &&
+                this.isCacheValid(cacheData as CacheData<unknown>)
+              ) {
                 hasValidData = true;
                 break;
               }
@@ -592,7 +594,7 @@ async function handleDatabaseOperationFailure(
     | 'searchHistory'
     | 'mangaShelf'
     | 'mangaHistory',
-  error: any
+  error: unknown
 ): Promise<void> {
   logger.error(`数据库操作失败 (${dataType}):`, error);
   triggerGlobalError(`数据库操作失败`);
@@ -600,43 +602,53 @@ async function handleDatabaseOperationFailure(
   try {
     // 使用 Promise 缓存防止并发重复请求
     await cacheManager.getOrCreateRequest(`recovery-${dataType}`, async () => {
-      let freshData: any;
+      let freshData: unknown;
       let eventName: string;
 
       switch (dataType) {
-        case 'playRecords':
-          freshData = await fetchFromApi<Record<string, PlayRecord>>(
+        case 'playRecords': {
+          const data = await fetchFromApi<Record<string, PlayRecord>>(
             `/api/playrecords`
           );
-          cacheManager.cachePlayRecords(freshData);
+          cacheManager.cachePlayRecords(data);
+          freshData = data;
           eventName = 'playRecordsUpdated';
           break;
-        case 'favorites':
-          freshData = await fetchFromApi<Record<string, Favorite>>(
+        }
+        case 'favorites': {
+          const data = await fetchFromApi<Record<string, Favorite>>(
             `/api/favorites`
           );
-          cacheManager.cacheFavorites(freshData);
+          cacheManager.cacheFavorites(data);
+          freshData = data;
           eventName = 'favoritesUpdated';
           break;
-        case 'searchHistory':
-          freshData = await fetchFromApi<string[]>(`/api/searchhistory`);
-          cacheManager.cacheSearchHistory(freshData);
+        }
+        case 'searchHistory': {
+          const data = await fetchFromApi<string[]>(`/api/searchhistory`);
+          cacheManager.cacheSearchHistory(data);
+          freshData = data;
           eventName = 'searchHistoryUpdated';
           break;
-        case 'mangaShelf':
-          freshData = await fetchFromApi<Record<string, MangaShelfItem>>(
+        }
+        case 'mangaShelf': {
+          const data = await fetchFromApi<Record<string, MangaShelfItem>>(
             `/api/manga/shelf`
           );
-          cacheManager.cacheMangaShelf(freshData);
+          cacheManager.cacheMangaShelf(data);
+          freshData = data;
           eventName = 'mangaShelfUpdated';
           break;
-        case 'mangaHistory':
-          freshData = await fetchFromApi<Record<string, MangaReadRecord>>(
+        }
+        case 'mangaHistory': {
+          const data = await fetchFromApi<Record<string, MangaReadRecord>>(
             `/api/manga/history`
           );
-          cacheManager.cacheMangaReadRecords(freshData);
+          cacheManager.cacheMangaReadRecords(data);
+          freshData = data;
           eventName = 'mangaHistoryUpdated';
           break;
+        }
       }
 
       // 触发更新事件通知组件
@@ -2283,7 +2295,7 @@ export function subscribeToDataUpdates<T>(
   callback: (data: T) => void
 ): () => void {
   if (typeof window === 'undefined') {
-    return () => {};
+    return () => undefined;
   }
 
   const handleUpdate = (event: CustomEvent) => {

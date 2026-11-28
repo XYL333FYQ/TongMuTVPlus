@@ -59,6 +59,11 @@ export interface HlsAttachOptions {
   play: () => void;
 }
 
+/** hls.js 内部的缓冲控制器，只用到它的 MediaSource */
+interface HlsBufferInternals {
+  bufferController?: { mediaSource?: MediaSource | null };
+}
+
 /** hls.js 还没把视频接上时（Safari 偶发），重新接一次 */
 export function needsWebkitRescue(video: VideoWithHls) {
   const hls = video.hls;
@@ -71,7 +76,9 @@ export function needsWebkitRescue(video: VideoWithHls) {
   }
   if (video.readyState > 0 || buffered) return false;
   const src = video.currentSrc || video.src || '';
-  const mseState = hls.bufferController?.mediaSource?.readyState || '';
+  // bufferController 是 hls.js 的内部字段（类型里标成 private），这里只读它的 MediaSource 状态
+  const internals = hls as unknown as HlsBufferInternals;
+  const mseState = internals.bufferController?.mediaSource?.readyState || '';
   return !(src.startsWith('blob:') && mseState !== 'closed');
 }
 
@@ -84,10 +91,12 @@ export function rescueWebkitHls(
   [1500, 3500, 6000].forEach((delay) =>
     later(() => {
       if (!stillCurrent() || !needsWebkitRescue(video)) return;
+      const hls = video.hls;
+      if (!hls) return;
       try {
-        video.hls.detachMedia?.();
-        video.hls.attachMedia?.(video);
-        video.hls.startLoad?.(-1);
+        hls.detachMedia();
+        hls.attachMedia(video);
+        hls.startLoad(-1);
         video.play().catch(() => undefined);
       } catch {
         // 补救失败就等用户手动重试

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { checkSubscription } from '@/lib/anime-subscription';
@@ -41,10 +40,10 @@ export async function POST(
       success: true,
       ...result,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('检查追番订阅失败:', error);
     return NextResponse.json(
-      { error: error.message || '检查失败' },
+      { error: (error as Error).message || '检查失败' },
       { status: 500 }
     );
   }

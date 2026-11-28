@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { Star, X } from 'lucide-react';
@@ -109,7 +107,7 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
   useEffect(() => {
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
-      async (newFavorites: Record<string, any>) => {
+      async (newFavorites: Record<string, unknown>) => {
         if (isOpen) {
           // 获取最新的收藏列表的键
           const currentKeys = Object.keys(newFavorites);

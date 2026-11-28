@@ -1,6 +1,7 @@
 import { playbackRatePlugin } from './basics';
 import { DanmakuController } from './danmaku';
 import { heatmapPlugin, setHeatmapEnabled } from './heatmap';
+import { bindKeyboard } from './keyboard';
 import type { Art } from '../art-types';
 import type { PluginContext, WatchPlayer } from '../WatchPlayer';
 
@@ -142,5 +143,41 @@ describe('danmaku display state', () => {
     dispose();
     art.emit('artplayerPluginDanmuku:hide');
     expect(localStorage.getItem('danmaku_display_enabled')).toBe('true');
+  });
+});
+
+describe('keyboard shortcuts', () => {
+  const setup = () => {
+    const art = { paused: true, toggle: jest.fn(), notice: { show: '' } };
+    const unbind = bindKeyboard({
+      player: { art } as unknown as WatchPlayer,
+      seekStep: () => 10,
+      quickForward: () => 90,
+    });
+    return { art, unbind };
+  };
+
+  it('toggles playback from the page', () => {
+    const { art, unbind } = setup();
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', bubbles: true })
+    );
+    expect(art.toggle).toHaveBeenCalledTimes(1);
+    unbind();
+  });
+
+  it('leaves keys to an open dialog on top of the page', () => {
+    const { art, unbind } = setup();
+    const dialog = document.createElement('dialog');
+    dialog.setAttribute('open', '');
+    const inner = document.createElement('div');
+    dialog.append(inner);
+    document.body.append(dialog);
+    inner.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', bubbles: true })
+    );
+    expect(art.toggle).not.toHaveBeenCalled();
+    dialog.remove();
+    unbind();
   });
 });

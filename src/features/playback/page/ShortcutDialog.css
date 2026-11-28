@@ -1,30 +1,4 @@
 /* ShortcutDialog.tsx 的样式（块 tm-pkeys）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
-/* fixed inset-0 z-[var(--tm-z-top)] flex items-center justify-center bg-ink/50 px-4 py-6 backdrop-blur-sm */
-.tm-pkeys-div-1 {
-  position: fixed;
-  inset: 0px;
-  z-index: var(--tm-z-top);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgb(var(--tm-ink-rgb) / 0.5);
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-  --tw-backdrop-blur: blur(4px);
-  -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
-    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
-    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
-    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
-    var(--tw-backdrop-sepia);
-  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
-    var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
-    var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
-    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
-    var(--tw-backdrop-sepia);
-}
-
 /* relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-fg shadow-2xl shadow-ink/20 shadow-ink/40 */
 .tm-pkeys-div-2 {
   position: relative;

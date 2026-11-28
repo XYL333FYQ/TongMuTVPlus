@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { motion } from 'framer-motion';
@@ -32,7 +30,7 @@ function RegisterPageClient() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
-  const [siteConfig, setSiteConfig] = useState<any>(null);
+  const [siteConfig, setSiteConfig] = useState<AuthPageSiteConfig | null>(null);
   const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(
     null
   );
@@ -113,16 +111,13 @@ function RegisterPageClient() {
     }
 
     const container = document.getElementById('turnstile-container');
-    if (container && (window as any).turnstile) {
-      const widgetId = (window as any).turnstile.render(
-        '#turnstile-container',
-        {
-          sitekey: siteConfig.TurnstileSiteKey,
-          callback: (token: string) => {
-            setTurnstileToken(token);
-          },
-        }
-      );
+    if (container && window.turnstile) {
+      const widgetId = window.turnstile.render('#turnstile-container', {
+        sitekey: siteConfig.TurnstileSiteKey,
+        callback: (token: string) => {
+          setTurnstileToken(token);
+        },
+      });
       setTurnstileWidgetId(widgetId);
     }
   }, [turnstileLoaded, siteConfig]);
@@ -192,9 +187,9 @@ function RegisterPageClient() {
         if (
           siteConfig?.RegistrationRequireTurnstile &&
           turnstileWidgetId !== null &&
-          (window as any).turnstile
+          window.turnstile
         ) {
-          (window as any).turnstile.reset(turnstileWidgetId);
+          window.turnstile.reset(turnstileWidgetId);
           setTurnstileToken(null);
         }
 
@@ -213,9 +208,9 @@ function RegisterPageClient() {
       if (
         siteConfig?.RegistrationRequireTurnstile &&
         turnstileWidgetId !== null &&
-        (window as any).turnstile
+        window.turnstile
       ) {
-        (window as any).turnstile.reset(turnstileWidgetId);
+        window.turnstile.reset(turnstileWidgetId);
         setTurnstileToken(null);
       }
       setError('网络错误，请稍后重试');
@@ -478,6 +473,14 @@ function RegisterPageClient() {
       <AuthVersion />
     </PageContainer>
   );
+}
+
+/** 注册页从运行时配置里取的开关 */
+interface AuthPageSiteConfig {
+  EnableRegistration: boolean;
+  RequireRegistrationInviteCode: boolean;
+  RegistrationRequireTurnstile: boolean;
+  TurnstileSiteKey: string;
 }
 
 export default function RegisterPage() {

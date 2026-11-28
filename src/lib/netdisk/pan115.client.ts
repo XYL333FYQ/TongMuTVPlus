@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const SHARE_URL = 'https://webapi.115.com/share/snap';
 const PLAY_URL = 'http://pro.api.115.com/app/share/downurl';
 
@@ -98,10 +96,27 @@ export function parsePan115ShareUrl(shareUrl: string, passcode = '') {
   };
 }
 
-async function parseJson(response: Response) {
+/** 115 分享目录接口里一项：fc 1 是文件、0 是文件夹；n 名字，fid / cid 文件 / 文件夹 id，s 大小 */
+interface Pan115ShareEntry {
+  fc?: number | string;
+  n?: string;
+  fid?: string;
+  cid?: string;
+  s?: number | string;
+}
+
+interface Pan115ShareDirResponse {
+  data?: {
+    share_state?: number;
+    shareinfo?: { forbid_reason?: string };
+    list?: Pan115ShareEntry[];
+  };
+}
+
+async function parseJson<T>(response: Response): Promise<T> {
   const text = await response.text();
   try {
-    return typeof text === 'string' ? JSON.parse(text) : text;
+    return JSON.parse(text) as T;
   } catch {
     throw new Error(`115接口返回异常：${text.slice(0, 200)}`);
   }
@@ -122,7 +137,7 @@ async function fetchShareDir(
   if (!response.ok) {
     throw new Error(`115分享接口请求失败 (${response.status})`);
   }
-  return parseJson(response);
+  return parseJson<Pan115ShareDirResponse>(response);
 }
 
 async function collectFilesRecursive(
@@ -141,11 +156,11 @@ async function collectFilesRecursive(
     ? responseData.data.list
     : [];
   const mediaFiles = list.filter(
-    (item: any) => Number(item.fc) === 1 && isMediaFile(String(item.n || ''))
+    (item) => Number(item.fc) === 1 && isMediaFile(String(item.n || ''))
   );
-  const folders = list.filter((item: any) => Number(item.fc) === 0);
+  const folders = list.filter((item) => Number(item.fc) === 0);
 
-  mediaFiles.forEach((file: any) => {
+  mediaFiles.forEach((file) => {
     files.push({
       name: String(file.n || ''),
       fileId: String(file.fid || ''),
@@ -353,7 +368,12 @@ export async function getPan115PlayUrl(
     cache: 'no-store',
   });
 
-  const responseData = await parseJson(response);
+  const responseData = await parseJson<{
+    state?: boolean;
+    msg?: string;
+    error?: string;
+    data?: unknown;
+  } | null>(response);
   if (!responseData) {
     throw new Error('115盘无响应数据');
   }

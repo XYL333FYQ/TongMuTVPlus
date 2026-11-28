@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DOMParser } from '@xmldom/xmldom';
 import * as cheerio from 'cheerio/slim';
 import crypto from 'crypto';
@@ -24,6 +23,9 @@ import {
 } from './book.types';
 import { getConfig } from './config';
 import { legadoSubscriptionStore } from './legado/subscription-store';
+
+/** cheerio 选出来的节点集合（cheerio 没直接导出节点类型，从它的选择函数推出来） */
+type CheerioNodes = ReturnType<cheerio.CheerioAPI>;
 import { validateProxyUrlServerSide } from './server/ssrf';
 
 interface ResolvedLegadoConfig {
@@ -63,7 +65,7 @@ interface RequestOptions {
 }
 
 const cookieJar = new Map<string, string>();
-const variableStore = new Map<string, any>();
+const variableStore = new Map<string, unknown>();
 
 function stableId(input: string) {
   return crypto.createHash('sha1').update(input).digest('hex').slice(0, 16);
@@ -78,34 +80,40 @@ function isJsRuleString(value?: string) {
   return /^(?:@js:|<js>)/i.test(trimmed) || /<js>[\s\S]*?<\/js>/i.test(trimmed);
 }
 
-function resolveLegadoDynamicValue(
-  value: any,
-  context: Record<string, any>,
+/** 读字段，和 node?.[key] 一样：null / undefined 得 undefined */
+function field(node: unknown, key: string | number): unknown {
+  return (node as Record<string | number, unknown> | null | undefined)?.[key];
+}
+
+/** 递归把字符串里的动态规则求值；结构和传进来的一样 */
+function resolveLegadoDynamicValue<T>(
+  value: T,
+  context: Record<string, unknown>,
   timeout = 1000,
   evaluateJs = false
-): any {
+): T {
   if (Array.isArray(value))
     return value.map((item) =>
       resolveLegadoDynamicValue(item, context, timeout, evaluateJs)
-    );
+    ) as T;
   if (!value || typeof value !== 'object') {
     if (typeof value !== 'string') return value;
     // 规范化书源时只做浅层搬移，不求值动态规则：此时上下文里没有 key/page/result，
     // 强行执行只会把规则清空（见 resolveLegadoSource）。JS 规则留到真正请求时求值。
     if (!evaluateJs || !isJsRuleString(value)) return value;
-    return evaluateJsRuleString(value, context, timeout);
+    return evaluateJsRuleString(value, context, timeout) as T;
   }
   return Object.fromEntries(
     Object.entries(value).map(([key, val]) => [
       key,
       resolveLegadoDynamicValue(val, context, timeout, evaluateJs),
     ])
-  );
+  ) as T;
 }
 
 function evaluateJsRuleString(
   value: string,
-  context: Record<string, any>,
+  context: Record<string, unknown>,
   timeout = 1000
 ) {
   const trimmed = value.trim();
@@ -116,7 +124,7 @@ function evaluateJsRuleString(
   );
 }
 
-function parseHeaderLines(raw: string, context: Record<string, any>) {
+function parseHeaderLines(raw: string, context: Record<string, unknown>) {
   return raw.split('\n').reduce<Record<string, string>>((headers, line) => {
     const index = line.indexOf(':');
     if (index <= 0) return headers;
@@ -132,19 +140,24 @@ function parseHeaderLines(raw: string, context: Record<string, any>) {
 
 function asObjectHeader(
   value?: string | Record<string, string>,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): Record<string, string> {
   if (!value) return {};
   if (typeof value === 'object')
     return resolveLegadoDynamicValue(value, context || {}, 1000, true);
   let raw = value.trim();
   if (isJsRuleString(raw)) {
-    raw = evaluateJsRuleString(raw, context || {});
+    raw = String(evaluateJsRuleString(raw, context || {}));
   }
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return {};
-    return resolveLegadoDynamicValue(parsed, context || {}, 1000, true);
+    return resolveLegadoDynamicValue(
+      parsed as Record<string, string>,
+      context || {},
+      1000,
+      true
+    );
   } catch {
     return parseHeaderLines(raw, context || {});
   }
@@ -342,7 +355,17 @@ function parseArguments(value?: string) {
   return out;
 }
 
-function makeSourceRuntime(source: any, baseUrl?: string) {
+/** 规则里 JS 能用到的书源字段（订阅里的书源可能带 key、variable、loginUrl） */
+type SourceRuntimeInput = LegadoBookSourceRule & {
+  key?: string;
+  variable?: string;
+  loginUrl?: string;
+};
+
+function makeSourceRuntime(
+  source: SourceRuntimeInput | undefined,
+  baseUrl?: string
+) {
   const raw = source || {};
   const variable =
     raw.variable || raw.loginUrl || raw.bookSourceUrl || baseUrl || '';
@@ -356,11 +379,14 @@ function makeSourceRuntime(source: any, baseUrl?: string) {
 
 function runJsSnippetRaw(
   code: string,
-  context: Record<string, any>,
+  context: Record<string, unknown>,
   timeout = 1000
-): any {
-  const sourceRuntime = makeSourceRuntime(context.source, context.baseUrl);
-  let lastPut: any = null;
+): unknown {
+  const sourceRuntime = makeSourceRuntime(
+    context.source as SourceRuntimeInput | undefined,
+    context.baseUrl as string | undefined
+  );
+  let lastPut: { key: string; value: unknown } | null = null;
   const java = {
     base64Encode: (value: unknown) =>
       Buffer.from(String(value ?? ''), 'utf8').toString('base64'),
@@ -387,7 +413,8 @@ function runJsSnippetRaw(
         nodes = $('#chapter-items').find('a');
       return nodes.toArray().map((element) => {
         const node = $(element);
-        const attrs = (element as any).attribs || {};
+        const attrs =
+          (element as { attribs?: Record<string, string> }).attribs || {};
         return {
           ...attrs,
           text: node.text().trim(),
@@ -405,7 +432,7 @@ function runJsSnippetRaw(
     encodeURI: (value: unknown) => encodeURIComponent(String(value ?? '')),
     encodeURIComponent: (value: unknown) =>
       encodeURIComponent(String(value ?? '')),
-    put: (key: string, value: any) => {
+    put: (key: string, value: unknown) => {
       lastPut = { key, value };
       variableStore.set(key, value);
       return value;
@@ -421,14 +448,14 @@ function runJsSnippetRaw(
   const cookie = {
     getCookie: () => '',
     removeCookie: () => undefined,
-    mapToCookie: (input: any) =>
+    mapToCookie: (input: unknown) =>
       typeof input === 'string'
         ? input
         : Array.isArray(input)
         ? input.join('; ')
         : '',
   };
-  const sandbox: Record<string, any> = {
+  const sandbox: Record<string, unknown> = {
     ...context,
     source: sourceRuntime,
     book: context.book || {},
@@ -444,13 +471,17 @@ function runJsSnippetRaw(
     encodeURIComponent,
     encryptText: encryptTongrenKeyword,
     openUrl: (encryptedText: string, num: string) =>
-      decryptTongrenOpenUrl(encryptedText, num, context.source),
+      decryptTongrenOpenUrl(
+        encryptedText,
+        num,
+        context.source as LegadoBookSourceRule | undefined
+      ),
     getArguments: (value: string, key?: string) =>
       key ? parseArguments(value)[key] || '' : parseArguments(value),
     console: { log: () => undefined },
   };
   const body = unwrapJsRule(code);
-  const runAttempt = (wrapper: string): any => {
+  const runAttempt = (wrapper: string): unknown => {
     try {
       const script = new vm.Script(wrapper);
       const result = script.runInNewContext(sandbox, { timeout });
@@ -495,7 +526,7 @@ function runJsSnippetRaw(
 
 function runJsSnippet(
   code: string,
-  context: Record<string, any>,
+  context: Record<string, unknown>,
   timeout = 1000
 ): string {
   return jsonPrimitiveToString(runJsSnippetRaw(code, context, timeout));
@@ -565,7 +596,7 @@ function applyRuleJsBlocks(raw: string, rule?: string) {
   }
 }
 
-function parseJsonMaybe(value: string): any | null {
+function parseJsonMaybe(value: string): unknown {
   try {
     return JSON.parse(value.trim());
   } catch {
@@ -573,7 +604,7 @@ function parseJsonMaybe(value: string): any | null {
   }
 }
 
-function jsonPrimitiveToString(value: any): string {
+function jsonPrimitiveToString(value: unknown): string {
   if (value === undefined || value === null) return '';
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' || typeof value === 'boolean')
@@ -587,7 +618,7 @@ function jsonPrimitiveToString(value: any): string {
   }
 }
 
-function readJsonPath(input: any, path?: string): any {
+function readJsonPath(input: unknown, path?: string): unknown {
   if (!path) return input;
   let normalized = path.trim();
   if (normalized.startsWith('@json:')) normalized = normalized.slice(6);
@@ -601,7 +632,7 @@ function readJsonPath(input: any, path?: string): any {
     const base = readJsonPath(input, filterMatch[1] || '$');
     const list = Array.isArray(base) ? base : [];
     const filtered = list.filter((item) => {
-      const actual = jsonPrimitiveToString(item?.[filterMatch[2]]);
+      const actual = jsonPrimitiveToString(field(item, filterMatch[2]));
       return filterMatch[3] === '!='
         ? actual !== filterMatch[4]
         : actual === filterMatch[4];
@@ -615,11 +646,12 @@ function readJsonPath(input: any, path?: string): any {
   if (recursive) {
     const key = recursive[1];
     const rest = recursive[2] || '';
-    const out: any[] = [];
-    const walk = (node: any) => {
+    const out: unknown[] = [];
+    const walk = (node: unknown) => {
       if (!node || typeof node !== 'object') return;
       if (Array.isArray(node)) return node.forEach(walk);
-      if (node[key] !== undefined) out.push(node[key]);
+      const value = (node as Record<string, unknown>)[key];
+      if (value !== undefined) out.push(value);
       Object.values(node).forEach(walk);
     };
     walk(input);
@@ -671,19 +703,19 @@ function readJsonPath(input: any, path?: string): any {
       );
       if (Array.isArray(current))
         current = current
-          .map((item) => keys.map((key) => item?.[key]))
+          .map((item) => keys.map((key) => field(item, key)))
           .flat()
           .filter((item) => item !== undefined);
       else
         current = keys
-          .map((key) => current?.[key])
+          .map((key) => field(current, key))
           .filter((item) => item !== undefined);
     } else if (Array.isArray(current)) {
       current = current
-        .map((item) => item?.[token])
+        .map((item) => field(item, token))
         .filter((item) => item !== undefined);
     } else {
-      current = current[token];
+      current = (current as Record<string, unknown>)[token];
     }
   }
   return current;
@@ -693,7 +725,7 @@ function ruleIsJson(rule?: string) {
   return !!rule && /@json:|-@json:|^\$\./.test(rule.trim());
 }
 
-function selectJsonItems(json: any, rule?: string): any[] {
+function selectJsonItems(json: unknown, rule?: string): unknown[] {
   const alternatives = splitAlternatives(rule);
   for (let index = 0; index < alternatives.length; index += 1) {
     const alternative = alternatives[index];
@@ -711,8 +743,8 @@ function selectJsonItems(json: any, rule?: string): any[] {
 
 function evaluateJsListRule(
   rule: string | undefined,
-  context: Record<string, any>
-): any[] {
+  context: Record<string, unknown>
+): unknown[] {
   const trimmed = (rule || '').trim();
   if (!isJsRuleString(trimmed)) return [];
   const elementRules = Array.from(
@@ -729,7 +761,8 @@ function evaluateJsListRule(
         nodes = $('#chapter-items').find('a');
       const items = nodes.toArray().map((element) => {
         const node = $(element);
-        const attrs = (element as any).attribs || {};
+        const attrs =
+          (element as { attribs?: Record<string, string> }).attribs || {};
         return {
           ...attrs,
           text: node.text().trim(),
@@ -754,7 +787,7 @@ function evaluateJsListRule(
 
 function renderTemplateWithJson(
   template: string,
-  json: any,
+  json: unknown,
   source: BookSource,
   baseUrl: string
 ) {
@@ -769,7 +802,7 @@ function renderTemplateWithJson(
 }
 
 function readJsonRule(
-  json: any,
+  json: unknown,
   rule?: string,
   source?: BookSource,
   baseUrl?: string
@@ -794,12 +827,15 @@ function readJsonRule(
       );
       return normalizeUrl(
         baseUrl || sourceBase(source as BookSource),
-        `${match?.[1] || ''}${jsonPrimitiveToString(json?.[match?.[2] || ''])}`
+        `${match?.[1] || ''}${jsonPrimitiveToString(
+          field(json, match?.[2] || '')
+        )}`
       );
     }
     if (/item\.img|\.reverse\(\)/.test(trimmed)) {
-      const data = Array.isArray(json?.data)
-        ? [...json.data].reverse()
+      const jsonData = field(json, 'data');
+      const data = Array.isArray(jsonData)
+        ? [...jsonData].reverse()
         : Array.isArray(json)
         ? [...json].reverse()
         : [];
@@ -852,12 +888,15 @@ function readJsonRule(
 }
 
 function fallbackChapterHrefFromItem(
-  item: any,
+  item: unknown,
   rule?: string,
   baseUrl?: string
 ): string {
   const id = jsonPrimitiveToString(
-    item?.id || item?.cid || item?.chapter_id || item?.chapterId
+    field(item, 'id') ||
+      field(item, 'cid') ||
+      field(item, 'chapter_id') ||
+      field(item, 'chapterId')
   );
   if (!id) return '';
   const match = (rule || '').match(
@@ -1104,18 +1143,15 @@ function stripFilters(rule: string) {
 
 // legado 的选择器作用于 element.getAllElements()，即包含当前节点自身。
 // 只 find 子孙节点会让 `tag.div.xxx@onclick` 这类「卡片自身带属性」的规则永远取不到值。
-function findWithSelf(
-  current: cheerio.Cheerio<any>,
-  selector: string
-): cheerio.Cheerio<any> {
+function findWithSelf(current: CheerioNodes, selector: string): CheerioNodes {
   if (!selector) return current;
-  let self: cheerio.Cheerio<any>;
+  let self: CheerioNodes;
   try {
     self = current.filter(selector);
   } catch {
     self = current.filter(() => false);
   }
-  let descendants: cheerio.Cheerio<any>;
+  let descendants: CheerioNodes;
   try {
     descendants = current.find(selector);
   } catch {
@@ -1127,9 +1163,9 @@ function findWithSelf(
 }
 
 function applyLegadoIndexSelector(
-  current: cheerio.Cheerio<any>,
+  current: CheerioNodes,
   selector: string
-): { current: cheerio.Cheerio<any>; selector: string } {
+): { current: CheerioNodes; selector: string } {
   let normalized = selector.trim();
   const exclude = normalized.match(/(?:\[!(-?\d+)\]|!(-?\d+))$/);
   if (exclude) {
@@ -1158,7 +1194,8 @@ function applyLegadoIndexSelector(
       current:
         step === 1
           ? sliced
-          : sliced.filter((_, index) => index % Math.abs(step) === 0),
+          : // cheerio 的 filter 回调是 (下标, 元素)；原来取成了元素，步长不为 1 时结果总是空
+            sliced.filter((index) => index % Math.abs(step) === 0),
       selector: '',
     };
   }
@@ -1175,9 +1212,9 @@ function applyLegadoIndexSelector(
 
 function applyLegadoSelector(
   $: cheerio.CheerioAPI,
-  current: cheerio.Cheerio<any>,
+  current: CheerioNodes,
   selector: string
-): cheerio.Cheerio<any> {
+): CheerioNodes {
   const normalized = selector.trim();
   if (!normalized) return current;
   const textMatch = normalized.match(/^text\.(.+)$/);
@@ -1216,9 +1253,9 @@ function applyLegadoSelector(
 
 function selectElements(
   $: cheerio.CheerioAPI,
-  root: cheerio.Cheerio<any>,
+  root: CheerioNodes,
   rule?: string
-): cheerio.Cheerio<any> {
+): CheerioNodes {
   for (const alternative of splitAlternatives(rule)) {
     try {
       const normalized = stripFilters(alternative || '');
@@ -1255,16 +1292,16 @@ function selectElements(
 
 function selectXPath(
   $: cheerio.CheerioAPI,
-  root: cheerio.Cheerio<any>,
+  root: CheerioNodes,
   rule: string
-): { nodes: cheerio.Cheerio<any>; attr: string; value?: string } {
+): { nodes: CheerioNodes; attr: string; value?: string } {
   const expr = rule.trim().replace(/^@XPath:/i, '');
   try {
     const html = $.html(root);
     const doc = new DOMParser({
       errorHandler: () => undefined,
     }).parseFromString(html, 'text/html');
-    const selected = xpath.select(expr, doc as any) as any;
+    const selected = xpath.select(expr, doc as unknown as Node);
     const list = Array.isArray(selected) ? selected : [selected];
     const values = list
       .map((node) => {
@@ -1316,10 +1353,10 @@ function selectXPath(
 
 function readValue(
   $: cheerio.CheerioAPI,
-  root: cheerio.Cheerio<any>,
+  root: CheerioNodes,
   rule?: string,
   baseUrl?: string,
-  jsContext?: Record<string, any>,
+  jsContext?: Record<string, unknown>,
   rawUrl = false
 ): string {
   for (const alternative of splitAlternatives(rule)) {
@@ -1511,7 +1548,7 @@ function readValue(
 
 function readValues(
   $: cheerio.CheerioAPI,
-  root: cheerio.Cheerio<any>,
+  root: CheerioNodes,
   rule?: string,
   baseUrl?: string
 ): string[] {
@@ -1576,7 +1613,7 @@ function readValues(
 
 function applyBookInfoInit(
   $: cheerio.CheerioAPI,
-  root: cheerio.Cheerio<any>,
+  root: CheerioNodes,
   initRule?: string,
   baseUrl?: string
 ) {
@@ -2238,7 +2275,7 @@ export class LegadoClient {
             source,
             targetUrl
           );
-          const itemId = jsonPrimitiveToString(item?.id) || undefined;
+          const itemId = jsonPrimitiveToString(field(item, 'id')) || undefined;
           const dedupeKey = itemId || detailHref || `${title}|${cover}`;
           if (dedupeKey && seen.has(dedupeKey)) return;
           if (dedupeKey) seen.add(dedupeKey);
@@ -2450,7 +2487,10 @@ export class LegadoClient {
         );
         entries.push(
           makeItem(source, {
-            id: jsonPrimitiveToString(item?.id) || detailHref || undefined,
+            id:
+              jsonPrimitiveToString(field(item, 'id')) ||
+              detailHref ||
+              undefined,
             title,
             author: readJsonRule(item, exploreRule?.author, source, targetUrl),
             summary: readJsonRule(item, exploreRule?.intro, source, targetUrl),
@@ -2580,7 +2620,7 @@ export class LegadoClient {
         applyBookInfoInit(
           $,
           root,
-          (rule.ruleBookInfo as any).init || rule.bookInfoInit,
+          rule.ruleBookInfo.init || rule.bookInfoInit,
           targetUrl
         );
       const read = (itemRule?: string) =>
@@ -2590,7 +2630,7 @@ export class LegadoClient {
           ? readJsonRule(json, itemRule, source, targetUrl)
           : readValue(
               $ as cheerio.CheerioAPI,
-              root as cheerio.Cheerio<any>,
+              root as CheerioNodes,
               itemRule,
               targetUrl
             );
@@ -2894,8 +2934,8 @@ export class LegadoClient {
             ...(rule.ruleContent.sourceRegex
               ? [rule.ruleContent.sourceRegex, '']
               : []),
-            ...((rule.ruleContent as any).replaceRegex
-              ? splitRuleFilters((rule.ruleContent as any).replaceRegex).filters
+            ...(rule.ruleContent.replaceRegex
+              ? splitRuleFilters(rule.ruleContent.replaceRegex).filters
               : []),
           ])
         ),

@@ -14,7 +14,7 @@
   "parts:toast": [],
   "parts:spinner": [],
   "parts:emoji": [],
-  "eslintDisableInline": ["src/lib/turso-adapter.ts ×1"],
+  "eslintDisableInline": [],
   "important": [],
   "lintWarnings": [],
   "parts:roleCheck": [],
@@ -23,5 +23,6 @@
   "parts:poster": [],
   "parts:emptyState": [],
   "parts:retryNotice": [],
-  "parts:fetch": []
+  "parts:fetch": [],
+  "eslintDisableFile": []
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -69,10 +68,10 @@ export async function POST(req: NextRequest) {
       message: '已添加到离线下载队列',
       path: downloadPath,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('添加离线下载任务失败:', error);
     return NextResponse.json(
-      { error: error.message || '添加离线下载任务失败' },
+      { error: (error as Error).message || '添加离线下载任务失败' },
       { status: 500 }
     );
   }

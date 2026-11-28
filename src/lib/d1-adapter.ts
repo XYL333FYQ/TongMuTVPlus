@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type BetterSqlite3 from 'better-sqlite3';
+
 import { logger } from '@/lib/logger';
 
 /**
@@ -8,25 +9,35 @@ import { logger } from '@/lib/logger';
  * 注意：此模块仅在服务端使用，通过 webpack 配置排除客户端打包
  */
 
+/** 查询出来的一行：列名 → 值。各张表的行类型写在用它的存储实现里，查询时用 first<行类型>() 指明 */
+export type DbRow = Record<string, unknown>;
+
+/** 执行结果附带的信息（改了几行、新插入行的 id） */
+export interface D1Meta {
+  changes?: number;
+  last_row_id?: number | bigint | null;
+  [key: string]: unknown;
+}
+
 // Cloudflare D1 Database 接口
 export interface D1Database {
   prepare(query: string): D1PreparedStatement;
-  batch(statements: any[]): Promise<D1Result[]>;
+  batch(statements: D1PreparedStatement[]): Promise<D1Result[]>;
   exec(query: string): Promise<D1Result>;
 }
 
 // D1 PreparedStatement 接口
 export interface D1PreparedStatement {
-  bind(...values: any[]): D1PreparedStatement;
-  first<T = any>(colName?: string): Promise<T | null>;
-  run<T = any>(): Promise<D1Result<T>>;
-  all<T = any>(): Promise<D1Result<T>>;
+  bind(...values: unknown[]): D1PreparedStatement;
+  first<T = DbRow>(colName?: string): Promise<T | null>;
+  run<T = DbRow>(): Promise<D1Result<T>>;
+  all<T = DbRow>(): Promise<D1Result<T>>;
 }
 
-export interface D1Result<T = any> {
+export interface D1Result<T = DbRow> {
   results?: T[];
   success: boolean;
-  meta?: any;
+  meta?: D1Meta;
   error?: string;
 }
 
@@ -48,7 +59,7 @@ export class CloudflareD1Adapter implements DatabaseAdapter {
   }
 
   async batch(statements: D1PreparedStatement[]): Promise<D1Result[]> {
-    return this.db.batch(statements as any);
+    return this.db.batch(statements);
   }
 }
 
@@ -57,9 +68,9 @@ export class CloudflareD1Adapter implements DatabaseAdapter {
  * 包装 better-sqlite3 以兼容 D1 API
  */
 export class SQLiteAdapter implements DatabaseAdapter {
-  private db: any; // better-sqlite3 Database
+  private db: BetterSqlite3.Database;
 
-  constructor(db: any) {
+  constructor(db: BetterSqlite3.Database) {
     this.db = db;
   }
 
@@ -75,7 +86,7 @@ export class SQLiteAdapter implements DatabaseAdapter {
         const results: D1Result[] = [];
         const transaction = this.db.transaction(() => {
           for (const stmt of statements) {
-            const result = (stmt as any).runSync();
+            const result = (stmt as SQLitePreparedStatement).runSync();
             results.push(result);
           }
         });
@@ -97,31 +108,31 @@ export class SQLiteAdapter implements DatabaseAdapter {
  * 将 better-sqlite3 API 转换为 D1 兼容 API
  */
 class SQLitePreparedStatement implements D1PreparedStatement {
-  private stmt: any;
-  private params: any[] = [];
+  private stmt: BetterSqlite3.Statement;
+  private params: unknown[] = [];
 
-  constructor(stmt: any) {
+  constructor(stmt: BetterSqlite3.Statement) {
     this.stmt = stmt;
   }
 
-  bind(...values: any[]): D1PreparedStatement {
+  bind(...values: unknown[]): D1PreparedStatement {
     this.params = values;
     return this;
   }
 
-  async first<T = any>(colName?: string): Promise<T | null> {
+  async first<T = DbRow>(colName?: string): Promise<T | null> {
     try {
-      const result = this.stmt.get(...this.params);
+      const result = this.stmt.get(...this.params) as DbRow | undefined;
       if (!result) return null;
-      if (colName) return result[colName] ?? null;
-      return result;
+      if (colName) return (result[colName] ?? null) as T | null;
+      return result as T;
     } catch (err) {
       logger.error('SQLite first() error:', err);
       return null;
     }
   }
 
-  async run<T = any>(): Promise<D1Result<T>> {
+  async run<T = DbRow>(): Promise<D1Result<T>> {
     try {
       const info = this.stmt.run(...this.params);
       return {
@@ -131,27 +142,27 @@ class SQLitePreparedStatement implements D1PreparedStatement {
           last_row_id: info.lastInsertRowid,
         },
       };
-    } catch (err: any) {
+    } catch (err) {
       logger.error('SQLite run() error:', err);
       return {
         success: false,
-        error: err.message,
+        error: (err as Error).message,
       };
     }
   }
 
-  async all<T = any>(): Promise<D1Result<T>> {
+  async all<T = DbRow>(): Promise<D1Result<T>> {
     try {
-      const results = this.stmt.all(...this.params);
+      const results = this.stmt.all(...this.params) as T[];
       return {
         success: true,
         results: results || [],
       };
-    } catch (err: any) {
+    } catch (err) {
       logger.error('SQLite all() error:', err);
       return {
         success: false,
-        error: err.message,
+        error: (err as Error).message,
         results: [],
       };
     }
@@ -168,10 +179,10 @@ class SQLitePreparedStatement implements D1PreparedStatement {
           last_row_id: info.lastInsertRowid,
         },
       };
-    } catch (err: any) {
+    } catch (err) {
       return {
         success: false,
-        error: err.message,
+        error: (err as Error).message,
       };
     }
   }

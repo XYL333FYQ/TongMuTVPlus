@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { processSingleton } from './process-singleton';
 
 // 简单的内存锁管理器
 class LockManager {
@@ -85,13 +85,7 @@ class LockManager {
 }
 
 // 全局单例
-const globalKey = Symbol.for('__MOONTV_LOCK_MANAGER__');
-let _lockManager: LockManager | undefined = (global as any)[globalKey];
-
-if (!_lockManager) {
-  _lockManager = new LockManager();
-  (global as any)[globalKey] = _lockManager;
-}
-
-// TypeScript doesn't recognize that lockManager is always defined after the if block
-export const lockManager = _lockManager as LockManager;
+export const lockManager = processSingleton(
+  Symbol.for('__MOONTV_LOCK_MANAGER__'),
+  () => new LockManager()
+);

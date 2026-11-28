@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 'use client';
 
 // 由 UserMenu 拆出（按需加载）：账号菜单打开某个面板时才下载这部分代码。
@@ -11,7 +10,6 @@ import {
   CircleHelp,
   Copy,
   Download,
-  ExternalLink,
   Eye,
   EyeOff,
   Gauge,
@@ -29,6 +27,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import { writeSetting } from '@/lib/settings';
 
+import { DataSourceThanks } from '@/components/DataSourceThanks';
 import BusyDots from '@/components/feedback/BusyDots';
 import Switch from '@/components/ui/Switch';
 
@@ -75,7 +74,6 @@ export interface UserMenuSettingsPanelProps {
   formatDownloadSegmentTimeout: (value: number) => string;
   getBufferStrategyFromSlider: (sliderValue: number) => string;
   getSliderValueFromStrategy: (strategy: string) => number;
-  getThanksInfo: (dataSource: string) => { text: string; url: string } | null;
   handleAggregateToggle: (value: boolean) => void;
   handleAnimeCustomBaseUrlChange: (value: string) => void;
   handleAnimeDataSourceBackupChange: (value: string) => void;
@@ -232,7 +230,6 @@ export default function UserMenuSettingsPanel(
     formatDownloadSegmentTimeout,
     getBufferStrategyFromSlider,
     getSliderValueFromStrategy,
-    getThanksInfo,
     handleAggregateToggle,
     handleAnimeCustomBaseUrlChange,
     handleAnimeDataSourceBackupChange,
@@ -495,25 +492,7 @@ export default function UserMenuSettingsPanel(
                   </div>
 
                   {/* 感谢信息 */}
-                  {getThanksInfo(doubanDataSource) && (
-                    <div className='mt-3'>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          window.open(
-                            getThanksInfo(doubanDataSource)!.url,
-                            '_blank'
-                          )
-                        }
-                        className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-muted cursor-pointer min-h-[44px] tm-press'
-                      >
-                        <span className='font-medium'>
-                          {getThanksInfo(doubanDataSource)!.text}
-                        </span>
-                        <ExternalLink className='w-3.5 opacity-70' />
-                      </button>
-                    </div>
-                  )}
+                  <DataSourceThanks dataSource={doubanDataSource} />
                 </div>
 
                 {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
@@ -704,25 +683,7 @@ export default function UserMenuSettingsPanel(
                   </div>
 
                   {/* 感谢信息 */}
-                  {getThanksInfo(doubanImageProxyType) && (
-                    <div className='mt-3'>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          window.open(
-                            getThanksInfo(doubanImageProxyType)!.url,
-                            '_blank'
-                          )
-                        }
-                        className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-muted cursor-pointer min-h-[44px] tm-press'
-                      >
-                        <span className='font-medium'>
-                          {getThanksInfo(doubanImageProxyType)!.text}
-                        </span>
-                        <ExternalLink className='w-3.5 opacity-70' />
-                      </button>
-                    </div>
-                  )}
+                  <DataSourceThanks dataSource={doubanImageProxyType} />
                 </div>
 
                 {/* 豆瓣图片代理地址设置 - 仅在选择自定义代理时显示 */}

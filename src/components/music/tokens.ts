@@ -64,8 +64,9 @@ export const MUSIC_SWITCH_VALUE =
 
 export const MUSIC_SWITCH_CARET = 'h-3 w-3 shrink-0 opacity-45';
 
+/** 音乐页下拉菜单的样子；位置、宽度、最高多高由 Popover 管 */
 export const MUSIC_MENU =
-  'absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[min(240px,calc(100vw-32px))] max-h-[60dvh] overflow-y-auto gap-0.5 rounded-lg border border-line bg-surface p-1 shadow-[var(--tm-shadow-md)]';
+  'grid overflow-y-auto gap-0.5 rounded-lg border border-line bg-surface p-1 shadow-[var(--tm-shadow-md)]';
 
 export const MUSIC_MENU_ITEM = cn(
   'flex min-h-[44px] w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2.5 text-left font-sans text-sm text-fg tm-press',

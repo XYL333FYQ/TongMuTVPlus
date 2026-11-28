@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { safeFetch } from './safe-http';
 
 function isCloudflareEnvironment(): boolean {
@@ -28,7 +26,7 @@ export async function universalMagnetFetch(
     return response as unknown as Response;
   }
 
-  const fetchOptions: any = {
+  const fetchOptions: RequestInit = {
     ...init,
     signal: proxy ? AbortSignal.timeout(30000) : AbortSignal.timeout(15000),
   };

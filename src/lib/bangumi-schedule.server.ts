@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import * as cheerio from 'cheerio/slim';
 
 import { isCloudflareEnvironment } from '@/lib/bangumi.server';
@@ -101,7 +99,7 @@ export async function fetchLiveChart(
         return await res.text();
       }
 
-      const fetchOptions: any = {
+      const fetchOptions: RequestInit = {
         headers: {
           'User-Agent': LIVE_CHART_UA,
         },

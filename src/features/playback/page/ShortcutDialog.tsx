@@ -1,56 +1,16 @@
 'use client';
 
 import { Keyboard, X } from 'lucide-react';
-import { useEffect } from 'react';
 
-const PLAY_SHORTCUT_GROUPS = [
-  {
-    title: '播放控制',
-    items: [
-      { keys: ['空格'], description: '播放 / 暂停' },
-      { keys: ['←', '→'], description: '快退 / 快进（快进/倒退时间）' },
-      { keys: ['P'], description: '快捷快进' },
-      { keys: ['↑', '↓'], description: '音量增加 / 减少' },
-      { keys: ['F'], description: '切换全屏' },
-    ],
-  },
-  {
-    title: '剧集切换',
-    items: [
-      { keys: ['Alt', '←'], description: '上一集' },
-      { keys: ['Alt', '→'], description: '下一集' },
-    ],
-  },
-  {
-    title: '倍速控制',
-    items: [
-      { keys: ['小键盘 +'], description: '提高一档倍速' },
-      { keys: ['小键盘 -'], description: '降低一档倍速' },
-      { keys: ['小键盘 /'], description: '恢复 1x' },
-    ],
-  },
-];
+import ModalLayer from '@/components/feedback/ModalLayer';
 
-/** 播放快捷键说明，Esc 或点外面关闭 */
+import { SHORTCUT_GROUPS } from '@/features/player';
+
+/** 播放快捷键说明；放在公共弹窗层里，Esc、返回键、点外面关闭 */
 export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
   return (
-    <div className='tm-pkeys-div-1' onClick={onClose}>
-      <div
-        className='tm-pkeys-div-2'
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role='dialog'
-        aria-modal='true'
-        aria-labelledby='shortcut-dialog-title'
-      >
+    <ModalLayer label='播放快捷键' onClose={onClose}>
+      <div className='tm-pkeys-div-2'>
         <div className='tm-pkeys-div-3' />
         <div className='tm-pkeys-div-4'>
           <div className='tm-pkeys-div-5'>
@@ -74,7 +34,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
 
         <div className='tm-pkeys-div-7'>
           <div className='tm-pkeys-div-8'>
-            {PLAY_SHORTCUT_GROUPS.map((group) => (
+            {SHORTCUT_GROUPS.map((group) => (
               <section key={group.title} className='tm-pkeys-section-1'>
                 <h3 className='tm-pkeys-h3-1'>{group.title}</h3>
                 <div className='tm-pkeys-div-9'>
@@ -110,6 +70,6 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
 }

@@ -165,6 +165,17 @@ module.exports = {
       files: ['src/components/ProxyImage.tsx', '**/*.test.tsx'],
       rules: { '@next/next/no-img-element': 'off' },
     },
+    // 存储后端按环境变量在运行时选，只在服务端加载（Redis、SQLite 原生模块、Cloudflare 绑定）。
+    // 这里只能用 require：要写成字面量让打包器找到模块，又不能在客户端代码里静态 import
+    {
+      files: ['src/lib/db.ts', 'src/lib/turso-adapter.ts'],
+      rules: { '@typescript-eslint/no-var-requires': 'off' },
+    },
+    // CommonJS 文件（.cjs，例如 Jest 的测试环境）本来就只能用 require；这条规则是给 TS 的 import 写法定的
+    {
+      files: ['**/*.cjs'],
+      rules: { '@typescript-eslint/no-var-requires': 'off' },
+    },
   ],
   globals: {
     React: true,

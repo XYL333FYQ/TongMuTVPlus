@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
@@ -518,19 +517,6 @@ function VinylTurntable({
       </div>
     </div>
   );
-}
-
-// 扩展 Window 接口以支持 Document PiP API
-declare global {
-  interface Window {
-    documentPictureInPicture?: {
-      requestWindow: (options: {
-        width: number;
-        height: number;
-      }) => Promise<Window>;
-      window: Window | null;
-    };
-  }
 }
 
 export default function MusicClient({
@@ -3161,15 +3147,7 @@ export default function MusicClient({
 
         {/* Lyrics Modal */}
         {showLyrics && currentSong && (
-          <div
-            className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[1000] flex items-center justify-center p-4'
-            onClick={(e) => {
-              // 点击背景关闭音量条
-              if (e.target === e.currentTarget) {
-                setShowVolumeSlider(false);
-              }
-            }}
-          >
+          <ModalLayer label='歌词' onClose={() => setShowLyrics(false)}>
             <div
               className='relative w-full max-w-6xl h-[90vh] bg-surface rounded-2xl overflow-hidden border border-line shadow-2xl flex flex-col'
               onClick={() => setShowVolumeSlider(false)}
@@ -3740,12 +3718,12 @@ export default function MusicClient({
                 </div>
               </div>
             </div>
-          </div>
+          </ModalLayer>
         )}
 
         {/* Playlist Modal */}
         {showPlaylist && (
-          <div className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[1000] flex items-center justify-center p-4'>
+          <ModalLayer label='播放列表' onClose={() => setShowPlaylist(false)}>
             <div className={MUSIC_QUEUE_SHELL}>
               <div className={MUSIC_QUEUE_HEAD}>
                 <div className='flex items-center gap-2.5'>
@@ -3820,14 +3798,15 @@ export default function MusicClient({
                 )}
               </div>
             </div>
-          </div>
+          </ModalLayer>
         )}
 
         {/* Sleep Timer Menu */}
         {showSleepTimerMenu && (
-          <div
-            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1010] flex items-end justify-center'
-            onClick={() => setShowSleepTimerMenu(false)}
+          <ModalLayer
+            variant='sheet'
+            label='睡眠定时'
+            onClose={() => setShowSleepTimerMenu(false)}
           >
             <div
               className='w-full max-w-md bg-surface rounded-t-2xl border-t border-line shadow-2xl animate-slide-up'
@@ -3996,13 +3975,13 @@ export default function MusicClient({
                 </button>
               </div>
             </div>
-          </div>
+          </ModalLayer>
         )}
 
         {showAudioEffectsMenu && (
-          <div
-            className='fixed inset-0 bg-ink/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4'
-            onClick={() => setShowAudioEffectsMenu(false)}
+          <ModalLayer
+            label='均衡器与音效调节'
+            onClose={() => setShowAudioEffectsMenu(false)}
           >
             <div
               className='relative w-full max-w-5xl max-h-[90vh] bg-surface rounded-2xl border border-line shadow-2xl overflow-hidden'
@@ -4289,14 +4268,15 @@ export default function MusicClient({
                 </div>
               </div>
             </div>
-          </div>
+          </ModalLayer>
         )}
 
         {/* Quality Selection Menu */}
         {showQualityMenu && (
-          <div
-            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000] flex items-end justify-center'
-            onClick={() => setShowQualityMenu(false)}
+          <ModalLayer
+            variant='sheet'
+            label='选择音质'
+            onClose={() => setShowQualityMenu(false)}
           >
             <div
               className='w-full max-w-md bg-surface rounded-t-2xl border-t border-line shadow-2xl animate-slide-up'
@@ -4466,7 +4446,7 @@ export default function MusicClient({
                 </button>
               </div>
             </div>
-          </div>
+          </ModalLayer>
         )}
 
         <MusicSidebarDrawer

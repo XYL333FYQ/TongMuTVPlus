@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import crypto from 'crypto';
 
 import type { AdminConfig } from '@/lib/admin.types';
@@ -109,15 +108,21 @@ async function fetchTextWithRetry(
   throw lastError instanceof Error ? lastError : new Error('订阅请求失败');
 }
 
-function extractRuleList(input: any): LegadoBookSourceRule[] {
-  if (Array.isArray(input))
-    return input.filter((item) => item && typeof item === 'object');
+/** 订阅内容可能是书源数组，也可能把数组包在 data / sources 等字段里，或者就是一个书源 */
+function extractRuleList(input: unknown): LegadoBookSourceRule[] {
+  const objects = (list: unknown[]) =>
+    list.filter(
+      (item): item is LegadoBookSourceRule =>
+        Boolean(item) && typeof item === 'object'
+    );
+  if (Array.isArray(input)) return objects(input);
   if (!input || typeof input !== 'object') return [];
+  const record = input as Record<string, unknown>;
   for (const key of ['data', 'sources', 'bookSources', 'items', 'list']) {
-    if (Array.isArray(input[key]))
-      return input[key].filter((item: any) => item && typeof item === 'object');
+    const list = record[key];
+    if (Array.isArray(list)) return objects(list);
   }
-  return [input];
+  return [input as LegadoBookSourceRule];
 }
 
 function normalizeRule(
@@ -188,7 +193,7 @@ export const legadoSubscriptionStore = {
     const name = input.name?.trim() || 'Legado 订阅';
     const previous = await readManifest(id);
     const { text, etag, lastModified } = await fetchTextWithRetry(url);
-    let parsed: any;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(text);
     } catch {

@@ -15,7 +15,8 @@ pnpm -s check:design || exit 1
 staged=$(git diff --cached --name-only --diff-filter=ACMR -- \
   '*.ts' '*.tsx' '*.css' '*.md' '*.json' '*.mjs' '*.cjs')
 if [ -n "$staged" ]; then
-  printf '%s\n' "$staged" | tr '\n' '\0' | xargs -0 pnpm exec prettier --check || {
+  # 每批 40 个：Windows 上 pnpm 经 cmd.exe 启动，一行最多 8191 个字符，xargs 按 Unix 上限分批不够
+  printf '%s\n' "$staged" | tr '\n' '\0' | xargs -0 -n 40 pnpm exec prettier --check || {
     echo '格式不对：先运行 pnpm exec prettier --write <文件> 再提交。' >&2
     exit 1
   }

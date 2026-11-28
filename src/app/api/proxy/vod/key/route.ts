@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -23,7 +21,7 @@ export async function GET(request: Request) {
 
   // 检查该视频源是否启用了代理模式
   const config = await getConfig();
-  const videoSource = config.SourceConfig?.find((s: any) => s.key === source);
+  const videoSource = config.SourceConfig?.find((s) => s.key === source);
 
   if (!videoSource) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });

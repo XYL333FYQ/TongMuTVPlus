@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { createHash } from 'crypto';
 
 import { logger } from '@/lib/logger';
@@ -311,7 +309,7 @@ export class SuwayomiClient {
 
   private async graphqlRequest<T>(
     query: string,
-    variables?: Record<string, any>,
+    variables?: Record<string, unknown>,
     operationName?: string
   ): Promise<T> {
     const resolved = await resolveSuwayomiConfig(this.options);

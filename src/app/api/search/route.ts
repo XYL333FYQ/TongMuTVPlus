@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -124,7 +122,7 @@ export async function GET(request: NextRequest) {
           return [];
         }
       })(),
-      new Promise<any[]>((_, reject) =>
+      new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${embyConfig.name} timeout`)), 20000)
       ),
     ]).catch((error) => {
@@ -158,7 +156,7 @@ export async function GET(request: NextRequest) {
 
             if (metaInfo && metaInfo.folders) {
               return Object.entries(metaInfo.folders)
-                .filter(([folderName, info]: [string, any]) => {
+                .filter(([folderName, info]) => {
                   const matchFolder = folderName
                     .toLowerCase()
                     .includes(query.toLowerCase());
@@ -167,7 +165,7 @@ export async function GET(request: NextRequest) {
                     .includes(query.toLowerCase());
                   return matchFolder || matchTitle;
                 })
-                .map(([folderName, info]: [string, any]) => ({
+                .map(([folderName, info]) => ({
                   id: folderName,
                   source: 'openlist',
                   source_name: '私人影库',
@@ -188,7 +186,7 @@ export async function GET(request: NextRequest) {
             return [];
           }
         })(),
-        new Promise<any[]>((_, reject) =>
+        new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('OpenList timeout')), 20000)
         ),
       ]).catch((error) => {
@@ -250,7 +248,7 @@ export async function GET(request: NextRequest) {
           return [];
         }
       })(),
-      new Promise<any[]>((_, reject) =>
+      new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${script.name} timeout`)), 20000)
       ),
     ]).catch((error) => {

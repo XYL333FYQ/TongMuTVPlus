@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
-
 import { Redis } from '@upstash/redis';
 
 import { logger } from '@/lib/logger';
+import { processSingleton } from '@/lib/process-singleton';
 
 import { UpstashRedisAdapter } from './redis-adapter';
 import { BaseRedisStorage } from './redis-base.db';
@@ -31,7 +30,8 @@ async function withRetry<T>(
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await operation();
-    } catch (err: any) {
+    } catch (caught) {
+      const err = caught as Error & { code?: string };
       const isLastAttempt = i === maxRetries - 1;
       const isConnectionError =
         err.message?.includes('Connection') ||
@@ -73,10 +73,7 @@ export class UpstashRedisStorage extends BaseRedisStorage {
 
 // 单例 Upstash Redis 客户端
 function getUpstashRedisClient(): Redis {
-  const globalKey = Symbol.for('__MOONTV_UPSTASH_REDIS_CLIENT__');
-  let client: Redis | undefined = (global as any)[globalKey];
-
-  if (!client) {
+  return processSingleton(Symbol.for('__MOONTV_UPSTASH_REDIS_CLIENT__'), () => {
     const upstashUrl = process.env.UPSTASH_URL;
     const upstashToken = process.env.UPSTASH_TOKEN;
 
@@ -87,7 +84,7 @@ function getUpstashRedisClient(): Redis {
     }
 
     // 创建 Upstash Redis 客户端
-    client = new Redis({
+    const client = new Redis({
       url: upstashUrl,
       token: upstashToken,
       signal: createUpstashAbortSignal,
@@ -101,8 +98,6 @@ function getUpstashRedisClient(): Redis {
 
     logger.info('Upstash Redis client created successfully');
 
-    (global as any)[globalKey] = client;
-  }
-
-  return client;
+    return client;
+  });
 }

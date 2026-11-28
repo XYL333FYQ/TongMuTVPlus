@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
@@ -7,9 +5,15 @@ import { gunzip } from 'zlib';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
+import type {
+  BackupFile,
+  BackupPlaylistSong,
+  MigrationStorage,
+} from '@/lib/data-migration-format';
 import { clearProgress, updateProgress } from '@/lib/data-migration-progress';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import type { MusicSource } from '@/lib/music-v2';
 import { isCaller, requireRole } from '@/lib/require-role';
 import { isOwnerRole } from '@/lib/roles';
 
@@ -66,9 +70,9 @@ export async function POST(req: NextRequest) {
     const decompressedData = decompressedBuffer.toString();
 
     // 解析JSON数据
-    let importData: any;
+    let importData: BackupFile;
     try {
-      importData = JSON.parse(decompressedData);
+      importData = JSON.parse(decompressedData) as BackupFile;
     } catch (error) {
       return NextResponse.json({ error: '备份文件格式错误' }, { status: 400 });
     }
@@ -101,13 +105,16 @@ export async function POST(req: NextRequest) {
     const preservedMangaData = preserveMangaData
       ? Object.fromEntries(
           await Promise.all(
-            importUsernames.map(async (name) => [
-              name,
-              {
-                mangaShelf: await db.getAllMangaShelf(name),
-                mangaReadRecords: await db.getAllMangaReadRecords(name),
-              },
-            ])
+            importUsernames.map(
+              async (name) =>
+                [
+                  name,
+                  {
+                    mangaShelf: await db.getAllMangaShelf(name),
+                    mangaReadRecords: await db.getAllMangaReadRecords(name),
+                  },
+                ] as const
+            )
           )
         )
       : {};
@@ -115,13 +122,16 @@ export async function POST(req: NextRequest) {
     const preservedBookData = preserveBookData
       ? Object.fromEntries(
           await Promise.all(
-            importUsernames.map(async (name) => [
-              name,
-              {
-                bookShelf: await db.getAllBookShelf(name),
-                bookReadRecords: await db.getAllBookReadRecords(name),
-              },
-            ])
+            importUsernames.map(
+              async (name) =>
+                [
+                  name,
+                  {
+                    bookShelf: await db.getAllBookShelf(name),
+                    bookReadRecords: await db.getAllBookReadRecords(name),
+                  },
+                ] as const
+            )
           )
         )
       : {};
@@ -157,10 +167,10 @@ export async function POST(req: NextRequest) {
 
     // 导入用户数据和user:info
     const userData = importData.data.userData;
-    const storage = (db as any).storage;
+    const storage = db.storage as MigrationStorage;
     // 使用前面已声明的 storageType 变量
     const usersV2Map = new Map(
-      (importData.data.usersV2 || []).map((u: any) => [u.username, u])
+      (importData.data.usersV2 || []).map((u) => [u.username, u])
     );
 
     const userCount = Object.keys(userData).length;
@@ -209,7 +219,7 @@ export async function POST(req: NextRequest) {
 
           // 为所有有passwordV2的用户创建user:info
           if (user.passwordV2) {
-            const userV2 = usersV2Map.get(username) as any;
+            const userV2 = usersV2Map.get(username);
 
             // 确定角色：站长为owner，其他用户从usersV2获取或默认为user
             let role: 'owner' | 'admin' | 'user' = 'user';
@@ -282,11 +292,13 @@ export async function POST(req: NextRequest) {
                 userInfo.enabledApis = JSON.stringify(userV2.enabledApis);
               }
 
-              await storage.withRetry(() =>
-                storage.client.hSet(userInfoKey, userInfo)
-              );
-              await storage.withRetry(() =>
-                storage.client.zAdd('user:list', {
+              const { withRetry, client } = storage;
+              if (!withRetry || !client) {
+                throw new Error(`${storageType} storage 缺少 Redis 客户端`);
+              }
+              await withRetry(() => client.hSet(userInfoKey, userInfo));
+              await withRetry(() =>
+                client.zAdd('user:list', {
                   score: createdAt,
                   value: username,
                 })
@@ -294,9 +306,7 @@ export async function POST(req: NextRequest) {
 
               if (userV2?.oidcSub) {
                 const oidcSubKey = `oidc:sub:${userV2.oidcSub}`;
-                await storage.withRetry(() =>
-                  storage.client.set(oidcSubKey, username)
-                );
+                await withRetry(() => client.set(oidcSubKey, username));
               }
 
               logger.info(`用户 ${username} 导入成功 (Redis)`);
@@ -317,7 +327,7 @@ export async function POST(req: NextRequest) {
                   const batch = entries.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
                     batch.map(([key, record]) =>
-                      (db as any).storage.setPlayRecord(username, key, record)
+                      storage.setPlayRecord(username, key, record)
                     )
                   );
                 }
@@ -332,7 +342,7 @@ export async function POST(req: NextRequest) {
                   const batch = entries.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
                     batch.map(([key, favorite]) =>
-                      (db as any).storage.setFavorite(username, key, favorite)
+                      storage.setFavorite(username, key, favorite)
                     )
                   );
                 }
@@ -368,7 +378,7 @@ export async function POST(req: NextRequest) {
                           username,
                           source,
                           id,
-                          skipConfig as any
+                          skipConfig
                         );
                       }
                       return Promise.resolve();
@@ -393,7 +403,7 @@ export async function POST(req: NextRequest) {
                   const batch = historyRecords.slice(j, j + DATA_BATCH_SIZE);
                   await db.batchUpsertMusicV2History(
                     username,
-                    batch.map((record: any) => ({
+                    batch.map((record) => ({
                       ...record,
                       source: record.source,
                       songId: record.songId,
@@ -437,14 +447,16 @@ export async function POST(req: NextRequest) {
                         j + DATA_BATCH_SIZE
                       );
                       await Promise.all(
-                        batch.map((song: any, index: number) =>
+                        batch.map((song: BackupPlaylistSong, index: number) =>
                           db.addMusicV2PlaylistItem(playlist.id, {
                             playlistId: playlist.id,
-                            songId: song.songId || song.id,
-                            source: song.source || song.platform,
+                            // 备份是上传的文件，字段缺了就照原样传下去，由存储报错
+                            songId: (song.songId || song.id) as string,
+                            source: (song.source ||
+                              song.platform) as MusicSource,
                             songmid: song.songmid,
-                            name: song.name,
-                            artist: song.artist,
+                            name: song.name as string,
+                            artist: song.artist as string,
                             album: song.album,
                             cover: song.cover || song.pic,
                             durationSec: song.durationSec || song.duration || 0,
@@ -482,7 +494,7 @@ export async function POST(req: NextRequest) {
               ) {
                 const batch = mangaShelfEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, item]: [string, any]) =>
+                  batch.map(([, item]) =>
                     db.saveMangaShelf(
                       username,
                       item.sourceId,
@@ -505,7 +517,7 @@ export async function POST(req: NextRequest) {
               ) {
                 const batch = mangaReadEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, record]: [string, any]) =>
+                  batch.map(([, record]) =>
                     db.saveMangaReadRecord(
                       username,
                       record.sourceId,
@@ -532,7 +544,7 @@ export async function POST(req: NextRequest) {
               ) {
                 const batch = bookShelfEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, item]: [string, any]) =>
+                  batch.map(([, item]) =>
                     db.saveBookShelf(username, item.sourceId, item.bookId, item)
                   )
                 );
@@ -550,7 +562,7 @@ export async function POST(req: NextRequest) {
               ) {
                 const batch = bookReadEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, record]: [string, any]) =>
+                  batch.map(([, record]) =>
                     db.saveBookReadRecord(
                       username,
                       record.sourceId,

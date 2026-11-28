@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { Bot, Check, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
@@ -24,6 +23,15 @@ import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import SideLayer from '@/components/feedback/SideLayer';
 
+/** AI 调用工具时的参数（工具链只展示其中几个） */
+interface ToolArgs {
+  query?: string;
+  url?: string;
+  id?: string | number;
+  trending?: boolean;
+  [field: string]: unknown;
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -33,7 +41,7 @@ interface ChatMessage {
   toolCalls?: Array<{
     name: string;
     key?: string;
-    args?: any;
+    args?: ToolArgs;
     result?: string;
     ok?: boolean;
   }>;
@@ -46,7 +54,7 @@ interface ToolChainItem {
   name: string;
   status: 'running' | 'done' | 'failed';
   key?: string;
-  args?: any;
+  args?: ToolArgs;
   result?: string;
   ok?: boolean;
 }
@@ -271,9 +279,12 @@ const renderStrikethroughNodes = (
       return parts.length > 0 ? parts : child;
     }
 
-    if (React.isValidElement(child) && (child as any).props?.children) {
-      return React.cloneElement(child as any, {
-        children: renderStrikethroughNodes((child as any).props.children),
+    if (
+      React.isValidElement<{ children?: React.ReactNode }>(child) &&
+      child.props?.children
+    ) {
+      return React.cloneElement(child, {
+        children: renderStrikethroughNodes(child.props.children),
       });
     }
 
@@ -333,17 +344,19 @@ export default function AIChatPanel({
   };
 
   // 工具名称 → 关键参数提取（用于工具链展示）
-  const TOOL_KEY_EXTRACTORS: Record<string, (args: any) => string | undefined> =
-    {
-      web_search: (a) => a?.query,
-      fetch_page: (a) => a?.url,
-      douban_lookup: (a) => a?.query || (a?.id ? `ID:${a.id}` : undefined),
-      tmdb_lookup: (a) =>
-        a?.trending ? '热榜' : a?.query || (a?.id ? `ID:${a.id}` : undefined),
-    };
+  const TOOL_KEY_EXTRACTORS: Record<
+    string,
+    (args: ToolArgs | undefined) => string | undefined
+  > = {
+    web_search: (a) => a?.query,
+    fetch_page: (a) => a?.url,
+    douban_lookup: (a) => a?.query || (a?.id ? `ID:${a.id}` : undefined),
+    tmdb_lookup: (a) =>
+      a?.trending ? '热榜' : a?.query || (a?.id ? `ID:${a.id}` : undefined),
+  };
 
   // 工具链：追加一个进行中的工具调用
-  const pushToolChain = (name: string, args?: any) => {
+  const pushToolChain = (name: string, args?: ToolArgs) => {
     const extractor = TOOL_KEY_EXTRACTORS[name];
     const key = extractor ? extractor(args) : undefined;
     const item: ToolChainItem = { name, status: 'running', key, args };
@@ -425,16 +438,38 @@ export default function AIChatPanel({
 
   const markdownComponents = useMemo(
     () => ({
-      del: ({ children }: any) => <del>{children}</del>,
-      p: ({ children }: any) => <p>{renderStrikethroughNodes(children)}</p>,
-      li: ({ children }: any) => <li>{renderStrikethroughNodes(children)}</li>,
-      h1: ({ children }: any) => <h1>{renderStrikethroughNodes(children)}</h1>,
-      h2: ({ children }: any) => <h2>{renderStrikethroughNodes(children)}</h2>,
-      h3: ({ children }: any) => <h3>{renderStrikethroughNodes(children)}</h3>,
-      h4: ({ children }: any) => <h4>{renderStrikethroughNodes(children)}</h4>,
-      h5: ({ children }: any) => <h5>{renderStrikethroughNodes(children)}</h5>,
-      h6: ({ children }: any) => <h6>{renderStrikethroughNodes(children)}</h6>,
-      a: ({ href, children, ...props }: any) => {
+      del: ({ children }: { children?: React.ReactNode }) => (
+        <del>{children}</del>
+      ),
+      p: ({ children }: { children?: React.ReactNode }) => (
+        <p>{renderStrikethroughNodes(children)}</p>
+      ),
+      li: ({ children }: { children?: React.ReactNode }) => (
+        <li>{renderStrikethroughNodes(children)}</li>
+      ),
+      h1: ({ children }: { children?: React.ReactNode }) => (
+        <h1>{renderStrikethroughNodes(children)}</h1>
+      ),
+      h2: ({ children }: { children?: React.ReactNode }) => (
+        <h2>{renderStrikethroughNodes(children)}</h2>
+      ),
+      h3: ({ children }: { children?: React.ReactNode }) => (
+        <h3>{renderStrikethroughNodes(children)}</h3>
+      ),
+      h4: ({ children }: { children?: React.ReactNode }) => (
+        <h4>{renderStrikethroughNodes(children)}</h4>
+      ),
+      h5: ({ children }: { children?: React.ReactNode }) => (
+        <h5>{renderStrikethroughNodes(children)}</h5>
+      ),
+      h6: ({ children }: { children?: React.ReactNode }) => (
+        <h6>{renderStrikethroughNodes(children)}</h6>
+      ),
+      a: ({
+        href,
+        children,
+        ...props
+      }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
         // 如果是内部链接（以 / 开头），使用 Next.js Link
         if (href?.startsWith('/')) {
           // 如果当前在 /play 页面且链接也是 /play，不做处理（返回纯文本）
@@ -461,7 +496,7 @@ export default function AIChatPanel({
   const inlineMarkdownComponents = useMemo(
     () => ({
       ...markdownComponents,
-      p: ({ children }: any) => (
+      p: ({ children }: { children?: React.ReactNode }) => (
         <span>{renderStrikethroughNodes(children)}</span>
       ),
     }),

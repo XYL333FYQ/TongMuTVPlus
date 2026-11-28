@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import parseTorrentName from 'parse-torrent-name';
 
 import type { AdminConfig } from '@/lib/admin.types';
@@ -7,7 +5,7 @@ import { getConfig } from '@/lib/config';
 import { generateFolderKey } from '@/lib/crypto';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { OpenListClient } from '@/lib/openlist.client';
+import { type OpenListFile, OpenListClient } from '@/lib/openlist.client';
 import {
   invalidateMetaInfoCache,
   MetaInfo,
@@ -185,8 +183,8 @@ async function loadMetaInfo(clearMetaInfo: boolean): Promise<MetaInfo> {
 async function listRootFolders(
   client: OpenListClient,
   rootPath: string
-): Promise<any[]> {
-  const folders: any[] = [];
+): Promise<OpenListFile[]> {
+  const folders: OpenListFile[] = [];
   let currentPage = 1;
   const pageSize = 100;
 
@@ -237,7 +235,8 @@ async function performMultiRootScan(
     const metaInfo = await loadMetaInfo(clearMetaInfo);
     invalidateMetaInfoCache();
 
-    const rootFolderGroups: { rootPath: string; folders: any[] }[] = [];
+    const rootFolderGroups: { rootPath: string; folders: OpenListFile[] }[] =
+      [];
     let totalFolders = 0;
 
     for (let i = 0; i < rootPaths.length; i++) {
@@ -302,7 +301,8 @@ async function performMultiRootScan(
           let searchQuery: string;
           let seasonNumber: number | null = null;
           let year: number | null = null;
-          let searchResult: any;
+          // 种子库模式先按解析出的标题搜；没搜到（或名字模式）再按文件夹名搜
+          let searchResult: Awaited<ReturnType<typeof searchTMDB>> | undefined;
 
           if (scanMode === 'torrent' || scanMode === 'hybrid') {
             const torrentInfo = parseTorrentName(folder.name);
@@ -354,10 +354,10 @@ async function performMultiRootScan(
             );
           }
 
-          if (searchResult.code === 200 && searchResult.result) {
+          if (searchResult?.code === 200 && searchResult.result) {
             const result = searchResult.result;
 
-            const folderInfo: any = {
+            const folderInfo: MetaInfo['folders'][string] = {
               folderName: fullFolderPath,
               tmdb_id: result.id,
               title: result.title || result.name || folder.name,

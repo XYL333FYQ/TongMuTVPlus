@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { getAuthSigningSecret } from '@/lib/auth-secret';
 export interface OidcSession {
   sub: string;
@@ -107,7 +105,15 @@ export async function verifyOidcSession(
     return null;
   }
 
-  let parsed: any;
+  // 字段都是带签名的：签名对得上才用（下面逐个检查了必填字段的类型）
+  let parsed: {
+    sub?: unknown;
+    email?: string;
+    name?: string;
+    trust_level?: number;
+    timestamp?: unknown;
+    signature?: unknown;
+  } | null;
   try {
     parsed = JSON.parse(cookieValue);
   } catch {

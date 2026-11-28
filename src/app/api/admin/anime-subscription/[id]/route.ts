@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
@@ -136,10 +135,10 @@ export async function PUT(
     await db.saveAdminConfig(config);
 
     return NextResponse.json(subscription);
-  } catch (error: any) {
+  } catch (error) {
     logger.error('更新追番订阅失败:', error);
     return NextResponse.json(
-      { error: error.message || '更新订阅失败' },
+      { error: (error as Error).message || '更新订阅失败' },
       { status: 500 }
     );
   }
@@ -171,10 +170,10 @@ export async function DELETE(
     await db.saveAdminConfig(config);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('删除追番订阅失败:', error);
     return NextResponse.json(
-      { error: error.message || '删除订阅失败' },
+      { error: (error as Error).message || '删除订阅失败' },
       { status: 500 }
     );
   }

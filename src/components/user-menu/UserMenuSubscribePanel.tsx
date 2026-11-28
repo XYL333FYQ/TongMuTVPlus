@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 'use client';
 
 // 由 UserMenu 拆出（按需加载）：账号菜单打开某个面板时才下载这部分代码。

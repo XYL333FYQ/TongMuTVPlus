@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { embyManager } from '@/lib/emby-manager';
@@ -36,7 +34,14 @@ export async function GET(request: NextRequest) {
     // 获取媒体详情
     const item = await client.getItem(itemId);
 
-    let episodes: any[] = [];
+    let episodes: Array<{
+      id: string;
+      title: string;
+      episode: number;
+      season: number;
+      overview: string;
+      playUrl: string;
+    }> = [];
 
     if (item.Type === 'Series') {
       // 获取所有剧集

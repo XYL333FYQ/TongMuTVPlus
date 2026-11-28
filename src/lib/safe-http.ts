@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import https from 'https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import nodeFetch from 'node-fetch';
+import nodeFetch, { type RequestInit as NodeFetchInit } from 'node-fetch';
+
+/** 响应上按名字调用的读取方法（json / text 等） */
+type ResponseReaders = Record<string, (...args: unknown[]) => Promise<unknown>>;
 
 /**
  * 针对 Node.js 24 + node-fetch v2 的 keep-alive 竞态修复。
@@ -61,7 +62,8 @@ function doFetch(
   proxy?: string | null,
   forceNonKeepAlive = false
 ): Promise<Response> {
-  const opts: any = { ...(init || {}) };
+  // 浏览器风格的 RequestInit 原样交给 node-fetch（两边字段一致），agent 由这里决定
+  const opts = { ...(init || {}) } as NodeFetchInit;
   delete opts.agent;
 
   // 仅用于重试时的临时强制（门闩尚未翻转但当前请求已确认命中竞态）
@@ -87,7 +89,7 @@ function wrapResponse(
   proxy?: string | null
 ): Response {
   let readRetried = false;
-  const target = res as any;
+  const target = res as unknown as ResponseReaders;
   const methodNames = [
     'json',
     'text',
@@ -97,7 +99,7 @@ function wrapResponse(
     'formData',
   ];
 
-  return new Proxy(target, {
+  const wrapped = new Proxy(target, {
     get(inner, prop, receiver) {
       if (typeof prop === 'string' && methodNames.includes(prop)) {
         return (...args: unknown[]) => {
@@ -113,7 +115,7 @@ function wrapResponse(
               useNonKeepAliveAgent = true; // 翻转门闩：后续请求全部走非 keep-alive
               const retried = doFetch(url, init, proxy, true);
               return retried.then((r2) => {
-                const inner2 = r2 as any;
+                const inner2 = r2 as unknown as ResponseReaders;
                 return inner2[prop](...args);
               });
             }
@@ -125,6 +127,7 @@ function wrapResponse(
       return typeof value === 'function' ? value.bind(inner) : value;
     },
   });
+  return wrapped as unknown as Response;
 }
 
 /**

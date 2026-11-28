@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -92,7 +90,9 @@ export async function GET(request: NextRequest) {
 
             // 超时要管到正文读完（由下方 finally 清除），
             // 否则对方卡住正文时整个校验流永远结束不了
-            const data = (await response.json()) as any;
+            const data = (await response.json()) as {
+              list?: Array<{ vod_name?: string }>;
+            };
 
             // 检查结果是否有效
             let status: 'valid' | 'no_results' | 'invalid';
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
               data.list.length > 0
             ) {
               // 检查是否有标题包含搜索词的结果
-              const validResults = data.list.filter((item: any) => {
+              const validResults = data.list.filter((item) => {
                 const title = item.vod_name || '';
                 return title
                   .toLowerCase()

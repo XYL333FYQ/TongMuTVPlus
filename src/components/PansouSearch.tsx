@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
@@ -22,8 +21,11 @@ import { useExternalAction } from '@/components/ExternalLink';
 import { notify } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
+import {
+  type DownloadTool,
+  OfflineDownloadNameDialog,
+} from '@/components/OfflineDownloadNameDialog';
 import ProxyImage from '@/components/ProxyImage';
-import Select from '@/components/ui/Select';
 
 interface PansouSearchProps {
   keyword: string;
@@ -31,8 +33,6 @@ interface PansouSearchProps {
   onError?: (error: string) => void;
   cloudTypes?: string[];
 }
-
-type DownloadTool = 'aria2' | 'Transmission' | 'qBittorrent';
 
 type MagnetHealthLevel = 'good' | 'ok' | 'risk' | 'unknown';
 
@@ -46,12 +46,6 @@ interface MagnetHealthView {
   source?: 'scrape' | 'cache';
   durationMs?: number;
 }
-
-const downloadToolOptions: Array<{ value: DownloadTool; label: string }> = [
-  { value: 'aria2', label: 'aria2' },
-  { value: 'qBittorrent', label: 'qBittorrent' },
-  { value: 'Transmission', label: 'Transmission' },
-];
 
 // 网盘类型映射
 export const CLOUD_TYPE_NAMES: Record<string, string> = {
@@ -339,10 +333,10 @@ export default function PansouSearch({
         const data: PansouSearchResult = await response.json();
         if (!current()) return;
         setResults(data);
-      } catch (err: any) {
+      } catch (err) {
         if (!current()) return;
         if (refreshSignal) throw err;
-        const errorMsg = err.message || '搜索失败，请检查配置';
+        const errorMsg = (err as Error).message || '搜索失败，请检查配置';
         setError(errorMsg);
         onError?.(errorMsg);
       } finally {
@@ -407,8 +401,8 @@ export default function PansouSearch({
       }
 
       notify(`转存成功，已保存到：${data.targetPath}`, 'success');
-    } catch (err: any) {
-      notify(err?.message || '转存失败', 'error');
+    } catch (err) {
+      notify((err as Error)?.message || '转存失败', 'error');
     } finally {
       setTransferingUrl(null);
     }
@@ -475,8 +469,8 @@ export default function PansouSearch({
           durationMs: data.durationMs,
         },
       }));
-    } catch (err: any) {
-      notify(err?.message || '测活失败', 'error');
+    } catch (err) {
+      notify((err as Error)?.message || '测活失败', 'error');
     } finally {
       setMagnetHealthCheckingIds((prev) => {
         const next = { ...prev };
@@ -526,8 +520,8 @@ export default function PansouSearch({
       }
 
       notify(data.message || '已添加到离线下载队列', 'success');
-    } catch (err: any) {
-      notify(err?.message || '添加下载任务失败', 'error');
+    } catch (err) {
+      notify((err as Error)?.message || '添加下载任务失败', 'error');
     } finally {
       setDownloadingUrl(null);
       setSelectedDownloadLink(null);
@@ -593,8 +587,8 @@ export default function PansouSearch({
           keyword
         )}`
       );
-    } catch (err: any) {
-      notify(err?.message || '播放失败', 'error');
+    } catch (err) {
+      notify((err as Error)?.message || '播放失败', 'error');
     } finally {
       setPlayingUrl(null);
     }
@@ -628,8 +622,8 @@ export default function PansouSearch({
         },
       }));
       setCooldownRemainingMs(Number(data.cooldownRemainingMs || 0));
-    } catch (err: any) {
-      notify(err?.message || '启动检测失败', 'error');
+    } catch (err) {
+      notify((err as Error)?.message || '启动检测失败', 'error');
     }
   };
 
@@ -655,8 +649,8 @@ export default function PansouSearch({
           task: data.task,
         },
       }));
-    } catch (err: any) {
-      notify(err?.message || '停止检测失败', 'error');
+    } catch (err) {
+      notify((err as Error)?.message || '停止检测失败', 'error');
     }
   };
 
@@ -1128,48 +1122,14 @@ export default function PansouSearch({
     <>
       <div className='space-y-6'>{renderBody()}</div>
       {showNameDialog && (
-        <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-ink/50'>
-          <div className='bg-surface rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
-            <h3 className='text-lg font-medium text-fg mb-4'>设置资源名称</h3>
-            <input
-              type='text'
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder='请输入资源名称'
-              className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-fg'
-              autoFocus
-            />
-            <label className='mt-4 block text-sm font-medium text-muted'>
-              下载方式
-            </label>
-            <Select
-              value={downloadTool}
-              onChange={(e) => setDownloadTool(e.target.value as DownloadTool)}
-              className='mt-1 w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-fg'
-            >
-              {downloadToolOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-            <div className='mt-4 flex gap-2 justify-end'>
-              <button
-                onClick={handleCloseDownloadDialog}
-                className='px-4 py-2 rounded-lg bg-raised text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              >
-                取消
-              </button>
-              <button
-                onClick={handleConfirmDownload}
-                disabled={!customName.trim()}
-                className='px-4 py-2 rounded-lg bg-fg text-inverse hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
-              >
-                确定
-              </button>
-            </div>
-          </div>
-        </div>
+        <OfflineDownloadNameDialog
+          name={customName}
+          onNameChange={setCustomName}
+          tool={downloadTool}
+          onToolChange={setDownloadTool}
+          onCancel={handleCloseDownloadDialog}
+          onConfirm={handleConfirmDownload}
+        />
       )}
       {externalAction.feedback}
     </>

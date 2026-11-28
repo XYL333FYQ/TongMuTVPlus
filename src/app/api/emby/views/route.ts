@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCachedEmbyViews, setCachedEmbyViews } from '@/lib/emby-cache';

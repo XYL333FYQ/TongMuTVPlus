@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { AdminConfig } from '@/lib/admin.types';
@@ -79,13 +77,13 @@ async function generateSuggestions(
       new Set(
         results
           .filter(
-            (r: any) =>
+            (r) =>
               config.SiteConfig.DisableYellowFilter ||
               !yellowWords.some((word: string) =>
                 (r.type_name || '').includes(word)
               )
           )
-          .map((r: any) => r.title)
+          .map((r) => r.title)
           .filter(Boolean)
           .flatMap((title: string) => title.split(/[ -:：·、-]/))
           .filter(

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { createHash } from 'crypto';
 
 import type {
@@ -101,6 +99,28 @@ function mergeCookie(cookie: string, key: string, value: string): string {
   return next;
 }
 
+/** 分享目录里的一项：isdir 1 / '1' 是文件夹 */
+interface BaiduShareEntry {
+  isdir?: number | string;
+  server_filename?: string;
+  fs_id?: number | string;
+  size?: number | string;
+}
+
+/** 这个文件用到的几个接口返回的字段（errno 0 表示成功） */
+interface BaiduApiResponse {
+  errno?: number;
+  errmsg?: string;
+  show_msg?: string;
+  randsk?: string;
+  share_id?: number | string;
+  uk?: number | string;
+  share_uk?: number | string;
+  list?: BaiduShareEntry[];
+}
+
+type QueryValue = string | number | boolean | null | undefined;
+
 async function requestApi(
   path: string,
   {
@@ -111,14 +131,14 @@ async function requestApi(
     retry = 2,
   }: {
     cookie: string;
-    data?: Record<string, any>;
+    data?: Record<string, QueryValue>;
     method?: 'get' | 'post';
     extraHeaders?: Record<string, string>;
     retry?: number;
   }
-): Promise<any> {
+): Promise<BaiduApiResponse | null> {
   const headers = { ...getBaseHeaders(cookie), ...extraHeaders };
-  const objectToQuery = (obj: Record<string, any>) =>
+  const objectToQuery = (obj: Record<string, QueryValue>) =>
     Object.entries(obj)
       .filter(([, value]) => value !== undefined && value !== null)
       .map(
@@ -142,7 +162,7 @@ async function requestApi(
     );
     const text = await response.text();
     try {
-      return JSON.parse(text);
+      return JSON.parse(text) as BaiduApiResponse | null;
     } catch {
       throw new Error(`百度网盘接口返回异常：${text.slice(0, 200)}`);
     }
@@ -241,7 +261,7 @@ async function listShareDirectory(
   meta: BaiduNetdiskSessionMeta,
   dirPath: string,
   dirFsId: string
-): Promise<any[]> {
+): Promise<BaiduShareEntry[]> {
   const shareDir = `/sharelink${meta.shareid}-${dirFsId}${dirPath}`;
   const data = await requestApi('share/list', {
     cookie,
@@ -256,13 +276,13 @@ async function listShareDirectory(
     method: 'get',
   });
   if (data?.errno !== 0 || !Array.isArray(data?.list)) return [];
-  return data.list;
+  return data.list ?? [];
 }
 
 async function collectVideosFromList(
   cookie: string,
   meta: BaiduNetdiskSessionMeta,
-  list: any[],
+  list: BaiduShareEntry[],
   parentPath = ''
 ): Promise<BaiduNetdiskSessionFile[]> {
   const videos: BaiduNetdiskSessionFile[] = [];

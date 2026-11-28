@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { parseAuthInfo } from '@/lib/auth';
-import { setAuthCookie } from '@/lib/auth-cookie';
+import { type AuthCookieData, setAuthCookie } from '@/lib/auth-cookie';
 import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
 import { isSecureRequest } from '@/lib/cookie-security';
@@ -88,7 +87,7 @@ async function generateAuthCookie(
   deviceInfo?: string
 ): Promise<string> {
   const now = Date.now();
-  const authData: any = { role: role || 'user' };
+  const authData: AuthCookieData = { role: role || 'user' };
 
   // 只在需要时包含 password
   if (includePassword && password) {

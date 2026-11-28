@@ -106,6 +106,20 @@ test('counts inline eslint disables', () => {
   );
 });
 
+test('counts block eslint disables but not the per-line forms', () => {
+  assert.equal(
+    countMatches(
+      '/* eslint-disable @typescript-eslint/no-explicit-any */\n' +
+        '/*eslint-disable*/\n' +
+        '// eslint-disable-next-line no-console\n' +
+        '/* eslint-disable-next-line x */\n' +
+        '/* eslint-enable */',
+      'eslintDisableFile'
+    ),
+    2
+  );
+});
+
 test('allows !important only in the agreed contexts', () => {
   assert.equal(
     isAllowedImportant("html[data-tm-reduced-motion='true'] .a", []),

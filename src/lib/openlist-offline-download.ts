@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { AdminConfig } from '@/lib/admin.types';
 import { OpenListClient } from '@/lib/openlist.client';
 
@@ -63,7 +61,7 @@ export async function addOpenListOfflineDownload(
     source.username,
     source.password
   );
-  const token = await (client as any).getToken();
+  const token = await client.getToken();
   const openlistUrl = `${source.url.replace(
     /\/$/,
     ''

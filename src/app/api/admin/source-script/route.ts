@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
@@ -14,6 +12,16 @@ import {
 } from '@/lib/source-script';
 
 export const runtime = 'nodejs';
+
+/** 请求体：按 action 用到其中的字段（由管理页面发来，各函数里还会再校验） */
+type SourceScriptRequest = Parameters<typeof saveSourceScript>[0] &
+  Omit<Parameters<typeof testSourceScript>[0], 'key' | 'name' | 'code'> & {
+    action?: string;
+    id: string;
+    items?: Array<
+      Parameters<typeof importSourceScripts>[0][number] & { id?: string }
+    >;
+  };
 
 async function assertAdmin(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
@@ -54,19 +62,21 @@ export async function POST(request: NextRequest) {
     const caller = await assertAdmin(request);
     if (!isCaller(caller)) return caller;
 
-    const body = (await request.json()) as Record<string, any>;
-    const action = body.action as string;
+    const body = (await request.json()) as SourceScriptRequest;
+    const action = body.action;
 
     // 高级推荐由启用的脚本决定。管理员可维护脚本，但不能通过保存、
     // 导入或删除第一个/最后一个启用脚本来改变全站开放状态。
     if (!isOwner(caller) && action !== 'test') {
       const items = await listSourceScripts();
       const before = items.some((item) => item.enabled);
-      let next = items.map((item) => ({
-        id: item.id,
-        key: item.key,
-        enabled: item.enabled,
-      }));
+      // 导入的脚本按 key 对应，还没有 id
+      let next: Array<{ id?: string; key: string; enabled: boolean }> =
+        items.map((item) => ({
+          id: item.id,
+          key: item.key,
+          enabled: item.enabled,
+        }));
       if (action === 'save') {
         const existing = next.find((item) => item.id === body.id);
         if (existing) existing.enabled = body.enabled ?? existing.enabled;

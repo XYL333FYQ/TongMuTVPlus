@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { setAuthCookie } from '@/lib/auth-cookie';
+import { type AuthCookieData, setAuthCookie } from '@/lib/auth-cookie';
 import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
 import { isSecureRequest } from '@/lib/cookie-security';
@@ -82,7 +81,7 @@ async function generateAuthCookie(
   role: 'owner' | 'admin' | 'user',
   deviceInfo: string
 ): Promise<string> {
-  const authData: any = { role };
+  const authData: AuthCookieData = { role };
 
   if (username && process.env.PASSWORD) {
     authData.username = username;

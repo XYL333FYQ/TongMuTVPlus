@@ -15,7 +15,7 @@ export interface TianyiNetdiskSession {
   passcode?: string;
   shareId: string;
   shareMode: string;
-  isFolder: string | number | boolean;
+  isFolder: string | number | boolean | undefined;
   accessCode: string;
   files: TianyiNetdiskSessionFile[];
   createdAt: number;
@@ -68,7 +68,7 @@ export function createTianyiNetdiskSession(input: {
   passcode?: string;
   shareId: string;
   shareMode: string;
-  isFolder: string | number | boolean;
+  isFolder: string | number | boolean | undefined;
   accessCode: string;
   files: TianyiNetdiskSessionFile[];
 }) {

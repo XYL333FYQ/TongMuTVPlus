@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { logger } from '@/lib/logger';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
@@ -17,6 +15,50 @@ export interface OpenListFile {
   thumb?: string;
   type: number;
   path?: string;
+}
+
+/** 视频预览（转码）返回里的一档清晰度 */
+export interface OpenListTranscodingTask {
+  template_id: string;
+  status: string;
+  url: string;
+  [field: string]: unknown;
+}
+
+/** /api/fs/other 的 video_preview 返回（小雅也是同一个格式） */
+export interface OpenListVideoPreview {
+  code: number;
+  message?: string;
+  data?: {
+    video_preview_play_info?: {
+      live_transcoding_task_list?: OpenListTranscodingTask[];
+    };
+  };
+}
+
+const PREVIEW_QUALITY_ORDER: Record<string, number> = {
+  FHD: 1,
+  HD: 2,
+  LD: 3,
+  SD: 4,
+};
+
+/** 转码完成、有地址的清晰度，按 FHD → HD → LD → SD 排好 */
+export function pickPreviewQualities(
+  taskList: OpenListTranscodingTask[]
+): Array<{ name: string; url: string }> {
+  return taskList
+    .filter((task) => task.status === 'finished')
+    .map((task) => ({
+      name: task.template_id,
+      url: task.url,
+    }))
+    .filter((quality) => quality.url && quality.url.trim() !== '') // 过滤空URL
+    .sort(
+      (a, b) =>
+        (PREVIEW_QUALITY_ORDER[a.name] || 999) -
+        (PREVIEW_QUALITY_ORDER[b.name] || 999)
+    );
 }
 
 export interface OpenListListResponse {
@@ -38,7 +80,8 @@ export interface OpenListGetResponse {
 
 export class OpenListClient {
   private token = '';
-  private baseURL: string;
+  /** 服务地址（音乐缓存上传文件时直接调 /api/fs/put 要用） */
+  readonly baseURL: string;
 
   constructor(
     baseURL: string,
@@ -83,7 +126,8 @@ export class OpenListClient {
   /**
    * 获取缓存的 Token 或重新登录
    */
-  private async getToken(): Promise<string> {
+  /** 登录拿到的令牌（离线下载等直接调 OpenList 接口时要带上） */
+  async getToken(): Promise<string> {
     const cacheKey = `${this.baseURL}:${this.username}`;
     const cached = tokenCache.get(cacheKey);
 
@@ -296,7 +340,7 @@ export class OpenListClient {
   }
 
   // 获取视频预览流
-  async getVideoPreview(path: string): Promise<any> {
+  async getVideoPreview(path: string): Promise<OpenListVideoPreview> {
     const response = await this.fetchWithRetry(`${this.baseURL}/api/fs/other`, {
       method: 'POST',
       headers: await this.getHeaders(),
@@ -311,7 +355,7 @@ export class OpenListClient {
       throw new Error(`视频预览请求失败: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as OpenListVideoPreview;
 
     if (data.code !== 200) {
       throw new Error(`视频预览失败: ${data.message}`);

@@ -1,15 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { promisify } from 'util';
 import { gzip } from 'zlib';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
+import type {
+  BackupUserData,
+  MigrationStorage,
+} from '@/lib/data-migration-format';
 import { clearProgress, updateProgress } from '@/lib/data-migration-progress';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
+import type { UserListV2 } from '@/lib/types';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
@@ -55,9 +58,9 @@ export async function POST(req: NextRequest) {
         // 管理员配置
         adminConfig: config,
         // 所有用户数据
-        userData: {} as { [username: string]: any },
+        userData: {} as { [username: string]: BackupUserData },
         // V2用户信息
-        usersV2: [] as any[],
+        usersV2: [] as UserListV2['users'],
       },
     };
 
@@ -313,7 +316,7 @@ export async function POST(req: NextRequest) {
 // 辅助函数：获取V2用户的加密密码
 async function getUserPasswordV2(username: string): Promise<string | null> {
   try {
-    const storage = (db as any).storage;
+    const storage = db.storage as MigrationStorage | null;
     if (!storage) return null;
 
     // 检查存储类型
@@ -338,9 +341,10 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
     // Redis 存储：直接调用hGetAll获取完整用户信息（包括密码）
     const userInfoKey = `user:${username}:info`;
 
-    if (typeof storage.withRetry === 'function' && storage.client?.hgetall) {
+    const client = storage.client;
+    if (typeof storage.withRetry === 'function' && client?.hgetall) {
       const userInfo = await storage.withRetry(() =>
-        storage.client.hgetall(userInfoKey)
+        client.hgetall(userInfoKey)
       );
       if (userInfo && userInfo.password) {
         return userInfo.password;

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { NextResponse } from 'next/server';
 
 import { getAuthSigningSecret } from '@/lib/auth-secret';
@@ -63,6 +61,19 @@ export function getDeviceInfoFromUserAgent(userAgent: string): string {
   return 'Unknown Device';
 }
 
+/** 登录凭证 Cookie（auth）里的内容；签名覆盖 username、role、timestamp */
+export interface AuthCookieData {
+  role: 'owner' | 'admin' | 'user';
+  /** 只有本地存储模式（没有数据库）才带密码 */
+  password?: string;
+  username?: string;
+  timestamp?: number;
+  tokenId?: string;
+  refreshToken?: string;
+  refreshExpires?: number;
+  signature?: string;
+}
+
 export async function generateAuthCookieValue(input: {
   username?: string;
   password?: string;
@@ -71,7 +82,7 @@ export async function generateAuthCookieValue(input: {
   deviceInfo?: string;
 }): Promise<string> {
   const now = Date.now();
-  const authData: any = { role: input.role || 'user' };
+  const authData: AuthCookieData = { role: input.role || 'user' };
 
   if (input.includePassword && input.password) {
     authData.password = input.password;

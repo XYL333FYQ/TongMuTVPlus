@@ -25,6 +25,7 @@ import { readSetting, writeSetting } from '@/lib/settings';
 import { processImageUrl } from '@/lib/utils';
 import { useLatest } from '@/hooks/useLatest';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -45,7 +46,6 @@ import {
   READER_SLIDER,
   READER_TOOLTIP,
 } from '@/components/media/library';
-import ReaderDialog from '@/components/media/ReaderDialog';
 import ProxyImage from '@/components/ProxyImage';
 
 // 还没拿到本章页面时的空列表：固定一个，依赖它的 effect 不会每次渲染都重跑
@@ -1084,7 +1084,7 @@ export default function MangaReadPage() {
   return (
     <div className='mx-auto max-w-6xl'>
       {settingsOpen && (
-        <ReaderDialog label='阅读设置' onClose={() => setSettingsOpen(false)}>
+        <ModalLayer label='阅读设置' onClose={() => setSettingsOpen(false)}>
           <div
             className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
             onClick={(e) => e.stopPropagation()}
@@ -1185,14 +1185,11 @@ export default function MangaReadPage() {
               </div>
             </div>
           </div>
-        </ReaderDialog>
+        </ModalLayer>
       )}
 
       {chapterListOpen && (
-        <ReaderDialog
-          label='章节列表'
-          onClose={() => setChapterListOpen(false)}
-        >
+        <ModalLayer label='章节列表' onClose={() => setChapterListOpen(false)}>
           <div
             className='tm-reader-drawer absolute right-0 top-0 w-full max-w-sm overflow-y-auto border-l border-line bg-surface shadow-xl'
             onClick={(event) => event.stopPropagation()}
@@ -1263,126 +1260,117 @@ export default function MangaReadPage() {
               </div>
             </div>
           </div>
-        </ReaderDialog>
+        </ModalLayer>
+      )}
+
+      {showChapterComplete && (
+        <ModalLayer
+          variant='confirm'
+          label={`${chapterName} 阅读完毕`}
+          onClose={() => setShowChapterComplete(false)}
+        >
+          <div className={cn(READER_SHEET, 'w-full max-w-sm p-6 text-center')}>
+            <div
+              className={cn('text-lg font-medium', LIBRARY_TEXT, LIBRARY_SERIF)}
+            >
+              {chapterName} 阅读完毕
+            </div>
+            <div className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
+              {nextChapter
+                ? '当前章节已读完，可继续阅读下一话'
+                : '当前章节已读完'}
+            </div>
+            <div className='mt-6 flex flex-col gap-3'>
+              {nextChapter ? (
+                <Link
+                  href={buildChapterHref(nextChapter)}
+                  className={cn(
+                    'px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
+                    LIBRARY_BUTTON
+                  )}
+                >
+                  下一话：{nextChapter.name}
+                </Link>
+              ) : null}
+              <button
+                type='button'
+                className={cn(
+                  'px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
+                  LIBRARY_GHOST_BUTTON
+                )}
+                onClick={() => setShowChapterComplete(false)}
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
+
+      {jumpDialogOpen && (
+        <ModalLayer
+          variant='confirm'
+          label='跳转到指定页'
+          onClose={() => setJumpDialogOpen(false)}
+        >
+          <form
+            className={cn(READER_SHEET, 'w-full max-w-xs p-6')}
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitJump();
+            }}
+          >
+            <div
+              className={cn(
+                'text-base font-medium',
+                LIBRARY_TEXT,
+                LIBRARY_SERIF
+              )}
+            >
+              跳转到指定页
+            </div>
+            <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
+              共 {pages.length} 页
+            </div>
+            <input
+              autoFocus
+              type='number'
+              inputMode='numeric'
+              min={1}
+              max={pages.length}
+              value={jumpValue}
+              onChange={(event) => setJumpValue(event.target.value)}
+              className={cn(LIBRARY_FIELD, 'mt-4 px-3 py-2 min-h-[44px]')}
+            />
+            <div className='mt-5 flex gap-3'>
+              <button
+                type='button'
+                className={cn(
+                  'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
+                  LIBRARY_GHOST_BUTTON
+                )}
+                onClick={() => setJumpDialogOpen(false)}
+              >
+                取消
+              </button>
+              <button
+                type='submit'
+                className={cn(
+                  'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
+                  LIBRARY_BUTTON
+                )}
+              >
+                跳转
+              </button>
+            </div>
+          </form>
+        </ModalLayer>
       )}
 
       <div
         className='relative min-h-[calc(100dvh-5rem)] select-none px-0 py-3 sm:px-3'
         onClick={handleReaderClick}
       >
-        {showChapterComplete && (
-          <div
-            className='fixed inset-0 z-30 flex items-center justify-center bg-ink/60 px-4'
-            onClick={() => setShowChapterComplete(false)}
-          >
-            <div
-              className={cn(READER_SHEET, 'w-full max-w-sm p-6 text-center')}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div
-                className={cn(
-                  'text-lg font-medium',
-                  LIBRARY_TEXT,
-                  LIBRARY_SERIF
-                )}
-              >
-                {chapterName} 阅读完毕
-              </div>
-              <div className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
-                {nextChapter
-                  ? '当前章节已读完，可继续阅读下一话'
-                  : '当前章节已读完'}
-              </div>
-              <div className='mt-6 flex flex-col gap-3'>
-                {nextChapter ? (
-                  <Link
-                    href={buildChapterHref(nextChapter)}
-                    className={cn(
-                      'px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
-                      LIBRARY_BUTTON
-                    )}
-                  >
-                    下一话：{nextChapter.name}
-                  </Link>
-                ) : null}
-                <button
-                  type='button'
-                  className={cn(
-                    'px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
-                    LIBRARY_GHOST_BUTTON
-                  )}
-                  onClick={() => setShowChapterComplete(false)}
-                >
-                  关闭
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {jumpDialogOpen && (
-          <div
-            className='fixed inset-0 z-30 flex items-center justify-center bg-ink/60 px-4'
-            onClick={(event) => {
-              event.stopPropagation();
-              setJumpDialogOpen(false);
-            }}
-          >
-            <form
-              className={cn(READER_SHEET, 'w-full max-w-xs p-6')}
-              onClick={(event) => event.stopPropagation()}
-              onSubmit={(event) => {
-                event.preventDefault();
-                submitJump();
-              }}
-            >
-              <div
-                className={cn(
-                  'text-base font-medium',
-                  LIBRARY_TEXT,
-                  LIBRARY_SERIF
-                )}
-              >
-                跳转到指定页
-              </div>
-              <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
-                共 {pages.length} 页
-              </div>
-              <input
-                autoFocus
-                type='number'
-                inputMode='numeric'
-                min={1}
-                max={pages.length}
-                value={jumpValue}
-                onChange={(event) => setJumpValue(event.target.value)}
-                className={cn(LIBRARY_FIELD, 'mt-4 px-3 py-2 min-h-[44px]')}
-              />
-              <div className='mt-5 flex gap-3'>
-                <button
-                  type='button'
-                  className={cn(
-                    'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
-                    LIBRARY_GHOST_BUTTON
-                  )}
-                  onClick={() => setJumpDialogOpen(false)}
-                >
-                  取消
-                </button>
-                <button
-                  type='submit'
-                  className={cn(
-                    'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
-                    LIBRARY_BUTTON
-                  )}
-                >
-                  跳转
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
         <div
           className={`fixed right-3 top-1/2 z-20 h-40 w-1 -translate-y-1/2 overflow-hidden rounded-full bg-[color:color-mix(in_srgb,var(--tm-line)_80%,transparent)] duration-200 ${
             controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'

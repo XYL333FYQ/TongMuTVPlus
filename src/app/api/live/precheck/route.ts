@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -27,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
   }
   const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+  const liveSource = config.LiveConfig?.find((s) => s.key === source);
   if (!liveSource) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }

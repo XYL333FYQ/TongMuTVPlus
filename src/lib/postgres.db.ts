@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Vercel Postgres Storage Implementation
  *
@@ -12,7 +10,8 @@ import { logger } from '@/lib/logger';
 
 import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
-import { DatabaseAdapter } from './d1-adapter';
+import { DatabaseAdapter, DbRow } from './d1-adapter';
+import type { MusicPlayRecord } from './db.client';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import {
   MusicV2HistoryRecord,
@@ -24,18 +23,32 @@ import {
   hashPassword as createPasswordHash,
   verifyPassword,
 } from './password-hash';
+import type {
+  FavoriteRow,
+  MovieRequestRow,
+  MusicPlaylistRow,
+  MusicPlaylistSongRow,
+  MusicPlayRecordRow,
+  MusicV2HistoryRow,
+  MusicV2PlaylistItemRow,
+  MusicV2PlaylistRow,
+  PlayRecordRow,
+} from './sql-rows';
 import {
   DanmakuFilterConfig,
   Favorite,
   IStorage,
   LocalSettingsSyncRecord,
   MovieRequest,
+  MusicPlaylistRecord,
+  MusicPlaylistSongRecord,
   Notification,
   PlayRecord,
   PushSubscriptionRecord,
   SetLocalSettingsSyncOptions,
   SetLocalSettingsSyncResult,
   SkipConfig,
+  UserInfoV2,
 } from './types';
 
 /**
@@ -54,7 +67,7 @@ import {
 export class PostgresStorage implements IStorage {
   private db: DatabaseAdapter;
   private schemaReady: Promise<void>;
-  public adapter: any; // 用于兼容
+  public adapter: PostgresRedisHashAdapter; // 用于兼容（设备管理、扫码登录按 Redis 哈希的方式读写）
 
   constructor(adapter: DatabaseAdapter) {
     this.db = adapter;
@@ -96,7 +109,7 @@ export class PostgresStorage implements IStorage {
       const result = await this.db
         .prepare('SELECT * FROM play_records WHERE username = $1 AND key = $2')
         .bind(userName, key)
-        .first();
+        .first<PlayRecordRow>();
 
       if (!result) return null;
       return this.rowToPlayRecord(result);
@@ -168,7 +181,7 @@ export class PostgresStorage implements IStorage {
           'SELECT * FROM play_records WHERE username = $1 ORDER BY save_time DESC'
         )
         .bind(userName)
-        .all();
+        .all<PlayRecordRow>();
 
       const records: { [key: string]: PlayRecord } = {};
       if (results.results) {
@@ -279,7 +292,7 @@ export class PostgresStorage implements IStorage {
       const result = await this.db
         .prepare('SELECT * FROM favorites WHERE username = $1 AND key = $2')
         .bind(userName, key)
-        .first();
+        .first<FavoriteRow>();
 
       if (!result) return null;
       return this.rowToFavorite(result);
@@ -347,7 +360,7 @@ export class PostgresStorage implements IStorage {
           'SELECT * FROM favorites WHERE username = $1 ORDER BY save_time DESC'
         )
         .bind(userName)
-        .all();
+        .all<FavoriteRow>();
 
       const favorites: { [key: string]: Favorite } = {};
       if (results.results) {
@@ -388,7 +401,7 @@ export class PostgresStorage implements IStorage {
 
   // ==================== 辅助方法 ====================
 
-  private rowToPlayRecord(row: any): PlayRecord {
+  private rowToPlayRecord(row: PlayRecordRow): PlayRecord {
     return {
       title: row.title,
       source_name: row.source_name,
@@ -405,7 +418,7 @@ export class PostgresStorage implements IStorage {
     };
   }
 
-  private rowToFavorite(row: any): Favorite {
+  private rowToFavorite(row: FavoriteRow): Favorite {
     return {
       source_name: row.source_name,
       total_episodes: row.total_episodes,
@@ -529,7 +542,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getUserInfoV2(userName: string): Promise<any> {
+  async getUserInfoV2(userName: string): Promise<UserInfoV2 | null> {
     try {
       // 先尝试从缓存获取用户信息
       const { userInfoCache } = await import('./user-cache');
@@ -839,7 +852,7 @@ export class PostgresStorage implements IStorage {
   ): Promise<void> {
     try {
       const fields: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramIndex = 1;
 
       if (updates.role !== undefined) {
@@ -959,7 +972,7 @@ export class PostgresStorage implements IStorage {
 
       if (!result.results) return [];
 
-      return result.results.map((row: any) => row.username as string);
+      return result.results.map((row) => row.username as string);
     } catch (err) {
       logger.error('PostgresStorage.getUsersByTag error:', err);
       return [];
@@ -1157,7 +1170,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .all();
 
-      return (results.results || []).map((row: any) => ({
+      return (results.results || []).map((row) => ({
         id: row.id as string,
         username: row.username as string,
         tokenId: (row.token_id as string | null) || null,
@@ -1266,7 +1279,7 @@ export class PostgresStorage implements IStorage {
       const result = await this.db
         .prepare('SELECT tvbox_subscribe_token FROM users WHERE username = $1')
         .bind(userName)
-        .first();
+        .first<{ tvbox_subscribe_token: string | null }>();
 
       return result?.tvbox_subscribe_token || null;
     } catch (err) {
@@ -1298,7 +1311,7 @@ export class PostgresStorage implements IStorage {
       const result = await this.db
         .prepare('SELECT username FROM users WHERE tvbox_subscribe_token = $1')
         .bind(token)
-        .first();
+        .first<{ username: string }>();
 
       return result?.username || null;
     } catch (err) {
@@ -1309,14 +1322,17 @@ export class PostgresStorage implements IStorage {
 
   // ==================== 音乐播放记录 ====================
 
-  async getMusicPlayRecord(userName: string, key: string): Promise<any | null> {
+  async getMusicPlayRecord(
+    userName: string,
+    key: string
+  ): Promise<MusicPlayRecord | null> {
     try {
       const result = await this.db
         .prepare(
           'SELECT * FROM music_play_records WHERE username = $1 AND key = $2'
         )
         .bind(userName, key)
-        .first();
+        .first<MusicPlayRecordRow>();
 
       if (!result) return null;
 
@@ -1340,7 +1356,7 @@ export class PostgresStorage implements IStorage {
   async setMusicPlayRecord(
     userName: string,
     key: string,
-    record: any
+    record: MusicPlayRecord
   ): Promise<void> {
     try {
       await this.db
@@ -1380,7 +1396,7 @@ export class PostgresStorage implements IStorage {
 
   async batchSetMusicPlayRecords(
     userName: string,
-    records: { key: string; record: any }[]
+    records: { key: string; record: MusicPlayRecord }[]
   ): Promise<void> {
     if (records.length === 0) return;
 
@@ -1430,16 +1446,16 @@ export class PostgresStorage implements IStorage {
 
   async getAllMusicPlayRecords(
     userName: string
-  ): Promise<{ [key: string]: any }> {
+  ): Promise<{ [key: string]: MusicPlayRecord }> {
     try {
       const results = await this.db
         .prepare(
           'SELECT * FROM music_play_records WHERE username = $1 ORDER BY save_time DESC'
         )
         .bind(userName)
-        .all();
+        .all<MusicPlayRecordRow>();
 
-      const records: { [key: string]: any } = {};
+      const records: { [key: string]: MusicPlayRecord } = {};
       if (results.results) {
         for (const row of results.results) {
           records[row.key as string] = {
@@ -1524,12 +1540,14 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getMusicPlaylist(playlistId: string): Promise<any | null> {
+  async getMusicPlaylist(
+    playlistId: string
+  ): Promise<MusicPlaylistRecord | null> {
     try {
       const result = await this.db
         .prepare('SELECT * FROM music_playlists WHERE id = $1')
         .bind(playlistId)
-        .first();
+        .first<MusicPlaylistRow>();
 
       if (!result) return null;
 
@@ -1548,14 +1566,16 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getUserMusicPlaylists(userName: string): Promise<any[]> {
+  async getUserMusicPlaylists(
+    userName: string
+  ): Promise<MusicPlaylistRecord[]> {
     try {
       const results = await this.db
         .prepare(
           'SELECT * FROM music_playlists WHERE username = $1 ORDER BY created_at DESC'
         )
         .bind(userName)
-        .all();
+        .all<MusicPlaylistRow>();
 
       if (!results.results) return [];
 
@@ -1584,7 +1604,7 @@ export class PostgresStorage implements IStorage {
   ): Promise<void> {
     try {
       const setClauses: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramIndex = 1;
 
       if (updates.name !== undefined) {
@@ -1720,14 +1740,16 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getPlaylistSongs(playlistId: string): Promise<any[]> {
+  async getPlaylistSongs(
+    playlistId: string
+  ): Promise<MusicPlaylistSongRecord[]> {
     try {
       const results = await this.db
         .prepare(
           'SELECT * FROM music_playlist_songs WHERE playlist_id = $1 ORDER BY sort_order ASC'
         )
         .bind(playlistId)
-        .all();
+        .all<MusicPlaylistSongRow>();
 
       if (!results.results) return [];
 
@@ -1786,11 +1808,11 @@ export class PostgresStorage implements IStorage {
           'SELECT * FROM music_v2_history WHERE username = $1 ORDER BY sort_order ASC, created_at ASC, id ASC'
         )
         .bind(userName)
-        .all();
+        .all<MusicV2HistoryRow>();
 
       if (!results.results) return [];
 
-      return results.results.map((row: any) => ({
+      return results.results.map((row: MusicV2HistoryRow) => ({
         songId: row.song_id,
         source: row.source,
         songmid: row.songmid || undefined,
@@ -1930,10 +1952,10 @@ export class PostgresStorage implements IStorage {
   async getMusicV2Playlist(
     playlistId: string
   ): Promise<MusicV2PlaylistRecord | null> {
-    const row: any = await this.db
+    const row = await this.db
       .prepare('SELECT * FROM music_v2_playlists WHERE id = $1')
       .bind(playlistId)
-      .first();
+      .first<MusicV2PlaylistRow>();
     if (!row) return null;
     return {
       id: row.id,
@@ -1955,9 +1977,9 @@ export class PostgresStorage implements IStorage {
         'SELECT * FROM music_v2_playlists WHERE username = $1 ORDER BY updated_at DESC'
       )
       .bind(userName)
-      .all();
+      .all<MusicV2PlaylistRow>();
     if (!results.results) return [];
-    return results.results.map((row: any) => ({
+    return results.results.map((row: MusicV2PlaylistRow) => ({
       id: row.id,
       username: row.username,
       name: row.name,
@@ -1979,7 +2001,7 @@ export class PostgresStorage implements IStorage {
     }
   ): Promise<void> {
     const clauses: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let index = 1;
     if (updates.name !== undefined) {
       clauses.push(`name = $${index++}`);
@@ -2025,12 +2047,12 @@ export class PostgresStorage implements IStorage {
     if (!playlist) {
       throw new Error('歌单不存在');
     }
-    const maxSort: any = await this.db
+    const maxSort = await this.db
       .prepare(
         'SELECT MAX(sort_order) as max_sort FROM music_v2_playlist_items WHERE playlist_id = $1'
       )
       .bind(playlistId)
-      .first();
+      .first<{ max_sort: number | string | null }>();
     const nextOrder = Math.max(
       item.sortOrder || 0,
       ((maxSort?.max_sort as number) || 0) + 1
@@ -2106,9 +2128,9 @@ export class PostgresStorage implements IStorage {
         'SELECT * FROM music_v2_playlist_items WHERE playlist_id = $1 ORDER BY sort_order ASC, added_at ASC'
       )
       .bind(playlistId)
-      .all();
+      .all<MusicV2PlaylistItemRow>();
     if (!results.results) return [];
-    return results.results.map((row: any) => ({
+    return results.results.map((row: MusicV2PlaylistItemRow) => ({
       playlistId: row.playlist_id,
       songId: row.song_id,
       source: row.source,
@@ -3093,7 +3115,7 @@ export class PostgresStorage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => ({
         id: row.id as string,
-        type: row.type as any,
+        type: row.type as Notification['type'],
         title: row.title as string,
         message: row.message as string,
         timestamp: row.timestamp as number,
@@ -3203,7 +3225,7 @@ export class PostgresStorage implements IStorage {
     try {
       const results = await this.db
         .prepare('SELECT * FROM movie_requests ORDER BY created_at DESC')
-        .all();
+        .all<MovieRequestRow>();
 
       if (!results.results) return [];
       return results.results.map((row) => this.rowToMovieRequest(row));
@@ -3218,7 +3240,7 @@ export class PostgresStorage implements IStorage {
       const result = await this.db
         .prepare('SELECT * FROM movie_requests WHERE id = $1')
         .bind(requestId)
-        .first();
+        .first<MovieRequestRow>();
 
       if (!result) return null;
       return this.rowToMovieRequest(result);
@@ -3272,7 +3294,7 @@ export class PostgresStorage implements IStorage {
   ): Promise<void> {
     try {
       const fields: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramIndex = 1;
 
       if (updates.requestedBy !== undefined) {
@@ -3382,7 +3404,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  private rowToMovieRequest(row: any): MovieRequest {
+  private rowToMovieRequest(row: MovieRequestRow): MovieRequest {
     return {
       id: row.id,
       tmdbId: row.tmdb_id || undefined,
@@ -3611,7 +3633,7 @@ export class PostgresStorage implements IStorage {
   }
 
   private mapTelegramBinding(
-    row: any
+    row: DbRow
   ): import('./types').TelegramBindingRecord {
     return {
       username: row.username as string,

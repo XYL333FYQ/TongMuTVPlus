@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // 只代理站长配置过的采集源，防止被当作任意地址的开放代理（SSRF）
     const sourceConfig = (await getConfig()).SourceConfig || [];
-    if (!sourceConfig.some((site: any) => site.api === apiUrl)) {
+    if (!sourceConfig.some((site) => site.api === apiUrl)) {
       return NextResponse.json(
         { error: '不是已配置的视频源' },
         { status: 403 }
@@ -133,10 +131,10 @@ export async function GET(request: NextRequest) {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
         },
       });
-    } catch (fetchError: any) {
+    } catch (fetchError) {
       clearTimeout(timeoutId);
 
-      if (fetchError.name === 'AbortError') {
+      if ((fetchError as Error).name === 'AbortError') {
         logger.error(
           'CMS API 请求超时:',
           `${targetUrl.origin}${targetUrl.pathname}`
@@ -158,29 +156,48 @@ export async function GET(request: NextRequest) {
 /**
  * 处理 CMS API 返回数据，将播放链接替换为代理链接
  */
+/** 苹果 CMS 接口里会被改写的部分：分类、影片列表（其余字段原样转发） */
+interface CmsVod {
+  vod_name?: string;
+  type_name?: string;
+  vod_remarks?: string;
+  vod_content?: string;
+  vod_play_url?: string;
+  vod_play_from?: string;
+  [field: string]: unknown;
+}
+
+interface CmsPayload {
+  class?: Array<{ type_name?: string; [field: string]: unknown }>;
+  list?: CmsVod[];
+  total?: unknown;
+  limit?: unknown;
+  [field: string]: unknown;
+}
+
 function processCmsResponse(
-  data: any,
+  data: unknown,
   proxyOrigin: string,
   yellowFilter: boolean,
   tokenParam: string
-): any {
+): unknown {
   if (!data || typeof data !== 'object') {
     return data;
   }
 
   // 深拷贝数据，避免修改原始对象
-  const processedData = JSON.parse(JSON.stringify(data));
+  const processedData = JSON.parse(JSON.stringify(data)) as CmsPayload;
 
   if (yellowFilter) {
     if (processedData.class && Array.isArray(processedData.class)) {
       processedData.class = processedData.class.filter(
-        (item: any) => !matchesYellowContent(item?.type_name)
+        (item) => !matchesYellowContent(item?.type_name)
       );
     }
 
     if (processedData.list && Array.isArray(processedData.list)) {
       processedData.list = processedData.list.filter(
-        (item: any) =>
+        (item) =>
           !matchesYellowContent(
             item?.vod_name,
             item?.type_name,
@@ -200,7 +217,7 @@ function processCmsResponse(
 
   // 处理列表数据
   if (processedData.list && Array.isArray(processedData.list)) {
-    processedData.list = processedData.list.map((item: any, index: number) => {
+    processedData.list = processedData.list.map((item, index) => {
       // 只处理有播放地址的项目
       if (item.vod_play_url && typeof item.vod_play_url === 'string') {
         try {
@@ -445,7 +462,11 @@ async function handleOpenListProxy(request: NextRequest) {
         throw new Error('获取视频详情失败');
       }
 
-      const detailData = await detailResponse.json();
+      const detailData = (await detailResponse.json()) as {
+        success?: boolean;
+        episodes: Array<{ title?: string; episode?: number; playUrl?: string }>;
+        [field: string]: unknown;
+      };
 
       if (!detailData.success) {
         throw new Error('获取视频详情失败');
@@ -453,7 +474,7 @@ async function handleOpenListProxy(request: NextRequest) {
 
       // 构建播放列表
       const playUrls = detailData.episodes
-        .map((ep: any) => {
+        .map((ep) => {
           const title = ep.title || `第${ep.episode}集`;
           return `${title}$${ep.playUrl}`;
         })

@@ -1,9 +1,11 @@
 'use client';
 
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { cn } from '@/lib/cn';
+
+import Popover from '@/components/feedback/Popover';
 
 import {
   MUSIC_MENU,
@@ -47,20 +49,13 @@ export default function MusicSwitch<T extends string>({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const current = options.find((option) => option.key === value) || options[0];
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open]);
 
   return (
     <div className={cn('relative', className)}>
       <button
+        ref={triggerRef}
         type='button'
         onClick={() => setOpen((prev) => !prev)}
         className={MUSIC_SWITCH}
@@ -78,45 +73,47 @@ export default function MusicSwitch<T extends string>({
       </button>
 
       {open ? (
-        <>
-          {/* 透明背板：点空白处关菜单。z 压在菜单下、播放器上。 */}
-          <button
-            type='button'
-            tabIndex={-1}
-            aria-label='关闭菜单'
-            className='fixed inset-0 z-[55] cursor-default'
-            onClick={() => setOpen(false)}
-          />
-          <div className={MUSIC_MENU} role='listbox'>
-            {options.map((option) => {
-              const active = option.key === value;
-              return (
-                <button
-                  key={option.key}
-                  type='button'
-                  role='option'
-                  aria-selected={active}
-                  onClick={() => {
-                    setOpen(false);
-                    if (!active) onChange(option.key);
-                  }}
-                  className={cn(
-                    MUSIC_MENU_ITEM,
-                    active ? MUSIC_MENU_ITEM_ACTIVE : MUSIC_MENU_ITEM_IDLE
-                  )}
-                >
-                  {option.monogram ? (
-                    <span className={MUSIC_MONOGRAM}>{option.monogram}</span>
-                  ) : null}
-                  <span className='truncate'>{option.label}</span>
-                  {active ? (
-                    <Check className={MUSIC_MENU_CHECK} strokeWidth={3} />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        </>
+        // 贴着按钮右边弹出；点外面、Esc 关（手机上是底部面板）
+        <Popover
+          anchor={triggerRef.current}
+          onDismiss={() => setOpen(false)}
+          role='listbox'
+          label={field}
+          align='end'
+          width={240}
+          gap={6}
+          edge={16}
+          maxHeightRatio={0.6}
+          className={MUSIC_MENU}
+        >
+          {options.map((option) => {
+            const active = option.key === value;
+            return (
+              <button
+                key={option.key}
+                type='button'
+                role='option'
+                aria-selected={active}
+                onClick={() => {
+                  setOpen(false);
+                  if (!active) onChange(option.key);
+                }}
+                className={cn(
+                  MUSIC_MENU_ITEM,
+                  active ? MUSIC_MENU_ITEM_ACTIVE : MUSIC_MENU_ITEM_IDLE
+                )}
+              >
+                {option.monogram ? (
+                  <span className={MUSIC_MONOGRAM}>{option.monogram}</span>
+                ) : null}
+                <span className='truncate'>{option.label}</span>
+                {active ? (
+                  <Check className={MUSIC_MENU_CHECK} strokeWidth={3} />
+                ) : null}
+              </button>
+            );
+          })}
+        </Popover>
       ) : null}
     </div>
   );

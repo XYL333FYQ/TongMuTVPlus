@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { Suspense } from 'react';
@@ -167,7 +165,7 @@ export default async function RootLayout({
   let recommendationDataSource = 'Mixed';
   let tmdbImageBaseUrl = 'https://image.tmdb.org';
   let bangumiDataSource =
-    (process.env.NEXT_PUBLIC_BANGUMI_DATA_SOURCE as any) || 'direct';
+    process.env.NEXT_PUBLIC_BANGUMI_DATA_SOURCE || 'direct';
   let bangumiApiBaseUrl =
     process.env.NEXT_PUBLIC_BANGUMI_API_BASE_URL ||
     process.env.BANGUMI_API_BASE_URL ||

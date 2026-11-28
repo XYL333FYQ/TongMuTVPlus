@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -68,11 +66,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const backdrops = (response.images.backdrops || []).map((item: any) => ({
+    const backdrops = (response.images.backdrops || []).map((item) => ({
       ...item,
       imageType: 'backdrop' as const,
     }));
-    const posters = (response.images.posters || []).map((item: any) => ({
+    const posters = (response.images.posters || []).map((item) => ({
       ...item,
       imageType: 'poster' as const,
     }));

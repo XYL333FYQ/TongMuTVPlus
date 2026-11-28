@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextResponse } from 'next/server';
 
 import { API_CONFIG, getCacheTime } from '@/lib/config';

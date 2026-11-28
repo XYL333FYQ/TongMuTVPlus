@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any,@typescript-eslint/no-non-null-assertion,no-empty */
 'use client';
 
 import {
@@ -17,6 +16,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, {
   startTransition,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -60,6 +60,7 @@ import {
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 import { useClientMemoryState } from '@/hooks/useClientMemoryState';
+import { useLatest } from '@/hooks/useLatest';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import AcgSearch from '@/components/AcgSearch';
@@ -465,8 +466,8 @@ export function SearchPageClient({
       if (aExact && !bExact) return -1;
       if (!aExact && bExact) return 1;
 
-      const aNum = Number.parseInt(a.year as any, 10);
-      const bNum = Number.parseInt(b.year as any, 10);
+      const aNum = Number.parseInt(String(a.year), 10);
+      const bNum = Number.parseInt(String(b.year), 10);
       const aValid = !Number.isNaN(aNum);
       const bValid = !Number.isNaN(bNum);
       if (aValid && !bValid) return -1;
@@ -554,15 +555,18 @@ export function SearchPageClient({
   };
 
   // 辅助函数：检查标题是否包含搜索词（用于精确搜索）
-  const titleContainsQuery = (title: string, query: string): boolean => {
-    if (!exactSearch) return true; // 如果未开启精确搜索，不过滤
-    if (!query || !title) return true; // 如果没有搜索词或标题，不过滤
+  const titleContainsQuery = useCallback(
+    (title: string, query: string): boolean => {
+      if (!exactSearch) return true; // 如果未开启精确搜索，不过滤
+      if (!query || !title) return true; // 如果没有搜索词或标题，不过滤
 
-    const normalizedTitle = title.toLowerCase();
-    const normalizedQuery = query.toLowerCase();
+      const normalizedTitle = title.toLowerCase();
+      const normalizedQuery = query.toLowerCase();
 
-    return normalizedTitle.includes(normalizedQuery);
-  };
+      return normalizedTitle.includes(normalizedQuery);
+    },
+    [exactSearch]
+  );
 
   const allExactSearchResults = useMemo(() => {
     if (!exactSearch) return searchResults;
@@ -570,7 +574,7 @@ export function SearchPageClient({
     return searchResults.filter((item) =>
       titleContainsQuery(item.title, submittedSearchQuery)
     );
-  }, [searchResults, submittedSearchQuery, exactSearch]);
+  }, [searchResults, submittedSearchQuery, exactSearch, titleContainsQuery]);
 
   // 聚合后的结果（按标题和年份分组）
   const aggregatedResults = useMemo(() => {
@@ -636,7 +640,7 @@ export function SearchPageClient({
 
     // 按出现顺序返回聚合结果
     return keyOrder.map(
-      (key) => [key, finalMap.get(key)!] as [string, SearchResult[]]
+      (key) => [key, finalMap.get(key) ?? []] as [string, SearchResult[]]
     );
   }, [allExactSearchResults]);
 
@@ -845,7 +849,14 @@ export function SearchPageClient({
     ];
 
     return { categoriesAll, categoriesAgg };
-  }, [searchResults, aggregatedResults, exactSearch, filterAll, filterAgg]);
+  }, [
+    searchResults,
+    aggregatedResults,
+    exactSearch,
+    filterAll,
+    filterAgg,
+    titleContainsQuery,
+  ]);
 
   // 非聚合：应用筛选与排序
   const filteredAllResults = useMemo(() => {
@@ -884,7 +895,7 @@ export function SearchPageClient({
 
   // 聚合：应用筛选与排序
   const filteredAggResults = useMemo(() => {
-    const { source, title, year, yearOrder } = filterAgg as any;
+    const { source, title, year, yearOrder } = filterAgg;
     const filtered = aggregatedResults.filter(([_, group]) => {
       const gTitle = group[0]?.title ?? '';
       const gYear = group[0]?.year ?? 'unknown';
@@ -998,7 +1009,7 @@ export function SearchPageClient({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [advancedOpen]);
+  }, [advancedOpen, setAdvancedOpen]);
 
   const getSearchResultUrl = (params: {
     title: string;
@@ -1210,8 +1221,10 @@ export function SearchPageClient({
     );
   };
 
-  // 监听选项卡切换，自动执行搜索
+  // 监听选项卡切换，自动执行搜索（只在切换时触发，读当时的搜索词和结果状态）
+  const tabSwitchInputs = useLatest({ searchQuery, showResults });
   useEffect(() => {
+    const { searchQuery, showResults } = tabSwitchInputs.current;
     // 如果切换到网盘搜索选项卡，且有搜索关键词，且已显示结果，则触发搜索
     if (activeTab === 'pansou' && searchQuery.trim() && showResults) {
       setTriggerPansouSearch((prev) => !prev);
@@ -1220,8 +1233,10 @@ export function SearchPageClient({
     if (activeTab === 'acg' && searchQuery.trim() && showResults) {
       setTriggerAcgSearch((prev) => !prev);
     }
-  }, [activeTab]);
+  }, [activeTab, tabSwitchInputs]);
 
+  // 按地址打开网盘 / 磁力搜索时，已恢复的草稿优先（不覆盖用户正在输入的词）
+  const draftInputs = useLatest({ restoredDraft, setSearchQuery });
   useEffect(() => {
     // 获取用户权限
     const authInfo = getAuthInfoFromBrowserCookie();
@@ -1309,7 +1324,7 @@ export function SearchPageClient({
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [isSpecialEntry]);
 
   useEffect(() => {
     if (!featureFlagsReady) return;
@@ -1344,9 +1359,39 @@ export function SearchPageClient({
     netdiskSearchEnabled,
     magnetSearchEnabled,
     featureFlagsReady,
+    isSpecialEntry,
   ]);
 
+  // 搜索只在下面依赖数组里的值变化时重新发起；其余用到的状态和函数读这一次渲染的值
+  const searchInputs = useLatest({
+    clearCachedResults,
+    getCachedResults,
+    setCachedResults,
+    restoredDraft,
+    router,
+    searchBase,
+    setSearchQuery,
+    totalSources,
+    useFluidSearch,
+    viewMode,
+    aggYearOrder: filterAgg.yearOrder,
+    allYearOrder: filterAll.yearOrder,
+  });
   useEffect(() => {
+    const {
+      clearCachedResults,
+      getCachedResults,
+      setCachedResults,
+      restoredDraft,
+      router,
+      searchBase,
+      setSearchQuery,
+      totalSources,
+      useFluidSearch,
+      viewMode,
+      aggYearOrder,
+      allYearOrder,
+    } = searchInputs.current;
     // 等待转换器和私人影库搜索设置初始化完成
     if (!converterReady || !privateLibraryOnlyReady) {
       return;
@@ -1413,7 +1458,9 @@ export function SearchPageClient({
       if (eventSourceRef.current) {
         try {
           eventSourceRef.current.close();
-        } catch {}
+        } catch {
+          // 连接已经关了
+        }
         eventSourceRef.current = null;
       }
       pendingResultsRef.current = [];
@@ -1539,7 +1586,9 @@ export function SearchPageClient({
       if (eventSourceRef.current) {
         try {
           eventSourceRef.current.close();
-        } catch {}
+        } catch {
+          // 连接已经关了
+        }
         eventSourceRef.current = null;
       }
       // 先设置加载状态，再清空结果，避免短暂显示"暂无搜索结果"
@@ -1606,9 +1655,7 @@ export function SearchPageClient({
                 ) {
                   // 缓冲新增结果，节流刷入，避免频繁重渲染导致闪烁
                   const activeYearOrder =
-                    viewMode === 'agg'
-                      ? filterAgg.yearOrder
-                      : filterAll.yearOrder;
+                    viewMode === 'agg' ? aggYearOrder : allYearOrder;
                   const incoming: SearchResult[] =
                     activeYearOrder === 'none'
                       ? sortBatchForNoOrder(payload.results as SearchResult[])
@@ -1665,13 +1712,17 @@ export function SearchPageClient({
                 );
                 try {
                   es.close();
-                } catch {}
+                } catch {
+                  // 连接已经关了
+                }
                 if (eventSourceRef.current === es) {
                   eventSourceRef.current = null;
                 }
                 break;
             }
-          } catch {}
+          } catch {
+            // 连接已经关了
+          }
         };
 
         es.onerror = () => {
@@ -1692,7 +1743,9 @@ export function SearchPageClient({
           }
           try {
             es.close();
-          } catch {}
+          } catch {
+            // 连接已经关了
+          }
           if (eventSourceRef.current === es) {
             eventSourceRef.current = null;
           }
@@ -1716,7 +1769,7 @@ export function SearchPageClient({
 
             if (data.results && Array.isArray(data.results)) {
               const activeYearOrder =
-                viewMode === 'agg' ? filterAgg.yearOrder : filterAll.yearOrder;
+                viewMode === 'agg' ? aggYearOrder : allYearOrder;
               const results: SearchResult[] =
                 activeYearOrder === 'none'
                   ? sortBatchForNoOrder(data.results as SearchResult[])
@@ -1754,6 +1807,7 @@ export function SearchPageClient({
     privateLibraryOnlyReady,
     privateLibraryOnly,
     isGuest,
+    searchInputs,
   ]);
 
   useEffect(() => {
@@ -1763,6 +1817,7 @@ export function SearchPageClient({
     const query = searchParams.get('q');
     if (!query || !query.trim()) return;
 
+    const { restoredDraft, setSearchQuery } = draftInputs.current;
     if (typeParam === 'pansou' && netdiskSearchEnabled) {
       if (!restoredDraft) setSearchQuery(query);
       setShowResults(true);
@@ -1781,6 +1836,7 @@ export function SearchPageClient({
     netdiskSearchEnabled,
     magnetSearchEnabled,
     featureFlagsReady,
+    draftInputs,
   ]);
 
   // 组件卸载时，关闭可能存在的连接
@@ -1789,7 +1845,9 @@ export function SearchPageClient({
       if (eventSourceRef.current) {
         try {
           eventSourceRef.current.close();
-        } catch {}
+        } catch {
+          // 连接已经关了
+        }
         eventSourceRef.current = null;
       }
       if (flushTimerRef.current) {
@@ -2311,13 +2369,13 @@ export function SearchPageClient({
                         <SearchResultFilter
                           categories={filterOptions.categoriesAgg}
                           values={filterAgg}
-                          onChange={(v) => setFilterAgg(v as any)}
+                          onChange={(v) => setFilterAgg(v as typeof filterAgg)}
                         />
                       ) : (
                         <SearchResultFilter
                           categories={filterOptions.categoriesAll}
                           values={filterAll}
-                          onChange={(v) => setFilterAll(v as any)}
+                          onChange={(v) => setFilterAll(v as typeof filterAll)}
                         />
                       )}
                     </div>

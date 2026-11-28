@@ -70,6 +70,11 @@ export const DETECTORS = {
     pattern: /eslint-disable-(?:next-)?line\b/g,
     label: '行内跳过代码检查',
   },
+  // 整段关掉检查（从注释处一直关到文件末尾或 eslint-enable）：全部 src 都算，不只核心
+  eslintDisableFile: {
+    pattern: /(?:\/\*|\/\/)\s*eslint-disable(?![-\w])/g,
+    label: '整段跳过代码检查',
+  },
 };
 
 // S5：!important 只许用在这几种场合——压 Artplayer 的内联样式、减弱动效、关闭玻璃效果、

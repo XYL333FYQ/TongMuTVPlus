@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { logger } from '@/lib/logger';
 
 import { safeFetch } from './safe-http';
@@ -96,6 +94,7 @@ export type TMDBMultiResult = {
   first_air_date?: string;
   overview?: string;
   vote_average?: number;
+  genre_ids?: number[];
 };
 
 export interface TMDBItem {
@@ -109,6 +108,54 @@ export interface TMDBItem {
   media_type: 'movie' | 'tv';
   genre_ids?: number[]; // 类型ID列表
   video_key?: string; // YouTube视频key
+}
+
+/** TMDB 列表类接口的外层 */
+interface TMDBListResponse<T> {
+  results?: T[];
+}
+
+/** /videos 里的一项（原样字段） */
+interface TMDBVideoResult {
+  id?: string;
+  key?: string;
+  name?: string;
+  site?: string;
+  type?: string;
+  official?: boolean;
+  published_at?: string;
+  iso_639_1?: string;
+}
+
+/** 电影 / 剧集详情：页面用到的字段写明，其余原样转给前端 */
+export interface TMDBDetails {
+  title?: string;
+  name?: string;
+  backdrop_path?: string | null;
+  poster_path?: string | null;
+  overview?: string;
+  vote_average?: number;
+  release_date?: string;
+  first_air_date?: string;
+  genres?: Array<{ id: number; name: string }>;
+  [field: string]: unknown;
+}
+
+/** 演职员表，原样转给前端 */
+export type TMDBCredits = Record<string, unknown>;
+
+/** 一张图片（原样字段） */
+export interface TMDBImage {
+  file_path: string;
+  vote_average?: number;
+  vote_count?: number;
+  [field: string]: unknown;
+}
+
+export interface TMDBImages {
+  backdrops?: TMDBImage[];
+  posters?: TMDBImage[];
+  [field: string]: unknown;
 }
 
 interface TMDBUpcomingResponse {
@@ -337,12 +384,12 @@ export async function getTMDBVideos(
       return null;
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBListResponse<TMDBVideoResult>;
     const videos = data.results || [];
 
     // 只查找YouTube预告片
     const trailer = videos.find(
-      (v: any) => v.site === 'YouTube' && v.type === 'Trailer'
+      (v) => v.site === 'YouTube' && v.type === 'Trailer'
     );
 
     return trailer?.key || null;
@@ -395,11 +442,14 @@ export async function getTMDBVideoList(
       return { code: response.status, videos: [] };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBListResponse<TMDBVideoResult>;
     const videoMap = new Map<string, TMDBVideoItem>();
     (data.results || [])
-      .filter((video: any) => video?.site === 'YouTube' && video?.key)
-      .forEach((video: any) => {
+      .filter(
+        (video): video is TMDBVideoResult & { key: string } =>
+          video?.site === 'YouTube' && Boolean(video?.key)
+      )
+      .forEach((video) => {
         if (videoMap.has(video.key)) return;
         videoMap.set(video.key, {
           id: String(video.id ?? video.key),
@@ -472,20 +522,22 @@ export async function getTMDBTrendingContent(
       return { code: response.status, list: [] };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as {
+      results: TMDBMultiResult[];
+    };
 
     // 转换为统一格式，只保留有backdrop_path的项目（用于轮播图）
     const items: TMDBItem[] = data.results
-      .filter((item: any) => item.backdrop_path) // 只保留有背景图的
+      .filter((item) => item.backdrop_path) // 只保留有背景图的
       .slice(0, 10) // 只取前10个
-      .map((item: any) => ({
+      .map((item) => ({
         id: item.id,
-        title: item.title || item.name,
-        poster_path: item.poster_path,
+        title: (item.title || item.name) as string,
+        poster_path: item.poster_path ?? null,
         backdrop_path: item.backdrop_path, // 添加背景图
         release_date: item.release_date || item.first_air_date || '',
-        overview: item.overview,
-        vote_average: item.vote_average,
+        overview: item.overview as string,
+        vote_average: item.vote_average as number,
         media_type: item.media_type as 'movie' | 'tv',
         genre_ids: item.genre_ids || [], // 保存类型ID
       }));
@@ -539,7 +591,7 @@ export async function searchTMDBMulti(
       return { code: response.status, results: [] };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBListResponse<TMDBMultiResult>;
 
     return {
       code: 200,
@@ -585,7 +637,7 @@ export async function getTMDBMovieRecommendations(
       return { code: response.status, results: [] };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBListResponse<TMDBMovie>;
 
     return {
       code: 200,
@@ -631,7 +683,7 @@ export async function getTMDBTVRecommendations(
       return { code: response.status, results: [] };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBListResponse<TMDBTVShow>;
 
     return {
       code: 200,
@@ -656,7 +708,7 @@ export async function getTMDBMovieDetails(
   movieId: number,
   proxy?: string,
   reverseProxyBaseUrl?: string
-): Promise<{ code: number; details: any }> {
+): Promise<{ code: number; details: TMDBDetails | null }> {
   try {
     const actualKey = getNextApiKey(apiKey);
     if (!actualKey) {
@@ -673,7 +725,7 @@ export async function getTMDBMovieDetails(
       return { code: response.status, details: null };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBDetails;
 
     return {
       code: 200,
@@ -698,7 +750,7 @@ export async function getTMDBTVDetails(
   tvId: number,
   proxy?: string,
   reverseProxyBaseUrl?: string
-): Promise<{ code: number; details: any }> {
+): Promise<{ code: number; details: TMDBDetails | null }> {
   try {
     const actualKey = getNextApiKey(apiKey);
     if (!actualKey) {
@@ -715,7 +767,7 @@ export async function getTMDBTVDetails(
       return { code: response.status, details: null };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBDetails;
 
     return {
       code: 200,
@@ -742,7 +794,7 @@ export async function getTMDBCredits(
   mediaType: 'movie' | 'tv',
   proxy?: string,
   reverseProxyBaseUrl?: string
-): Promise<{ code: number; credits: any }> {
+): Promise<{ code: number; credits: TMDBCredits | null }> {
   try {
     const actualKey = getNextApiKey(apiKey);
     if (!actualKey) {
@@ -763,7 +815,7 @@ export async function getTMDBCredits(
       return { code: response.status, credits: null };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBCredits;
 
     return {
       code: 200,
@@ -790,7 +842,7 @@ export async function getTMDBImages(
   mediaType: 'movie' | 'tv',
   proxy?: string,
   reverseProxyBaseUrl?: string
-): Promise<{ code: number; images: any }> {
+): Promise<{ code: number; images: TMDBImages | null }> {
   try {
     const actualKey = getNextApiKey(apiKey);
     if (!actualKey) {
@@ -811,7 +863,7 @@ export async function getTMDBImages(
       return { code: response.status, images: null };
     }
 
-    const data: any = await response.json();
+    const data = (await response.json()) as TMDBImages;
 
     return {
       code: 200,

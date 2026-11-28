@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Pansou 网盘搜索 API 客户端
  * 文档: https://github.com/fish2018/pansou
@@ -133,7 +131,7 @@ export async function searchPansou(
     }
 
     // 构建请求体
-    const body: any = {
+    const body: Record<string, unknown> = {
       kw: keyword,
       res: 'merge', // 只返回按网盘类型分类的结果
     };

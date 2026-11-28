@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
@@ -33,10 +32,10 @@ export async function GET(req: NextRequest) {
       ...animeConfig,
       DownloadTool: animeConfig.DownloadTool || 'aria2',
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('获取追番订阅配置失败:', error);
     return NextResponse.json(
-      { error: error.message || '获取配置失败' },
+      { error: (error as Error).message || '获取配置失败' },
       { status: 500 }
     );
   }
@@ -165,10 +164,10 @@ export async function POST(req: NextRequest) {
     await db.saveAdminConfig(config);
 
     return NextResponse.json(newSubscription);
-  } catch (error: any) {
+  } catch (error) {
     logger.error('创建追番订阅失败:', error);
     return NextResponse.json(
-      { error: error.message || '创建订阅失败' },
+      { error: (error as Error).message || '创建订阅失败' },
       { status: 500 }
     );
   }

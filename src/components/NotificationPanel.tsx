@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { Bell, Check, Settings, Trash2, X } from 'lucide-react';

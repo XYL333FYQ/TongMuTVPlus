@@ -59,6 +59,7 @@ import { formatPaddedClock } from '@/lib/time';
 
 import BookPdfActions from '@/components/books/BookPdfActions';
 import BusyDots from '@/components/feedback/BusyDots';
+import ModalLayer from '@/components/feedback/ModalLayer';
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -72,7 +73,6 @@ import {
   READER_SHEET,
   READER_SLIDER,
 } from '@/components/media/library';
-import ReaderDialog from '@/components/media/ReaderDialog';
 import Select from '@/components/ui/Select';
 
 declare global {
@@ -1361,7 +1361,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       style={{ backgroundColor: palette.panelBg, color: palette.bodyColor }}
     >
       {tocOpen ? (
-        <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
+        <ModalLayer label='章节目录' onClose={() => setTocOpen(false)}>
           <div
             className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
             onClick={(event) => event.stopPropagation()}
@@ -1400,11 +1400,11 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
               })}
             </div>
           </div>
-        </ReaderDialog>
+        </ModalLayer>
       ) : null}
 
       {settingsOpen ? (
-        <ReaderDialog label='阅读设置' onClose={() => setSettingsOpen(false)}>
+        <ModalLayer label='阅读设置' onClose={() => setSettingsOpen(false)}>
           <div
             className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
             onClick={(event) => event.stopPropagation()}
@@ -1534,7 +1534,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
               </div>
             </div>
           </div>
-        </ReaderDialog>
+        </ModalLayer>
       ) : null}
 
       {settings.mode === 'paginated' && !tocOpen && !settingsOpen ? (
@@ -3713,7 +3713,7 @@ export default function BookReadPage() {
       ) : null}
 
       {tocOpen ? (
-        <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
+        <ModalLayer label='章节目录' onClose={() => setTocOpen(false)}>
           <div
             className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
             onClick={(event) => event.stopPropagation()}
@@ -3740,11 +3740,11 @@ export default function BookReadPage() {
               </div>
             </div>
           </div>
-        </ReaderDialog>
+        </ModalLayer>
       ) : null}
 
       {settingsOpen ? (
-        <ReaderDialog label='阅读设置' onClose={() => setSettingsOpen(false)}>
+        <ModalLayer label='阅读设置' onClose={() => setSettingsOpen(false)}>
           <div
             className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
             onClick={(event) => event.stopPropagation()}
@@ -3895,7 +3895,7 @@ export default function BookReadPage() {
               </div>
             </div>
           </div>
-        </ReaderDialog>
+        </ModalLayer>
       ) : null}
 
       {manifest.format === 'epub' && ttsBarVisible ? (

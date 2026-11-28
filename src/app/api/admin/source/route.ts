@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -46,7 +44,7 @@ export async function POST(request: NextRequest) {
     const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
     if (!isCaller(caller)) return caller;
 
-    const body = (await request.json()) as BaseBody & Record<string, any>;
+    const body = (await request.json()) as BaseBody & Record<string, unknown>;
     const { action } = body;
 
     const username = caller.username;
@@ -74,6 +72,9 @@ export async function POST(request: NextRequest) {
 
     // 获取配置与存储
     const adminConfig = await getConfig();
+
+    // 批量删除的统计，放进最后的返回里
+    let batchDeleteResult: { deleted: number; skipped: number } | null = null;
 
     switch (action) {
       case 'add': {
@@ -261,7 +262,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 保存批量删除的统计信息，稍后返回
-        (body as any)._batchDeleteResult = {
+        batchDeleteResult = {
           deleted: keysToDelete.length,
           skipped: skippedKeys.length,
         };
@@ -454,12 +455,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 构建响应数据
-    const responseData: Record<string, any> = { ok: true };
+    const responseData: Record<string, unknown> = { ok: true };
 
     // 如果是批量删除操作，包含统计信息
-    if (action === 'batch_delete' && (body as any)._batchDeleteResult) {
-      responseData.deleted = (body as any)._batchDeleteResult.deleted;
-      responseData.skipped = (body as any)._batchDeleteResult.skipped;
+    if (action === 'batch_delete' && batchDeleteResult) {
+      responseData.deleted = batchDeleteResult.deleted;
+      responseData.skipped = batchDeleteResult.skipped;
     }
 
     return NextResponse.json(responseData, {

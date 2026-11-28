@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, no-case-declarations */
-
 import { logger } from '@/lib/logger';
 
 import { DoubanItem, DoubanResult } from './types';
@@ -93,7 +91,8 @@ interface DoubanDetailApiResponse {
   episodes_info?: string;
   cover_url?: string;
   url?: string;
-  [key: string]: any; // 允许其他字段
+  trailers?: Array<{ video_url?: string; [key: string]: unknown }>;
+  [key: string]: unknown; // 允许其他字段
 }
 
 export type DoubanProxyType =
@@ -659,7 +658,9 @@ async function fetchDoubanRecommends(
     sort = '';
   }
 
-  const selectedCategories = { 类型: category } as any;
+  const selectedCategories: Record<string, string | undefined> = {
+    类型: category,
+  };
   if (format) {
     selectedCategories['形式'] = format;
   }

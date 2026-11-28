@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import { motion } from 'framer-motion';
 import { BarChart3, Clock, List, Target, Tv } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -10,6 +8,7 @@ import '@/styles/controls-expand-search.css';
 import { viewportSize } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 import { formatTimeToHHMM, parseCustomTimeFormat } from '@/lib/time';
+import { useLatest } from '@/hooks/useLatest';
 
 interface EpgProgram {
   start: string;
@@ -40,6 +39,17 @@ export default function EpgScrollableRow({
   const [isHovered, setIsHovered] = useState(false);
   const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number>(-1);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  // 判断节目是否正在播放
+  const isCurrentlyPlaying = (program: EpgProgram) => {
+    try {
+      const start = parseCustomTimeFormat(program.start);
+      const end = parseCustomTimeFormat(program.end);
+      return currentTime >= start && currentTime < end;
+    } catch {
+      return false;
+    }
+  };
 
   // 处理滚轮事件，实现横向滚动
   const handleWheel = (e: WheelEvent) => {
@@ -144,22 +154,29 @@ export default function EpgScrollableRow({
     }
   };
 
+  // 效果里调的是每次渲染最新的那份函数（它们读的节目表、视图都是最新的）
+  const preventPageScrollLatest = useLatest(preventPageScroll);
+  const handleWheelLatest = useLatest(handleWheel);
+  const isCurrentlyPlayingLatest = useLatest(isCurrentlyPlaying);
+  const scrollToCurrentProgramLatest = useLatest(scrollToCurrentProgram);
+  const scrollToCurrentProgramTimelineLatest = useLatest(
+    scrollToCurrentProgramTimeline
+  );
+
   useEffect(() => {
-    if (isHovered) {
-      // 鼠标悬停时阻止页面滚动
-      document.addEventListener('wheel', preventPageScroll, { passive: false });
-      document.addEventListener('wheel', handleWheel, { passive: false });
-    } else {
-      // 鼠标离开时恢复页面滚动
-      document.removeEventListener('wheel', preventPageScroll);
-      document.removeEventListener('wheel', handleWheel);
-    }
+    if (!isHovered) return;
+    // 鼠标悬停时阻止页面滚动，滚轮改为横向滚动节目单；离开时由清理函数恢复
+    const onBlockPageScroll = (e: WheelEvent) =>
+      preventPageScrollLatest.current(e);
+    const onWheel = (e: WheelEvent) => handleWheelLatest.current(e);
+    document.addEventListener('wheel', onBlockPageScroll, { passive: false });
+    document.addEventListener('wheel', onWheel, { passive: false });
 
     return () => {
-      document.removeEventListener('wheel', preventPageScroll);
-      document.removeEventListener('wheel', handleWheel);
+      document.removeEventListener('wheel', onBlockPageScroll);
+      document.removeEventListener('wheel', onWheel);
     };
-  }, [isHovered]);
+  }, [isHovered, preventPageScrollLatest, handleWheelLatest]);
 
   // 组件加载后自动滚动到正在播放的节目
   useEffect(() => {
@@ -167,14 +184,19 @@ export default function EpgScrollableRow({
     const timer = setTimeout(() => {
       // 初始化当前正在播放的节目索引
       const initialPlayingIndex = programs.findIndex((program) =>
-        isCurrentlyPlaying(program)
+        isCurrentlyPlayingLatest.current(program)
       );
       setCurrentPlayingIndex(initialPlayingIndex);
-      scrollToCurrentProgram();
+      scrollToCurrentProgramLatest.current();
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [programs, currentTime]);
+  }, [
+    programs,
+    currentTime,
+    isCurrentlyPlayingLatest,
+    scrollToCurrentProgramLatest,
+  ]);
 
   // 定时刷新正在播放状态
   useEffect(() => {
@@ -194,39 +216,37 @@ export default function EpgScrollableRow({
       if (newPlayingIndex !== currentPlayingIndex) {
         setCurrentPlayingIndex(newPlayingIndex);
         // 如果正在播放的节目发生变化，自动滚动到新位置
-        scrollToCurrentProgram();
+        scrollToCurrentProgramLatest.current();
       }
     }, 60000); // 60秒 = 1分钟
 
     return () => clearInterval(interval);
-  }, [programs, currentTime, currentPlayingIndex]);
+  }, [
+    programs,
+    currentTime,
+    currentPlayingIndex,
+    scrollToCurrentProgramLatest,
+  ]);
 
   // 切换视图时自动跳转到当前播放位置
   useEffect(() => {
     // 延迟执行，确保DOM完全渲染
     const timer = setTimeout(() => {
       if (viewMode === 'list') {
-        scrollToCurrentProgram();
+        scrollToCurrentProgramLatest.current();
       } else if (viewMode === 'timeline') {
-        scrollToCurrentProgramTimeline();
+        scrollToCurrentProgramTimelineLatest.current();
       }
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [viewMode]);
+  }, [
+    viewMode,
+    scrollToCurrentProgramLatest,
+    scrollToCurrentProgramTimelineLatest,
+  ]);
 
   // 格式化时间显示
-  // 判断节目是否正在播放
-  const isCurrentlyPlaying = (program: EpgProgram) => {
-    try {
-      const start = parseCustomTimeFormat(program.start);
-      const end = parseCustomTimeFormat(program.end);
-      return currentTime >= start && currentTime < end;
-    } catch {
-      return false;
-    }
-  };
-
   // 计算节目时长（分钟）
   const getProgramDuration = (program: EpgProgram) => {
     try {

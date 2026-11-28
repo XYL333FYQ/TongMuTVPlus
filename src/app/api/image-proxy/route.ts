@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { NextResponse } from 'next/server';
-import nodeFetch from 'node-fetch';
+import nodeFetch, { type RequestInit as NodeFetchInit } from 'node-fetch';
 
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
@@ -89,11 +87,14 @@ async function fetchImage(
   }
 
   const proxy = config?.SiteConfig.BangumiProxy?.trim();
-  const fetchOptions: any = {
+  const fetchOptions: NodeFetchInit = {
     headers,
     // 不自动跟随跳转：已校验的公网地址不能再被重定向到内网
     redirect: 'manual',
-    signal: AbortSignal.timeout(proxy ? 30000 : 15000),
+    // node-fetch 和全局的 AbortSignal 类型来自两套声明，运行时是同一个
+    signal: AbortSignal.timeout(
+      proxy ? 30000 : 15000
+    ) as NodeFetchInit['signal'],
   };
 
   if (proxy) {

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { motion } from 'framer-motion';
@@ -115,7 +113,7 @@ function LoginPageClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
-  const [siteConfig, setSiteConfig] = useState<any>(null);
+  const [siteConfig, setSiteConfig] = useState<AuthPageSiteConfig | null>(null);
   const [turnstileWidgetId, setTurnstileWidgetId] = useState<string | null>(
     null
   );
@@ -243,16 +241,13 @@ function LoginPageClient() {
     }
 
     const container = document.getElementById('turnstile-container');
-    if (container && (window as any).turnstile) {
-      const widgetId = (window as any).turnstile.render(
-        '#turnstile-container',
-        {
-          sitekey: siteConfig.TurnstileSiteKey,
-          callback: (token: string) => {
-            setTurnstileToken(token);
-          },
-        }
-      );
+    if (container && window.turnstile) {
+      const widgetId = window.turnstile.render('#turnstile-container', {
+        sitekey: siteConfig.TurnstileSiteKey,
+        callback: (token: string) => {
+          setTurnstileToken(token);
+        },
+      });
       setTurnstileWidgetId(widgetId);
     }
   }, [turnstileLoaded, siteConfig]);
@@ -284,7 +279,9 @@ function LoginPageClient() {
       if (res.ok) {
         // 处理记住密码逻辑
         if (rememberPassword) {
-          const credentials: any = { password };
+          const credentials: { password: string; username?: string } = {
+            password,
+          };
           // 如果需要用户名且有用户名，就保存用户名
           if (shouldAskUsername && username) {
             credentials.username = username;
@@ -302,9 +299,9 @@ function LoginPageClient() {
         if (
           siteConfig?.LoginRequireTurnstile &&
           turnstileWidgetId !== null &&
-          (window as any).turnstile
+          window.turnstile
         ) {
-          (window as any).turnstile.reset(turnstileWidgetId);
+          window.turnstile.reset(turnstileWidgetId);
           setTurnstileToken(null);
         }
 
@@ -320,9 +317,9 @@ function LoginPageClient() {
       if (
         siteConfig?.LoginRequireTurnstile &&
         turnstileWidgetId !== null &&
-        (window as any).turnstile
+        window.turnstile
       ) {
-        (window as any).turnstile.reset(turnstileWidgetId);
+        window.turnstile.reset(turnstileWidgetId);
         setTurnstileToken(null);
       }
       setError('网络错误，请稍后重试');
@@ -658,6 +655,15 @@ function LoginPageClient() {
       <AuthVersion />
     </PageContainer>
   );
+}
+
+/** 登录页从运行时配置里取的开关 */
+interface AuthPageSiteConfig {
+  LoginRequireTurnstile: boolean;
+  TurnstileSiteKey: string;
+  EnableRegistration: boolean;
+  EnableOIDCLogin: boolean;
+  OIDCButtonText: string;
 }
 
 export default function LoginPage() {

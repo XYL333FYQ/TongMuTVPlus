@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
@@ -974,7 +973,10 @@ export default function AnimeSubscriptionComponent({
                 <Select
                   value={formData.source}
                   onChange={(e) =>
-                    setFormData({ ...formData, source: e.target.value as any })
+                    setFormData({
+                      ...formData,
+                      source: e.target.value as typeof formData.source,
+                    })
                   }
                   className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-fg'
                 >

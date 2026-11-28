@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -10,10 +8,17 @@ import { getTMDBTrendingContent, getTMDBVideos } from '@/lib/tmdb.client';
 // 缓存配置 - 服务器内存缓存3小时
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3小时
 
+/** 轮播图接口的返回：三种数据源各自的条目字段略有不同，原样交给前端 */
+interface BannerResult {
+  code: number;
+  list: object[];
+  source?: 'Douban' | 'TX' | 'TMDB';
+}
+
 // 为不同数据源分别维护缓存
-let tmdbCache: { data: any; timestamp: number } | null = null;
-let txCache: { data: any; timestamp: number } | null = null;
-let doubanCache: { data: any; timestamp: number } | null = null;
+let tmdbCache: { data: BannerResult; timestamp: number } | null = null;
+let txCache: { data: BannerResult; timestamp: number } | null = null;
+let doubanCache: { data: BannerResult; timestamp: number } | null = null;
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +41,7 @@ export async function GET() {
       return NextResponse.json(cache.data);
     }
 
-    let result: any;
+    let result: BannerResult;
 
     // 根据配置的数据源获取数据
     if (bannerDataSource === 'Douban') {
@@ -73,12 +78,17 @@ export async function GET() {
       }
 
       // 获取热门内容
-      result = await getTMDBTrendingContent(apiKey, proxy, reverseProxy);
+      const trending = await getTMDBTrendingContent(
+        apiKey,
+        proxy,
+        reverseProxy
+      );
+      result = trending;
 
       // 为每个项目获取视频数据
-      if (result.code === 200 && result.list) {
+      if (trending.code === 200 && trending.list) {
         const itemsWithVideos = await Promise.all(
-          result.list.map(async (item: any) => {
+          trending.list.map(async (item) => {
             const videoKey = await getTMDBVideos(
               apiKey,
               item.media_type,
@@ -114,7 +124,7 @@ export async function GET() {
 /**
  * 获取TX轮播图内容
  */
-async function getTXBannerContent(): Promise<{ code: number; list: any[] }> {
+async function getTXBannerContent(): Promise<BannerResult> {
   try {
     // TX API 配置
     const txApiUrl =
@@ -184,19 +194,30 @@ async function getTXBannerContent(): Promise<{ code: number; list: any[] }> {
   }
 }
 
+/** TX 页面接口里我们读到的部分 */
+interface TXCard {
+  type?: string;
+  params?: Record<string, string | undefined>;
+  children_list?: { list?: { cards?: TXCard[] } };
+}
+
+interface TXPageResponse {
+  data?: { CardList?: TXCard[] };
+}
+
 /**
  * 解析TX API响应数据，提取轮播图信息
  */
-function parseTXBannerData(data: any): any[] {
+function parseTXBannerData(data: unknown) {
   try {
-    const cardList = data?.data?.CardList;
+    const cardList = (data as TXPageResponse | null)?.data?.CardList;
     if (!Array.isArray(cardList)) {
       return [];
     }
 
     // 找到所有类型为 pc_shelves 的卡片
     const pcShelvesCards = cardList.filter(
-      (card: any) => card.type === 'pc_shelves'
+      (card) => card.type === 'pc_shelves'
     );
     if (pcShelvesCards.length === 0) {
       return [];
@@ -212,9 +233,14 @@ function parseTXBannerData(data: any): any[] {
       }
 
       // 转换为统一格式
-      const cardsWithParams = cards.filter((card: any) => card.params);
+      const cardsWithParams = cards.filter(
+        (
+          card
+        ): card is TXCard & { params: Record<string, string | undefined> } =>
+          Boolean(card.params)
+      );
 
-      const mappedItems = cardsWithParams.map((card: any, index: number) => {
+      const mappedItems = cardsWithParams.map((card, index) => {
         const params = card.params;
 
         // 获取标题（优先使用title）
@@ -246,7 +272,7 @@ function parseTXBannerData(data: any): any[] {
         };
       });
 
-      const bannerItems = mappedItems.filter((item: any) => {
+      const bannerItems = mappedItems.filter((item) => {
         // 只保留有标题和背景图的项目
         if (!item.title || !item.backdrop_path) return false;
         // 剔除标题包含"免费合集"的数据
@@ -270,10 +296,7 @@ function parseTXBannerData(data: any): any[] {
 /**
  * 获取豆瓣轮播图内容
  */
-async function getDoubanBannerContent(): Promise<{
-  code: number;
-  list: any[];
-}> {
+async function getDoubanBannerContent(): Promise<BannerResult> {
   try {
     // 获取豆瓣热门电影
     const hotMoviesUrl =
@@ -326,9 +349,9 @@ async function getDoubanBannerContent(): Promise<{
             cover_url?: string;
             trailers?: Array<{
               video_url?: string;
-              [key: string]: any;
+              [key: string]: unknown;
             }>;
-            [key: string]: any;
+            [key: string]: unknown;
           }
 
           const detail = await fetchDoubanData<DoubanDetailResponse>(detailUrl);

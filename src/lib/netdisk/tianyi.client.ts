@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { constants, publicEncrypt } from 'crypto';
 
 export interface TianyiShareVideoFile {
@@ -14,7 +12,7 @@ export interface TianyiShareListResult {
   files: TianyiShareVideoFile[];
   shareId: string;
   shareMode: string;
-  isFolder: string | number | boolean;
+  isFolder: string | number | boolean | undefined;
   accessCode: string;
 }
 
@@ -127,7 +125,39 @@ function mergeCookies(...cookieGroups: Array<string | string[] | undefined>) {
     .join('; ');
 }
 
-function toFormBody(data: Record<string, any>) {
+/** 登录流程几个接口返回里用到的字段 */
+interface TianyiLoginStep {
+  data?: { pubKey?: string; paramId?: string; returnUrl?: string };
+  toUrl?: string;
+  message?: string;
+  msg?: string;
+  [field: string]: unknown;
+}
+
+/** 分享信息 */
+interface TianyiShareInfo {
+  fileId?: string | number;
+  fileName?: string;
+  isFolder?: string | number | boolean;
+  shareId?: string | number;
+  shareMode?: string | number;
+}
+
+/** 分享目录的一页 */
+interface TianyiShareDir {
+  fileListAO?: {
+    count?: number | string;
+    folderList?: Array<{ id?: string | number } | null>;
+    fileList?: Array<{
+      id?: string | number;
+      name?: string;
+      mediaType?: number;
+      size?: number | string;
+    } | null>;
+  };
+}
+
+function toFormBody(data: Record<string, unknown>) {
   return new URLSearchParams(
     Object.entries(data).reduce<Record<string, string>>((acc, [key, value]) => {
       acc[key] = String(value);
@@ -136,7 +166,7 @@ function toFormBody(data: Record<string, any>) {
   ).toString();
 }
 
-async function parseJsonResponse<T = any>(response: Response): Promise<T> {
+async function parseJsonResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
   try {
     const normalized = text.replace(/(:\s*)(-?\d{15,})(\s*[,}])/g, '$1"$2"$3');
@@ -225,7 +255,9 @@ async function fetchLoginCookie(account: string, password: string) {
       cache: 'no-store',
     }
   );
-  const encryptConf = await parseJsonResponse<any>(encryptConfResp);
+  const encryptConf = await parseJsonResponse<TianyiLoginStep | null>(
+    encryptConfResp
+  );
   const pubKey = String(encryptConf?.data?.pubKey || '');
   if (!pubKey) {
     throw new Error('获取天翼云盘登录公钥失败');
@@ -258,7 +290,7 @@ async function fetchLoginCookie(account: string, password: string) {
     body: toFormBody({ version: '2.0', appKey: 'cloud' }),
     cache: 'no-store',
   });
-  const appConf = await parseJsonResponse<any>(appConfResp);
+  const appConf = await parseJsonResponse<TianyiLoginStep | null>(appConfResp);
   const returnUrl = appConf?.data?.returnUrl;
   const paramId = appConf?.data?.paramId;
   if (!returnUrl || !paramId) {
@@ -289,7 +321,9 @@ async function fetchLoginCookie(account: string, password: string) {
       cache: 'no-store',
     }
   );
-  const loginSubmit = await parseJsonResponse<any>(loginSubmitResp);
+  const loginSubmit = await parseJsonResponse<TianyiLoginStep | null>(
+    loginSubmitResp
+  );
   const toUrl = String(loginSubmit?.toUrl || '');
   if (!toUrl) {
     throw new Error(
@@ -322,7 +356,7 @@ async function fetchLoginCookie(account: string, password: string) {
   return finalCookie;
 }
 
-async function fetchJsonWithRetry<T = any>(
+async function fetchJsonWithRetry<T>(
   url: string,
   options?: RequestInit
 ): Promise<T> {
@@ -347,7 +381,7 @@ async function fetchJsonWithRetry<T = any>(
 }
 
 async function getShareInfo(input: { shareCode: string; accessCode: string }) {
-  let info: any = null;
+  let info: TianyiShareInfo | null = null;
 
   if (input.accessCode) {
     try {
@@ -371,7 +405,9 @@ async function getShareInfo(input: { shareCode: string; accessCode: string }) {
       : `${API_BASE}/open/share/getShareInfoByCodeV2.action?noCache=${Math.random()}&shareCode=${encodeURIComponent(
           input.shareCode
         )}`;
-    info = await fetchJsonWithRetry<any>(infoUrl, { headers: NORMAL_HEADERS });
+    info = await fetchJsonWithRetry<TianyiShareInfo | null>(infoUrl, {
+      headers: NORMAL_HEADERS,
+    });
   } catch (error) {
     if (input.accessCode) {
       throw new Error(
@@ -396,7 +432,7 @@ async function listShareDir(input: {
   fileId: string;
   shareId: string;
   shareMode: string;
-  isFolder: string | number | boolean;
+  isFolder: string | number | boolean | undefined;
   accessCode: string;
   pageNum?: number;
 }) {
@@ -459,7 +495,9 @@ async function listShareDir(input: {
   const errors: string[] = [];
   for (const url of candidates) {
     try {
-      return await fetchJsonWithRetry<any>(url, { headers: NORMAL_HEADERS });
+      return await fetchJsonWithRetry<TianyiShareDir | null>(url, {
+        headers: NORMAL_HEADERS,
+      });
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
     }
@@ -473,7 +511,7 @@ async function collectShareFiles(input: {
   fileId: string;
   shareId: string;
   shareMode: string;
-  isFolder: string | number | boolean;
+  isFolder: string | number | boolean | undefined;
   accessCode: string;
 }): Promise<TianyiShareVideoFile[]> {
   const result: TianyiShareVideoFile[] = [];
@@ -501,13 +539,13 @@ async function collectShareFiles(input: {
         ? fileListAO.fileList
         : [];
 
-      folderList.forEach((item: any) => {
+      folderList.forEach((item) => {
         if (item?.id) {
           stack.push(String(item.id));
         }
       });
 
-      fileList.forEach((item: any) => {
+      fileList.forEach((item) => {
         const name = String(item?.name || '');
         const isVideo = item?.mediaType === 3 || isVideoFile(name);
         if (!isVideo) return;
@@ -611,7 +649,10 @@ export async function getTianyiSharePlayUrl(
       );
     }
 
-    const data = await parseJsonResponse<any>(response);
+    const data = await parseJsonResponse<{
+      normal?: { url?: string };
+      url?: string;
+    } | null>(response);
     const rawUrl = String(data?.normal?.url || data?.url || '');
     if (!rawUrl) {
       throw new Error('未获取到天翼云盘播放地址');

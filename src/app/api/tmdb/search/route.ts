@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -55,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     // 过滤出电影和电视剧
     const validResults = response.results.filter(
-      (item: any) => item.media_type === 'movie' || item.media_type === 'tv'
+      (item) => item.media_type === 'movie' || item.media_type === 'tv'
     );
 
     return NextResponse.json({

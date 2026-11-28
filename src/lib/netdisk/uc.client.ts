@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import crypto from 'node:crypto';
 
 import { getConfig, setCachedConfig } from '@/lib/config';
@@ -277,7 +275,34 @@ async function parseJson(response: Response) {
   }
 }
 
-function ensureOk(data: any, fallbackMessage: string) {
+/** UC接口返回的外层：code 0 / 200（或 status 200）表示成功 */
+interface DriveApiStatus {
+  code?: number;
+  status?: number;
+  message?: string;
+  msg?: string;
+}
+
+/** 网盘目录 / 分享里的一项（不同接口字段名不一样，都列着） */
+interface DriveItem {
+  fid?: string;
+  file_id?: string;
+  file_name?: string;
+  name?: string;
+  dir?: boolean;
+  is_dir?: boolean;
+  file_type?: number;
+  size?: number | string;
+  share_fid_token?: string;
+  fid_token?: string;
+  share_token?: string;
+  [field: string]: unknown;
+}
+
+function ensureOk(
+  data: DriveApiStatus | null | undefined,
+  fallbackMessage: string
+) {
   if (data?.code === 0 || data?.code === 200 || data?.status === 200) return;
   throw new Error(data?.message || data?.msg || fallbackMessage);
 }
@@ -322,7 +347,7 @@ async function resolveUCUt(cookie: string) {
   return ut;
 }
 
-function getDriveItemName(item: any): string {
+function getDriveItemName(item: DriveItem | null | undefined): string {
   return String(item?.file_name || item?.name || '');
 }
 
@@ -415,7 +440,7 @@ async function fetchShareFolderItems(
   ensureOk(data, '获取 UC 分享详情失败');
   const list = data?.data?.list || [];
   return {
-    items: list.map((item: any) => ({
+    items: list.map((item: DriveItem) => ({
       fid: String(item.fid || item.file_id || ''),
       fileName: String(item.file_name || item.name || ''),
       dir: Boolean(item.dir || item.is_dir || item.file_type === 0),
@@ -477,7 +502,7 @@ async function fetchDriveFolderItems(
   pdirFid = '0',
   page = 1,
   size = 200
-): Promise<any[]> {
+): Promise<DriveItem[]> {
   const query = new URLSearchParams({
     pdir_fid: pdirFid,
     _page: String(page),
@@ -502,8 +527,8 @@ async function fetchAllDriveFolderItems(
   cookie: string,
   ut: string,
   pdirFid = '0'
-): Promise<any[]> {
-  const allItems: any[] = [];
+): Promise<DriveItem[]> {
+  const allItems: DriveItem[] = [];
   const pageSize = 200;
   for (let page = 1; page < 100; page += 1) {
     const items = await fetchDriveFolderItems(
@@ -552,11 +577,11 @@ async function findDirectoryByName(
   ut: string,
   parentFid: string,
   folderName: string
-): Promise<any | null> {
+): Promise<DriveItem | null> {
   const items = await fetchAllDriveFolderItems(cookie, ut, parentFid);
   return (
     items.find(
-      (item: any) =>
+      (item: DriveItem) =>
         Boolean(item.dir || item.is_dir) &&
         getDriveItemName(item) === folderName
     ) || null
@@ -623,7 +648,7 @@ export async function ensureUCDrivePath(
   for (const segment of segments) {
     const items = await fetchDriveFolderItems(safeCookie, ut, currentFid);
     const existed = items.find(
-      (item: any) =>
+      (item: DriveItem) =>
         Boolean(item.dir || item.is_dir) && getDriveItemName(item) === segment
     );
     currentPath = joinPath(currentPath, segment);
@@ -899,7 +924,7 @@ export async function getUCPlayUrls(
       const data = await parseJson(response);
       const openVideoInfo = Array.isArray(data?.data?.video_info)
         ? data.data.video_info.find(
-            (item: any) => item?.accessable && item?.url
+            (item: DriveItem) => item?.accessable && item?.url
           )
         : null;
       if (openVideoInfo?.url) {

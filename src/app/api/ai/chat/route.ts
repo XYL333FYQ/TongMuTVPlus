@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
+import type { AdminConfig } from '@/lib/admin.types';
 import { orchestrateDataSources, VideoContext } from '@/lib/ai-orchestrator';
 import {
   buildAgentSystemPrompt,
@@ -206,8 +205,8 @@ function transformToSSE(
  * 支持 OpenAI 普通协议 / OpenAI Response 协议 / Claude Messages 协议。
  */
 async function handleNewMode(
-  aiConfig: any,
-  adminConfig: any,
+  aiConfig: NonNullable<AdminConfig['AIConfig']>,
+  adminConfig: AdminConfig,
   body: ChatRequest,
   request: NextRequest,
   username?: string
@@ -260,14 +259,15 @@ async function handleNewMode(
       aiConfig.EnableWebSearch && aiConfig.WebSearchProvider
         ? {
             provider: aiConfig.WebSearchProvider,
+            // 没填对应的 key 时给空串，搜索工具会报“未配置”
             apiKey:
-              aiConfig.WebSearchProvider === 'tavily'
+              (aiConfig.WebSearchProvider === 'tavily'
                 ? aiConfig.TavilyApiKey
                 : aiConfig.WebSearchProvider === 'serper'
                 ? aiConfig.SerperApiKey
                 : aiConfig.WebSearchProvider === 'serpapi'
                 ? aiConfig.SerpApiKey
-                : '',
+                : '') ?? '',
           }
         : undefined,
     tmdb: adminConfig?.SiteConfig?.TMDBApiKey

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { Music2 } from 'lucide-react';
@@ -304,10 +303,10 @@ const copyStylesToPiPWindow = (pipWin: Window) => {
       pipWin.document.head.appendChild(style);
     } catch (e) {
       // 跨域样式表使用 link 标签
-      if ((styleSheet as any).href) {
+      if (styleSheet.href) {
         const link = pipWin.document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = (styleSheet as any).href;
+        link.href = styleSheet.href;
         pipWin.document.head.appendChild(link);
       }
     }
@@ -411,15 +410,14 @@ export default function LyricsPiPWindow({
   const renderPiPContentLatest = useLatest(renderPiPContent);
   useEffect(() => {
     const openPiPWindow = async () => {
-      if (!('documentPictureInPicture' in window)) {
+      const documentPip = window.documentPictureInPicture;
+      if (!documentPip) {
         logger.error('浏览器不支持 Document Picture-in-Picture API');
         return;
       }
 
       try {
-        const pipWin = await (
-          window as any
-        ).documentPictureInPicture.requestWindow({
+        const pipWin = await documentPip.requestWindow({
           width: 400,
           height: 300,
         });

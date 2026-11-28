@@ -2,6 +2,11 @@ import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
 import type { MusicPlayRecord } from './db.client';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
+import type {
+  MusicV2HistoryRecord,
+  MusicV2PlaylistItem,
+  MusicV2PlaylistRecord,
+} from './music-v2';
 
 // 播放记录数据结构
 export interface PlayRecord {
@@ -223,20 +228,7 @@ export interface IStorage {
   removeUserMovieRequest(userName: string, requestId: string): Promise<void>;
 
   // 新版用户存储（V2）- 可选方法
-  getUserInfoV2?(userName: string): Promise<{
-    role: 'owner' | 'admin' | 'user';
-    banned: boolean;
-    tags?: string[];
-    oidcSub?: string;
-    enabledApis?: string[];
-    created_at: number;
-    playrecord_migrated?: boolean;
-    favorite_migrated?: boolean;
-    skip_migrated?: boolean;
-    last_movie_request_time?: number;
-    email?: string; // 用户邮箱
-    emailNotifications?: boolean; // 是否接收邮件通知
-  } | null>;
+  getUserInfoV2?(userName: string): Promise<UserInfoV2 | null>;
 
   // 用户邮箱相关
   getUserEmail?(userName: string): Promise<string | null>;
@@ -297,6 +289,168 @@ export interface IStorage {
     payload: string,
     opts: SetLocalSettingsSyncOptions
   ): Promise<SetLocalSettingsSyncResult>;
+
+  // 新版用户存储（V2）的其余方法，各存储后端按需实现
+  createUserV2?(
+    userName: string,
+    password: string,
+    role?: UserRole,
+    tags?: string[],
+    oidcSub?: string,
+    enabledApis?: string[]
+  ): Promise<void>;
+  verifyUserV2?(userName: string, password: string): Promise<boolean>;
+  updateUserInfoV2?(
+    userName: string,
+    updates: UserInfoV2Updates
+  ): Promise<void>;
+  changePasswordV2?(userName: string, newPassword: string): Promise<void>;
+  checkUserExistV2?(userName: string): Promise<boolean>;
+  getUserByOidcSub?(oidcSub: string): Promise<string | null>;
+  getUserListV2?(
+    offset?: number,
+    limit?: number,
+    ownerUsername?: string,
+    search?: string
+  ): Promise<UserListV2>;
+  deleteUserV2?(userName: string): Promise<void>;
+  getUsersByTag?(tagName: string): Promise<string[]>;
+
+  // 音乐 V2：播放历史、歌单
+  listMusicV2History?(userName: string): Promise<MusicV2HistoryRecord[]>;
+  upsertMusicV2History?(
+    userName: string,
+    record: MusicV2HistoryRecord
+  ): Promise<void>;
+  batchUpsertMusicV2History?(
+    userName: string,
+    records: MusicV2HistoryRecord[]
+  ): Promise<void>;
+  deleteMusicV2History?(userName: string, songId: string): Promise<void>;
+  clearMusicV2History?(userName: string): Promise<void>;
+  createMusicV2Playlist?(
+    userName: string,
+    playlist: MusicPlaylistInput
+  ): Promise<void>;
+  getMusicV2Playlist?(
+    playlistId: string
+  ): Promise<MusicV2PlaylistRecord | null>;
+  listMusicV2Playlists?(userName: string): Promise<MusicV2PlaylistRecord[]>;
+  updateMusicV2Playlist?(
+    playlistId: string,
+    updates: Partial<MusicPlaylistInput> & { song_count?: number }
+  ): Promise<void>;
+  deleteMusicV2Playlist?(playlistId: string): Promise<void>;
+  addMusicV2PlaylistItem?(
+    playlistId: string,
+    item: MusicV2PlaylistItem
+  ): Promise<void>;
+  removeMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<void>;
+  listMusicV2PlaylistItems?(playlistId: string): Promise<MusicV2PlaylistItem[]>;
+  hasMusicV2PlaylistItem?(playlistId: string, songId: string): Promise<boolean>;
+
+  // 旧版音乐歌单
+  createMusicPlaylist?(
+    userName: string,
+    playlist: MusicPlaylistInput
+  ): Promise<void>;
+  getMusicPlaylist?(playlistId: string): Promise<MusicPlaylistRecord | null>;
+  getUserMusicPlaylists?(userName: string): Promise<MusicPlaylistRecord[]>;
+  updateMusicPlaylist?(
+    playlistId: string,
+    updates: Partial<Omit<MusicPlaylistInput, 'id'>>
+  ): Promise<void>;
+  deleteMusicPlaylist?(playlistId: string): Promise<void>;
+  addSongToPlaylist?(
+    playlistId: string,
+    song: MusicPlaylistSong
+  ): Promise<void>;
+  removeSongFromPlaylist?(
+    playlistId: string,
+    platform: string,
+    songId: string
+  ): Promise<void>;
+  getPlaylistSongs?(playlistId: string): Promise<MusicPlaylistSongRecord[]>;
+  isSongInPlaylist?(
+    playlistId: string,
+    platform: string,
+    songId: string
+  ): Promise<boolean>;
+}
+
+export type UserRole = 'owner' | 'admin' | 'user';
+
+/** 新版用户存储里一个用户的信息 */
+export interface UserInfoV2 {
+  role: UserRole;
+  banned: boolean;
+  tags?: string[];
+  oidcSub?: string;
+  enabledApis?: string[];
+  created_at: number;
+  playrecord_migrated?: boolean;
+  favorite_migrated?: boolean;
+  skip_migrated?: boolean;
+  last_movie_request_time?: number;
+  email?: string; // 用户邮箱
+  emailNotifications?: boolean; // 是否接收邮件通知
+}
+
+export interface UserInfoV2Updates {
+  role?: UserRole;
+  banned?: boolean;
+  tags?: string[];
+  oidcSub?: string;
+  enabledApis?: string[];
+}
+
+export interface UserListV2 {
+  users: Array<{
+    username: string;
+    role: UserRole;
+    banned: boolean;
+    tags?: string[];
+    oidcSub?: string;
+    enabledApis?: string[];
+    created_at: number;
+  }>;
+  total: number;
+}
+
+/** 建歌单、改歌单时传的字段 */
+export interface MusicPlaylistInput {
+  id: string;
+  name: string;
+  description?: string;
+  cover?: string;
+}
+
+/** 旧版歌单（存储后端读出来的样子） */
+export interface MusicPlaylistRecord {
+  id: string;
+  username: string;
+  name: string;
+  description?: string;
+  cover?: string;
+  created_at: number;
+  updated_at: number;
+}
+
+/** 加进旧版歌单的歌 */
+export interface MusicPlaylistSong {
+  platform: string;
+  id: string;
+  name: string;
+  artist: string;
+  album?: string;
+  pic?: string;
+  duration: number;
+}
+
+/** 旧版歌单里读出来的歌，多了加入时间；SQL 存储还带排序（Redis 系按加入时间排） */
+export interface MusicPlaylistSongRecord extends MusicPlaylistSong {
+  added_at: number;
+  sort_order?: number;
 }
 
 // 本地设置云同步记录（与关系型表 user_local_settings 逐列对应；Redis 存为单 JSON 文档）

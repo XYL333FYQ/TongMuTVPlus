@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export interface Pan123ShareVideoFile {
   shareKey: string;
   fileId: string;
@@ -64,7 +62,31 @@ function isPan123VideoFile(name: string) {
   return VIDEO_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
 
-function shouldTreatAsPlayableFile(item: any) {
+/** 分享目录里的一项：Category 0 是目录，2 是视频 */
+interface Pan123ShareItem {
+  FileName?: string;
+  FileId?: number | string;
+  Category?: number | string;
+  Type?: number | string;
+  Etag?: string;
+  S3KeyFlag?: string;
+  Size?: number | string;
+}
+
+interface Pan123SharePage {
+  InfoList?: Pan123ShareItem[];
+  Next?: string | number | null;
+}
+
+/** 接口返回的外层；data 的内容按接口不同 */
+interface Pan123Response<T> {
+  code?: number;
+  message?: string;
+  msg?: string;
+  data?: T;
+}
+
+function shouldTreatAsPlayableFile(item: Pan123ShareItem | null | undefined) {
   const fileName = String(item?.FileName || '');
   const category = Number(item?.Category);
   if (category === 0) return false;
@@ -152,7 +174,7 @@ export function parsePan123ShareUrl(
   return { shareKey, sharePwd };
 }
 
-async function parseJsonResponse<T = any>(response: Response): Promise<T> {
+async function parseJsonResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
   try {
     return JSON.parse(text) as T;
@@ -210,7 +232,9 @@ async function loginPan123(account: string, password: string): Promise<string> {
     }),
     cache: 'no-store',
   });
-  const data = await parseJsonResponse<any>(response);
+  const data = await parseJsonResponse<Pan123Response<{
+    token?: string;
+  }> | null>(response);
   const token = String(data?.data?.token || '');
   if (!response.ok || !token) {
     throw new Error(data?.message || data?.msg || '123网盘登录失败');
@@ -230,7 +254,7 @@ async function fetchSharePage(
   next: string | number = 0,
   parentFileId = 0,
   depth = 0
-): Promise<any> {
+): Promise<Pan123SharePage | null> {
   const query = new URLSearchParams({
     limit: '100',
     next: String(next),
@@ -260,7 +284,9 @@ async function fetchSharePage(
     }
     throw error;
   }
-  const data = await parseJsonResponse<any>(response);
+  const data = await parseJsonResponse<Pan123Response<Pan123SharePage> | null>(
+    response
+  );
   if (!response.ok) {
     throw new Error(
       data?.message || data?.msg || `123网盘接口请求失败 (${response.status})`
@@ -311,7 +337,7 @@ async function collectPan123FilesRecursive(
     }
     traverseState.seenPageKeys.add(pageKey);
 
-    const data: any = await fetchSharePage(
+    const data = await fetchSharePage(
       shareKey,
       sharePwd,
       next,
@@ -330,7 +356,7 @@ async function collectPan123FilesRecursive(
     const childFolders: Array<string | number> = [];
     const queuedChildFolderIds = new Set<string>();
 
-    infoList.forEach((item: any) => {
+    infoList.forEach((item) => {
       const fileName = String(item.FileName || '');
       const itemFileId = String(item.FileId || '');
       if (fileNameState && !fileNameState.value) {
@@ -463,7 +489,9 @@ export async function getPan123PlayInfo(
         }),
         cache: 'no-store',
       });
-      const downloadData = await parseJsonResponse<any>(downloadResp);
+      const downloadData = await parseJsonResponse<Pan123Response<{
+        DownloadURL?: string;
+      }> | null>(downloadResp);
       if (!downloadResp.ok) {
         throw new Error(
           downloadData?.message ||
@@ -491,14 +519,18 @@ export async function getPan123PlayInfo(
           cache: 'no-store',
         }
       );
-      const transcodeData = await parseJsonResponse<any>(transcodeResp);
+      const transcodeData = await parseJsonResponse<Pan123Response<{
+        video_play_info?: Array<{
+          url?: string;
+          height?: number | string;
+          resolution?: string;
+        }>;
+      }> | null>(transcodeResp);
       const qualities = Array.isArray(transcodeData?.data?.video_play_info)
-        ? transcodeData.data.video_play_info
-            .filter((item: any) => item?.url)
-            .sort(
-              (a: any, b: any) => Number(b.height || 0) - Number(a.height || 0)
-            )
-            .map((item: any) => ({
+        ? (transcodeData?.data?.video_play_info ?? [])
+            .filter((item) => item?.url)
+            .sort((a, b) => Number(b.height || 0) - Number(a.height || 0))
+            .map((item) => ({
               name: String(item.resolution || '转码'),
               url: String(item.url),
             }))

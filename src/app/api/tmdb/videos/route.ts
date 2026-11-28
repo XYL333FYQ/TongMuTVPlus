@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -70,16 +68,16 @@ export async function GET(request: NextRequest) {
       }
 
       const validResults = (searchResponse.results || []).filter(
-        (item: any) => item.media_type === 'movie' || item.media_type === 'tv'
+        (item) => item.media_type === 'movie' || item.media_type === 'tv'
       );
       const matched =
-        validResults.find((item: any) => {
+        validResults.find((item) => {
           if (item.media_type !== mediaType) return false;
           if (!year) return true;
           const date = item.release_date || item.first_air_date || '';
           return date.startsWith(year);
         }) ||
-        validResults.find((item: any) => item.media_type === mediaType) ||
+        validResults.find((item) => item.media_type === mediaType) ||
         validResults[0];
 
       if (!matched?.id) {

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
-
 import { StandardRedisAdapter } from './redis-adapter';
 import { BaseRedisStorage } from './redis-base.db';
 import { createRedisClient, createRetryWrapper } from './redis-node-client';
@@ -7,7 +5,8 @@ import { createRedisClient, createRetryWrapper } from './redis-node-client';
 export class KvrocksStorage extends BaseRedisStorage {
   constructor() {
     const config = {
-      url: process.env.KVROCKS_URL!,
+      // 没配时是空字符串，createRedisClient 会报“KVROCKS_URL 没设置”
+      url: process.env.KVROCKS_URL ?? '',
       clientName: 'Kvrocks',
     };
     const globalSymbol = Symbol.for('__MOONTV_KVROCKS_CLIENT__');

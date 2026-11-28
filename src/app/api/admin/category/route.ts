@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -32,7 +30,7 @@ export async function POST(request: NextRequest) {
     const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
     if (!isCaller(caller)) return caller;
 
-    const body = (await request.json()) as BaseBody & Record<string, any>;
+    const body = (await request.json()) as BaseBody & Record<string, unknown>;
     const { action } = body;
 
     const username = caller.username;

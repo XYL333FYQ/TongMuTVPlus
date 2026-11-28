@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -14,10 +12,32 @@ export const runtime = 'nodejs';
 const isCloudflare =
   process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
 
+/** 音乐服务里一个方法的配置：url / params / body 里的 {{表达式}} 会按传入的变量替换 */
+interface MusicMethodConfig {
+  url: string;
+  method?: string;
+  params?: Record<string, unknown>;
+  body?: unknown;
+  headers?: Record<string, string>;
+  /** 处理返回数据的函数源码 */
+  transform?: string;
+}
+
+/** 音乐服务返回里的一首歌（OpenList 缓存只看这几个字段） */
+interface MusicSongPayload {
+  id?: string;
+  url?: string;
+  cached?: boolean;
+  [field: string]: unknown;
+}
+
 // 服务器端内存缓存
 const serverCache = {
-  methodConfigs: new Map<string, { data: any; timestamp: number }>(),
-  proxyRequests: new Map<string, { data: any; timestamp: number }>(),
+  methodConfigs: new Map<
+    string,
+    { data: { data?: MusicMethodConfig }; timestamp: number }
+  >(),
+  proxyRequests: new Map<string, { data: unknown; timestamp: number }>(),
   CACHE_DURATION: 24 * 60 * 60 * 1000, // 24小时缓存
 };
 
@@ -88,10 +108,10 @@ async function cacheAudioToOpenList(
       const audioBuffer = await audioResponse.arrayBuffer();
       const audioBlob = Buffer.from(audioBuffer);
 
-      const token = await (openListClient as any).getToken();
+      const token = await openListClient.getToken();
 
       const uploadResponse = await fetch(
-        `${(openListClient as any).baseURL}/api/fs/put`,
+        `${openListClient.baseURL}/api/fs/put`,
         {
           method: 'PUT',
           headers: {
@@ -127,12 +147,12 @@ async function cacheAudioToOpenList(
 
 // 检查并替换音频 URL 为 OpenList URL
 async function replaceAudioUrlsWithOpenList(
-  data: any,
+  data: unknown,
   openListClient: OpenListClient | null,
   platform: string,
   quality: string,
   cachePath: string
-): Promise<any> {
+): Promise<unknown> {
   // 获取配置，检查是否启用 OpenList 缓存
   const config = await getConfig();
   const cacheEnabled = config?.MusicConfig?.OpenListCacheEnabled ?? false;
@@ -140,14 +160,17 @@ async function replaceAudioUrlsWithOpenList(
     config?.MusicConfig?.OpenListCacheProxyEnabled ?? true;
 
   // 如果没有启用 OpenList 缓存，直接返回原数据
-  if (!cacheEnabled || !openListClient || !data?.data) {
+  const payload = data as { data?: { data?: unknown } } | null;
+  if (!cacheEnabled || !openListClient || !payload?.data) {
     return data;
   }
 
   // 音乐服务返回的数据结构是 { code: 0, data: { data: [...], total: 1 } }
   // 需要提取内层的 data 数组
-  const songsData = data.data.data || data.data;
-  const songs = Array.isArray(songsData) ? songsData : [songsData];
+  const songsData = payload.data.data || payload.data;
+  const songs = (
+    Array.isArray(songsData) ? songsData : [songsData]
+  ) as MusicSongPayload[];
 
   for (const song of songs) {
     if (!song?.id || !song?.url) {
@@ -237,10 +260,10 @@ async function executeMethod(
   platform: string,
   func: string,
   variables: Record<string, string> = {}
-): Promise<any> {
+): Promise<unknown> {
   // 1. 获取方法配置
   const cacheKey = `method-config-${platform}-${func}`;
-  let config: any;
+  let config: MusicMethodConfig | undefined;
 
   const cached = serverCache.methodConfigs.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
@@ -249,7 +272,7 @@ async function executeMethod(
     const response = await proxyRequest(
       `${baseUrl}/v1/methods/${platform}/${func}`
     );
-    const data = await response.json();
+    const data = (await response.json()) as { data?: MusicMethodConfig };
     serverCache.methodConfigs.set(cacheKey, { data, timestamp: Date.now() });
     config = data.data;
   }
@@ -263,7 +286,7 @@ async function executeMethod(
   const params: Record<string, string> = {};
 
   // 先将 variables 中的值转换为可执行的变量
-  const evalContext: Record<string, any> = {};
+  const evalContext: Record<string, string | number> = {};
   for (const [key, value] of Object.entries(variables)) {
     // 尝试将字符串转换为数字（如果可能）
     const numValue = Number(value);
@@ -271,7 +294,7 @@ async function executeMethod(
   }
 
   // 递归处理对象中的模板变量
-  function processTemplateValue(value: any): any {
+  function processTemplateValue(value: unknown): unknown {
     if (typeof value === 'string') {
       // 处理包含模板变量的表达式
       const expressionRegex = /\{\{(.+?)\}\}/g;
@@ -288,7 +311,7 @@ async function executeMethod(
             }
 
             // 处理包含运算的表达式（如 page - 1）
-            let result: any = expr;
+            let result: string = expr;
 
             // 替换变量为其值
             for (const [key, val] of Object.entries(evalContext)) {
@@ -303,7 +326,7 @@ async function executeMethod(
 
             // 尝试计算表达式
             try {
-              result = evaluateExpression(result);
+              result = String(evaluateExpression(result));
             } catch (err) {
               logger.error(
                 `[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`,
@@ -331,7 +354,7 @@ async function executeMethod(
     } else if (Array.isArray(value)) {
       return value.map((item) => processTemplateValue(item));
     } else if (typeof value === 'object' && value !== null) {
-      const result: any = {};
+      const result: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(value)) {
         result[k] = processTemplateValue(v);
       }
@@ -343,7 +366,8 @@ async function executeMethod(
   // 处理 URL 参数
   if (config.params) {
     for (const [key, value] of Object.entries(config.params)) {
-      params[key] = processTemplateValue(value);
+      // 字符串模板替换后还是字符串；其余类型原样交给 URLSearchParams
+      params[key] = processTemplateValue(value) as string;
     }
   }
 
@@ -377,14 +401,14 @@ async function executeMethod(
   }
 
   const response = await proxyRequest(url, requestOptions);
-  let data = await response.json();
+  let data: unknown = await response.json();
 
   // 5. 执行 transform 函数（如果有）
   if (config.transform) {
     // 在 Cloudflare 环境下，将 transform 函数返回给前端执行
     if (isCloudflare) {
       // 将 transform 函数字符串附加到响应数据中
-      data.__transform = config.transform;
+      (data as Record<string, unknown>).__transform = config.transform;
     } else {
       // 在 Node.js 环境下，直接执行 transform
       try {
@@ -400,7 +424,7 @@ async function executeMethod(
 
   // 6. 处理酷我音乐的图片 URL（转换为代理 URL）
   if (platform === 'kuwo') {
-    const processKuwoImages = (obj: any): any => {
+    const processKuwoImages = (obj: unknown): unknown => {
       if (
         typeof obj === 'string' &&
         obj.startsWith('http://') &&
@@ -411,7 +435,7 @@ async function executeMethod(
       } else if (Array.isArray(obj)) {
         return obj.map((item) => processKuwoImages(item));
       } else if (typeof obj === 'object' && obj !== null) {
-        const result: any = {};
+        const result: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
           result[key] = processKuwoImages(value);
         }

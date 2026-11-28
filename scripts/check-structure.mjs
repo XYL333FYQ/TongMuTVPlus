@@ -289,6 +289,7 @@ function run() {
     eslintDisable: new Map(),
     important: new Map(),
     eslintDisableInline: new Map(),
+    eslintDisableFile: new Map(),
   };
   const warnings = [];
 
@@ -302,10 +303,14 @@ function run() {
     }
   }
 
-  // S8：行内跳过代码检查的注释，全部 src（含测试）按文件计数，只许减少
+  // S8：跳过代码检查的注释（行内的和整段的），全部 src（含测试）按文件计数，只许减少。
+  // 整段关掉会把后面所有警告藏起来，check:lint 的基线数不到它们
   for (const file of allFiles.filter(isScript)) {
-    const count = countMatches(read(file), 'eslintDisableInline');
-    if (count) violations.eslintDisableInline.set(file, count);
+    const text = read(file);
+    const inline = countMatches(text, 'eslintDisableInline');
+    if (inline) violations.eslintDisableInline.set(file, inline);
+    const block = countMatches(text, 'eslintDisableFile');
+    if (block) violations.eslintDisableFile.set(file, block);
   }
 
   const failures = [...problems];

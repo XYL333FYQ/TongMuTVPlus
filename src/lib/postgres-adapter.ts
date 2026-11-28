@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Vercel Postgres (Neon/Postgres) 适配器
  *
@@ -12,7 +10,12 @@ import { sql } from '@vercel/postgres';
 
 import { logger } from '@/lib/logger';
 
-import { D1PreparedStatement, D1Result, DatabaseAdapter } from './d1-adapter';
+import {
+  D1PreparedStatement,
+  D1Result,
+  DatabaseAdapter,
+  DbRow,
+} from './d1-adapter';
 
 /**
  * Vercel Postgres 适配器
@@ -20,8 +23,6 @@ import { D1PreparedStatement, D1Result, DatabaseAdapter } from './d1-adapter';
  * 使用 @vercel/postgres 包装为 D1 兼容接口
  */
 export class PostgresAdapter implements DatabaseAdapter {
-  private queryParams: { query: string; values: any[] } | null = null;
-
   prepare(query: string): D1PreparedStatement {
     return new PostgresPreparedStatement(query);
   }
@@ -50,12 +51,12 @@ export class PostgresAdapter implements DatabaseAdapter {
  * 将 Vercel Postgres API 转换为 D1 兼容 API
  */
 class PostgresPreparedStatement implements D1PreparedStatement {
-  private params: any[] = [];
+  private params: unknown[] = [];
   private paramIndex = 1;
 
   constructor(private query: string) {}
 
-  bind(...values: any[]): D1PreparedStatement {
+  bind(...values: unknown[]): D1PreparedStatement {
     this.params = values;
     return this;
   }
@@ -80,7 +81,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回第一行
    */
-  async first<T = any>(colName?: string): Promise<T | null> {
+  async first<T = DbRow>(colName?: string): Promise<T | null> {
     try {
       const convertedQuery = this.convertQuery(this.query);
 
@@ -89,9 +90,9 @@ class PostgresPreparedStatement implements D1PreparedStatement {
 
       if (!result || result.rows.length === 0) return null;
 
-      const row = result.rows[0];
+      const row = result.rows[0] as DbRow;
 
-      if (colName) return row[colName] ?? null;
+      if (colName) return (row[colName] ?? null) as T | null;
 
       return row as T;
     } catch (err) {
@@ -103,7 +104,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回结果
    */
-  async run<T = any>(): Promise<D1Result<T>> {
+  async run<T = DbRow>(): Promise<D1Result<T>> {
     try {
       const convertedQuery = this.convertQuery(this.query);
 
@@ -115,13 +116,13 @@ class PostgresPreparedStatement implements D1PreparedStatement {
           changes: result.rowCount || 0,
           last_row_id: null, // Postgres 不直接返回 lastInsertId
         },
-        results: result.rows,
+        results: result.rows as T[],
       };
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Postgres run() error:', err);
       return {
         success: false,
-        error: err.message,
+        error: (err as Error).message,
       };
     }
   }
@@ -129,7 +130,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回所有行
    */
-  async all<T = any>(): Promise<D1Result<T>> {
+  async all<T = DbRow>(): Promise<D1Result<T>> {
     try {
       const convertedQuery = this.convertQuery(this.query);
 
@@ -137,13 +138,13 @@ class PostgresPreparedStatement implements D1PreparedStatement {
 
       return {
         success: true,
-        results: result.rows || [],
+        results: (result.rows || []) as T[],
       };
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Postgres all() error:', err);
       return {
         success: false,
-        error: err.message,
+        error: (err as Error).message,
         results: [],
       };
     }

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import ReaderDialog from './ReaderDialog';
+// 阅读页（漫画、电子书）的设置、章节等弹窗直接用 ModalLayer
+import ModalLayer from './ModalLayer';
 
 beforeEach(() => {
   HTMLDialogElement.prototype.showModal = jest.fn(function (
@@ -18,9 +19,9 @@ beforeEach(() => {
 test('opens a named native modal and routes Escape and backdrop dismissal to the existing close callback', () => {
   const close = jest.fn();
   render(
-    <ReaderDialog label='阅读设置' onClose={close}>
+    <ModalLayer label='阅读设置' onClose={close}>
       <button>完成</button>
-    </ReaderDialog>
+    </ModalLayer>
   );
   const dialog = screen.getByRole('dialog', { name: '阅读设置' });
   expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledTimes(1);

@@ -1,5 +1,3 @@
-/* eslint-disable no-case-declarations */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -50,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     switch (action) {
-      case 'add':
+      case 'add': {
         // 检查是否已存在相同的 key
         if (config.LiveConfig.some((l) => l.key === key)) {
           return NextResponse.json(
@@ -81,8 +79,9 @@ export async function POST(request: NextRequest) {
         // 添加新的直播源
         config.LiveConfig.push(liveInfo);
         break;
+      }
 
-      case 'delete':
+      case 'delete': {
         // 删除直播源
         const deleteIndex = config.LiveConfig.findIndex((l) => l.key === key);
         if (deleteIndex === -1) {
@@ -101,8 +100,9 @@ export async function POST(request: NextRequest) {
 
         config.LiveConfig.splice(deleteIndex, 1);
         break;
+      }
 
-      case 'enable':
+      case 'enable': {
         // 启用直播源
         const enableSource = config.LiveConfig.find((l) => l.key === key);
         if (!enableSource) {
@@ -110,8 +110,9 @@ export async function POST(request: NextRequest) {
         }
         enableSource.disabled = false;
         break;
+      }
 
-      case 'disable':
+      case 'disable': {
         // 禁用直播源
         const disableSource = config.LiveConfig.find((l) => l.key === key);
         if (!disableSource) {
@@ -119,8 +120,9 @@ export async function POST(request: NextRequest) {
         }
         disableSource.disabled = true;
         break;
+      }
 
-      case 'edit':
+      case 'edit': {
         // 编辑直播源
         const editSource = config.LiveConfig.find((l) => l.key === key);
         if (!editSource) {
@@ -150,8 +152,9 @@ export async function POST(request: NextRequest) {
           editSource.channelNumber = 0;
         }
         break;
+      }
 
-      case 'sort':
+      case 'sort': {
         // 排序直播源
         const { order } = body;
         if (!Array.isArray(order)) {
@@ -179,8 +182,9 @@ export async function POST(request: NextRequest) {
 
         config.LiveConfig = sortedLiveConfig;
         break;
+      }
 
-      case 'set_proxy_mode':
+      case 'set_proxy_mode': {
         // 设置代理模式
         const setProxySource = config.LiveConfig.find((l) => l.key === key);
         if (!setProxySource) {
@@ -197,6 +201,7 @@ export async function POST(request: NextRequest) {
         }
         setProxySource.proxyMode = proxyMode as 'full' | 'm3u8-only' | 'direct';
         break;
+      }
 
       default:
         return NextResponse.json({ error: '未知操作' }, { status: 400 });

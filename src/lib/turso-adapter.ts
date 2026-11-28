@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Turso (libSQL) 适配器
  *
@@ -11,23 +9,34 @@
  * 注意：此模块仅在服务端使用，通过 webpack 配置排除客户端打包
  */
 
+import type { Client, InStatement, InValue } from '@libsql/client/http';
+
 import { logger } from '@/lib/logger';
 
-import { D1PreparedStatement, D1Result, DatabaseAdapter } from './d1-adapter';
+import {
+  D1PreparedStatement,
+  D1Result,
+  DatabaseAdapter,
+  DbRow,
+} from './d1-adapter';
+
+type CreateClient = typeof import('@libsql/client/http').createClient;
 
 /**
  * 动态加载 @libsql/client 的 createClient 函数
  *
  * 使用 require 而非 import，避免 webpack 在 EdgeOne 构建中
- * 因条件导出 (edge-light) 错误解析 ESM 模块
+ * 因条件导出 (edge-light) 错误解析 ESM 模块（.eslintrc.js 里给这个文件开了 require 的例外）
  *
  * 使用 @libsql/client/http 子路径而非主入口，避免拉入原生 libsql
  * 模块和 isomorphic-ws/isomorphic-fetch 等不兼容边缘环境的依赖
  */
-function getLibsqlClient(): any {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires -- 按需加载，避免打进客户端
-  const mod = require('@libsql/client/http');
-  return mod.createClient || mod.default?.createClient;
+function getLibsqlClient(): CreateClient {
+  const mod = require('@libsql/client/http') as {
+    createClient?: CreateClient;
+    default?: { createClient?: CreateClient };
+  };
+  return (mod.createClient || mod.default?.createClient) as CreateClient;
 }
 
 /**
@@ -36,7 +45,7 @@ function getLibsqlClient(): any {
  * 使用 @libsql/client 包装为 D1 兼容接口
  */
 export class TursoAdapter implements DatabaseAdapter {
-  private client: any;
+  private client: Client;
 
   constructor(url: string, authToken: string) {
     const createClient = getLibsqlClient();
@@ -56,9 +65,9 @@ export class TursoAdapter implements DatabaseAdapter {
       (stmt as TursoPreparedStatement).toLibSQLBatch()
     );
     const results = await this.client.batch(libsqlStatements, 'write');
-    return results.map((result: any) => ({
+    return results.map((result) => ({
       success: true,
-      results: result.rows || [],
+      results: (result.rows || []) as unknown as DbRow[],
       meta: {
         changes: result.rowsAffected,
         last_row_id:
@@ -79,19 +88,20 @@ export class TursoAdapter implements DatabaseAdapter {
  * 将 @libsql/client API 转换为 D1 兼容 API
  */
 class TursoPreparedStatement implements D1PreparedStatement {
-  private params: any[] = [];
+  private params: InValue[] = [];
 
-  constructor(private client: any, private query: string) {}
+  constructor(private client: Client, private query: string) {}
 
-  bind(...values: any[]): D1PreparedStatement {
-    this.params = values;
+  bind(...values: unknown[]): D1PreparedStatement {
+    // 绑定的值由调用方保证是 SQL 能存的类型（字符串、数字、null 等）
+    this.params = values as InValue[];
     return this;
   }
 
   /**
    * 执行查询并返回第一行
    */
-  async first<T = any>(colName?: string): Promise<T | null> {
+  async first<T = DbRow>(colName?: string): Promise<T | null> {
     try {
       const result = await this.client.execute({
         sql: this.query,
@@ -100,8 +110,8 @@ class TursoPreparedStatement implements D1PreparedStatement {
 
       if (!result.rows || result.rows.length === 0) return null;
 
-      const row = result.rows[0];
-      if (colName) return (row as any)[colName] ?? null;
+      const row = result.rows[0] as unknown as DbRow;
+      if (colName) return (row[colName] ?? null) as T | null;
 
       return row as T;
     } catch (err) {
@@ -113,7 +123,7 @@ class TursoPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回结果
    */
-  async run<T = any>(): Promise<D1Result<T>> {
+  async run<T = DbRow>(): Promise<D1Result<T>> {
     try {
       const result = await this.client.execute({
         sql: this.query,
@@ -129,13 +139,13 @@ class TursoPreparedStatement implements D1PreparedStatement {
               ? Number(result.lastInsertRowid)
               : null,
         },
-        results: result.rows as T[],
+        results: result.rows as unknown as T[],
       };
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Turso run() error:', err);
       return {
         success: false,
-        error: err.message,
+        error: (err as Error).message,
       };
     }
   }
@@ -143,7 +153,7 @@ class TursoPreparedStatement implements D1PreparedStatement {
   /**
    * 执行查询并返回所有行
    */
-  async all<T = any>(): Promise<D1Result<T>> {
+  async all<T = DbRow>(): Promise<D1Result<T>> {
     try {
       const result = await this.client.execute({
         sql: this.query,
@@ -152,13 +162,13 @@ class TursoPreparedStatement implements D1PreparedStatement {
 
       return {
         success: true,
-        results: (result.rows || []) as T[],
+        results: (result.rows || []) as unknown as T[],
       };
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Turso all() error:', err);
       return {
         success: false,
-        error: err.message,
+        error: (err as Error).message,
         results: [],
       };
     }
@@ -167,7 +177,7 @@ class TursoPreparedStatement implements D1PreparedStatement {
   /**
    * 转换为 libSQL batch 格式
    */
-  toLibSQLBatch(): { sql: string; args: any[] } {
+  toLibSQLBatch(): InStatement {
     return { sql: this.query, args: this.params };
   }
 }

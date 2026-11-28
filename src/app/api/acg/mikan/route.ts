@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { parseStringPromise } from 'xml2js';
 
@@ -7,18 +6,14 @@ import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
 import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
 import { hasFeaturePermission } from '@/lib/permissions';
+import {
+  type RssXmlItem,
+  pickRssText as pickText,
+  rssAttr,
+  rssChild,
+} from '@/lib/rss-xml';
 
 export const runtime = 'nodejs';
-
-const pickText = (value: any): string => {
-  if (value === undefined || value === null) return '';
-  const first = Array.isArray(value) ? value[0] : value;
-  if (first === undefined || first === null) return '';
-  if (typeof first === 'object') {
-    return String(first._ ?? first.$?.url ?? first.$?.href ?? '').trim();
-  }
-  return String(first).trim();
-};
 
 /**
  * POST /api/acg/mikan
@@ -106,20 +101,20 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const items = parsed.rss.channel[0].item;
+    const items: RssXmlItem[] = parsed.rss.channel[0].item;
 
-    const results = items.map((item: any, index: number) => {
+    const results = items.map((item, index) => {
       const title = pickText(item.title);
       const link = pickText(item.link);
       const pubDate =
         pickText(item.pubDate) ||
-        pickText(item.torrent?.[0]?.pubDate) ||
+        pickText(rssChild(item.torrent, 'pubDate')) ||
         pickText(item['dc:date']);
       const description =
         pickText(item.description) || pickText(item['content:encoded']) || '';
       const torrentUrl =
-        pickText(item.enclosure?.[0]?.$?.url) ||
-        pickText(item.enclosure?.[0]?.$?.href) ||
+        pickText(rssAttr(item.enclosure, 'url')) ||
+        pickText(rssAttr(item.enclosure, 'href')) ||
         pickText(item.enclosure?.[0]) ||
         '';
       // guid 必须是唯一纯字符串，避免 xml 对象导致前端 key 冲突
@@ -160,10 +155,10 @@ export async function POST(req: NextRequest) {
       total: results.length,
       items: results,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Mikan 搜索失败:', error);
     return NextResponse.json(
-      { error: error.message || '搜索失败' },
+      { error: (error as Error).message || '搜索失败' },
       { status: 500 }
     );
   }

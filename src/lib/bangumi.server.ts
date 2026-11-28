@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { safeFetch } from './safe-http';
 
 export type AnimeDataSource =
   | 'direct'
@@ -44,21 +42,17 @@ export async function fetchBangumiFromServer(
     }) as Promise<Response>;
   }
 
-  const fetchOptions: any = {
-    headers: {
-      Accept: 'application/json',
-      'Accept-Encoding': 'identity',
-      'User-Agent': 'MoonTVPlus/1.0 (https://github.com)',
+  // 走 safe-http：有代理时用代理（原来把 agent 交给全局 fetch，全局 fetch 不认 agent，代理设置没生效）
+  return safeFetch(
+    url,
+    {
+      headers: {
+        Accept: 'application/json',
+        'Accept-Encoding': 'identity',
+        'User-Agent': 'MoonTVPlus/1.0 (https://github.com)',
+      },
+      signal: AbortSignal.timeout(proxy ? 30000 : 15000),
     },
-    signal: AbortSignal.timeout(proxy ? 30000 : 15000),
-  };
-
-  if (proxy) {
-    fetchOptions.agent = new HttpsProxyAgent(proxy, {
-      timeout: 30000,
-      keepAlive: false,
-    });
-  }
-
-  return fetch(url, fetchOptions) as Promise<Response>;
+    proxy
+  );
 }

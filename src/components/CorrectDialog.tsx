@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { Search, X } from 'lucide-react';
@@ -244,7 +242,7 @@ export default function CorrectDialog({
         finalTitle = `${finalTitle} ${season.name}`;
       }
 
-      const correctionData: any = {
+      const correctionData: Record<string, unknown> = {
         tmdbId: finalTmdbId,
         title: finalTitle,
         posterPath: season?.poster_path || result.poster_path,
@@ -277,7 +275,7 @@ export default function CorrectDialog({
         );
       } else {
         // openlist 等其他源：调用 API
-        const body: any = {
+        const body: Record<string, unknown> = {
           key: videoKey,
           ...correctionData,
         };
@@ -359,7 +357,7 @@ export default function CorrectDialog({
     setError('');
 
     try {
-      const correctionData: any = {
+      const correctionData: Record<string, unknown> = {
         title: manualData.title.trim(),
         posterPath: manualData.posterPath.trim() || null,
         releaseDate: manualData.releaseDate.trim() || '',
@@ -403,7 +401,7 @@ export default function CorrectDialog({
         );
       } else {
         // openlist 等其他源：调用 API
-        const body: any = {
+        const body: Record<string, unknown> = {
           key: videoKey,
           ...correctionData,
         };

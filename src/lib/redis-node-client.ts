@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { createClient, RedisClientType } from 'redis';
+import { createClient, RedisClientOptions, RedisClientType } from 'redis';
 
 import { logger } from '@/lib/logger';
+import { processSingleton } from '@/lib/process-singleton';
 
 // 连接配置接口
 export interface RedisConnectionConfig {
@@ -23,7 +22,8 @@ export function createRetryWrapper(
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await operation();
-      } catch (err: any) {
+      } catch (caught) {
+        const err = caught as Error & { code?: string };
         const isLastAttempt = i === maxRetries - 1;
         const isConnectionError =
           err.message?.includes('Connection') ||
@@ -69,15 +69,13 @@ export function createRedisClient(
   config: RedisConnectionConfig,
   globalSymbol: symbol
 ): RedisClientType {
-  let client: RedisClientType | undefined = (global as any)[globalSymbol];
-
-  if (!client) {
+  return processSingleton(globalSymbol, () => {
     if (!config.url) {
       throw new Error(`${config.clientName}_URL env variable not set`);
     }
 
     // 创建客户端配置
-    const clientConfig: any = {
+    const clientConfig: RedisClientOptions = {
       url: config.url,
       socket: {
         // 重连策略：指数退避，最大30秒
@@ -101,8 +99,8 @@ export function createRedisClient(
       pingInterval: 30000, // 30秒 ping 一次，保持连接活跃
     };
 
-    const newClient: RedisClientType = createClient(clientConfig);
-    client = newClient;
+    const newClient = createClient(clientConfig) as RedisClientType;
+    const client = newClient;
 
     // 添加错误事件监听
     client.on('error', (err) => {
@@ -135,8 +133,6 @@ export function createRedisClient(
 
     connectWithRetry();
 
-    (global as any)[globalSymbol] = client;
-  }
-
-  return client;
+    return client;
+  });
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
@@ -81,10 +80,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
     logger.error('追番订阅集数测试失败:', error);
     return NextResponse.json(
-      { error: error.message || '测试失败' },
+      { error: (error as Error).message || '测试失败' },
       { status: 500 }
     );
   }

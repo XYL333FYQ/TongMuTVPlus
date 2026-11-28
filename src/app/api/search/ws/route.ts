@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
@@ -14,6 +12,7 @@ import {
   normalizeScriptSearchResults,
   normalizeScriptSources,
 } from '@/lib/source-script';
+import type { SearchResult } from '@/lib/types';
 import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
@@ -142,7 +141,7 @@ export async function GET(request: NextRequest) {
 
       // 记录已完成的源数量
       let completedSources = 0;
-      const allResults: any[] = [];
+      const allResults: SearchResult[] = [];
 
       const maybeComplete = () => {
         if (completedSources !== totalSourceCount || streamClosed) return;
@@ -325,7 +324,7 @@ export async function GET(request: NextRequest) {
 
               if (metaInfo && metaInfo.folders) {
                 return Object.entries(metaInfo.folders)
-                  .filter(([, info]: [string, any]) => {
+                  .filter(([, info]) => {
                     const matchFolder = info.folderName
                       .toLowerCase()
                       .includes(query.toLowerCase());
@@ -334,7 +333,7 @@ export async function GET(request: NextRequest) {
                       .includes(query.toLowerCase());
                     return matchFolder || matchTitle;
                   })
-                  .map(([key, info]: [string, any]) => ({
+                  .map(([key, info]) => ({
                     id: key,
                     source: 'openlist',
                     source_name: '私人影库',
@@ -355,11 +354,11 @@ export async function GET(request: NextRequest) {
               return [];
             }
           })(),
-          new Promise((_, reject) =>
+          new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error('OpenList timeout')), 20000)
           ),
         ])
-          .then((openlistResults: any) => {
+          .then((openlistResults) => {
             completedSources++;
             if (!streamClosed) {
               // 添加安全检查，确保结果是数组
@@ -406,12 +405,12 @@ export async function GET(request: NextRequest) {
           // 添加超时控制
           const searchPromise = Promise.race([
             searchFromApi(site, query),
-            new Promise((_, reject) =>
+            new Promise<never>((_, reject) =>
               setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000)
             ),
           ]);
 
-          const results = (await searchPromise) as any[];
+          const results = await searchPromise;
 
           // 添加安全检查，确保结果是数组
           const safeResults = Array.isArray(results) ? results : [];
@@ -507,7 +506,7 @@ export async function GET(request: NextRequest) {
               hook: 'getSources',
               payload: {},
             }),
-            new Promise((_, reject) =>
+            new Promise<never>((_, reject) =>
               setTimeout(
                 () => reject(new Error(`${script.name} timeout`)),
                 20000
@@ -515,9 +514,7 @@ export async function GET(request: NextRequest) {
             ),
           ]);
 
-          const sources = normalizeScriptSources(
-            (sourcesExecution as any).result
-          );
+          const sources = normalizeScriptSources(sourcesExecution.result);
           const sourceResults = await Promise.all(
             sources.map(async (source) => {
               const execution = await Promise.race([
@@ -530,7 +527,7 @@ export async function GET(request: NextRequest) {
                     sourceId: source.id,
                   },
                 }),
-                new Promise((_, reject) =>
+                new Promise<never>((_, reject) =>
                   setTimeout(
                     () =>
                       reject(
@@ -546,7 +543,7 @@ export async function GET(request: NextRequest) {
                 scriptName: script.name,
                 sourceId: source.id,
                 sourceName: source.name,
-                result: (execution as any).result,
+                result: execution.result,
               });
             })
           );

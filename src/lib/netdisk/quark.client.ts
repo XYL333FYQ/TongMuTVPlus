@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
@@ -278,7 +276,34 @@ async function parseJson(response: Response) {
   }
 }
 
-function ensureOk(data: any, fallbackMessage: string) {
+/** 夸克接口返回的外层：code 0 / 200（或 status 200）表示成功 */
+interface DriveApiStatus {
+  code?: number;
+  status?: number;
+  message?: string;
+  msg?: string;
+}
+
+/** 网盘目录 / 分享里的一项（不同接口字段名不一样，都列着） */
+interface DriveItem {
+  fid?: string;
+  file_id?: string;
+  file_name?: string;
+  name?: string;
+  dir?: boolean;
+  is_dir?: boolean;
+  file_type?: number;
+  size?: number | string;
+  share_fid_token?: string;
+  fid_token?: string;
+  share_token?: string;
+  [field: string]: unknown;
+}
+
+function ensureOk(
+  data: DriveApiStatus | null | undefined,
+  fallbackMessage: string
+) {
   if (data?.code === 0 || data?.code === 200 || data?.status === 200) {
     return;
   }
@@ -371,7 +396,7 @@ async function fetchShareFolderItems(
   ensureOk(data, '获取夸克分享详情失败');
 
   const list = data?.data?.list || [];
-  return list.map((item: any) => ({
+  return list.map((item: DriveItem) => ({
     fid: String(item.fid || item.file_id || ''),
     fileName: String(item.file_name || item.name || ''),
     dir: Boolean(item.dir || item.is_dir || item.file_type === 0),
@@ -387,7 +412,7 @@ async function fetchDriveFolderItems(
   pdirFid = '0',
   page = 1,
   size = 200
-): Promise<any[]> {
+): Promise<DriveItem[]> {
   const query = new URLSearchParams({
     pdir_fid: pdirFid,
     _page: String(page),
@@ -412,8 +437,8 @@ async function fetchDriveFolderItems(
 async function fetchAllDriveFolderItems(
   cookie: string,
   pdirFid = '0'
-): Promise<any[]> {
-  const allItems: any[] = [];
+): Promise<DriveItem[]> {
+  const allItems: DriveItem[] = [];
   const pageSize = 200;
 
   for (let page = 1; page < 100; page += 1) {
@@ -428,7 +453,7 @@ async function fetchAllDriveFolderItems(
   return allItems;
 }
 
-function getDriveItemName(item: any): string {
+function getDriveItemName(item: DriveItem | null | undefined): string {
   return String(item?.file_name || item?.name || '');
 }
 
@@ -441,11 +466,11 @@ async function findDirectoryByName(
   cookie: string,
   parentFid: string,
   folderName: string
-): Promise<any | null> {
+): Promise<DriveItem | null> {
   const items = await fetchAllDriveFolderItems(cookie, parentFid);
   return (
     items.find(
-      (item: any) =>
+      (item: DriveItem) =>
         Boolean(item.dir || item.is_dir) &&
         getDriveItemName(item) === folderName
     ) || null
@@ -456,13 +481,13 @@ async function findDriveFileInFolder(
   cookie: string,
   parentFid: string,
   input: { fileName?: string; size?: number }
-): Promise<any | null> {
+): Promise<DriveItem | null> {
   const fileName = input.fileName?.trim();
   if (!fileName) return null;
 
   const items = await fetchAllDriveFolderItems(cookie, parentFid);
   return (
-    items.find((item: any) => {
+    items.find((item: DriveItem) => {
       const isDir = Boolean(item.dir || item.is_dir || item.file_type === 0);
       if (isDir) return false;
       const itemName = String(item.file_name || item.name || '');
@@ -566,7 +591,7 @@ export async function ensureQuarkDrivePath(
   for (const segment of segments) {
     const items = await fetchDriveFolderItems(cookie, currentFid);
     const existed = items.find(
-      (item: any) =>
+      (item: DriveItem) =>
         Boolean(item.dir || item.is_dir) &&
         String(item.file_name || item.name || '') === segment
     );
@@ -713,7 +738,7 @@ export async function transferQuarkShare(
   const target = await ensureQuarkDrivePath(safeCookie, input.savePath);
   const existedItems = await fetchAllDriveFolderItems(safeCookie, target.fid);
   const existedNames = new Set(
-    existedItems.map((item: any) => getDriveItemName(item))
+    existedItems.map((item: DriveItem) => getDriveItemName(item))
   );
   const pendingItems = topLevelItems.filter(
     (item) => !existedNames.has(item.fileName)

@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
+import type { OpenListFile } from '@/lib/openlist.client';
+import type { MetaInfo } from '@/lib/openlist-cache';
 import { SearchResult } from '@/lib/types';
 
 /**
@@ -63,7 +63,7 @@ export async function getEmbyDetail(
   } else if (item.Type === 'Series') {
     // 剧集 - 获取所有季和集
     const seasons = await client.getSeasons(item.Id);
-    const allEpisodes: any[] = [];
+    const allEpisodes: Awaited<ReturnType<typeof client.getEpisodes>> = [];
 
     for (const season of seasons) {
       const episodes = await client.getEpisodes(item.Id, season.Id);
@@ -130,8 +130,8 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
   const rootPath = openListConfig.RootPath || '/';
 
   // 1. 读取 metainfo 获取元数据
-  let metaInfo: any = null;
-  let folderMeta: any = null;
+  let metaInfo: MetaInfo | null = null;
+  let folderMeta: MetaInfo['folders'][string];
   try {
     const { getCachedMetaInfo, setCachedMetaInfo } = await import(
       '@/lib/openlist-cache'
@@ -143,16 +143,18 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
     if (!metaInfo) {
       const metainfoJson = await db.getGlobalValue('video.metainfo');
       if (metainfoJson) {
-        metaInfo = JSON.parse(metainfoJson);
-        setCachedMetaInfo(metaInfo);
+        const parsed = JSON.parse(metainfoJson) as MetaInfo;
+        metaInfo = parsed;
+        setCachedMetaInfo(parsed);
       }
     }
 
     // 使用 key 查找文件夹信息
-    folderMeta = metaInfo?.folders?.[id];
-    if (!folderMeta) {
+    const found = metaInfo?.folders?.[id];
+    if (!found) {
       throw new Error('未找到该视频信息');
     }
+    folderMeta = found;
   } catch (error) {
     throw new Error('读取视频信息失败: ' + (error as Error).message);
   }
@@ -179,7 +181,7 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
   let videoInfo = getCachedVideoInfo(folderPath);
 
   // 获取所有分页的视频文件
-  const allFiles: any[] = [];
+  const allFiles: OpenListFile[] = [];
   let currentPage = 1;
   const pageSize = 100;
   let total = 0;

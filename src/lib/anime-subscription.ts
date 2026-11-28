@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import parseTorrentName from 'parse-torrent-name';
 import { parseStringPromise } from 'xml2js';
 
@@ -18,6 +17,11 @@ import {
   joinOpenListPath,
 } from '@/lib/openlist-offline-download';
 import { isOwnerRole } from '@/lib/roles';
+import {
+  type RssXmlItem,
+  pickRssText as pickRssNodeText,
+  rssAttr,
+} from '@/lib/rss-xml';
 
 import {
   AnimeSubscription,
@@ -40,14 +44,8 @@ const downloadTools: AnimeSubscriptionDownloadTool[] = [
   'Transmission',
 ];
 
-const pickRssText = (value: any): string => {
-  if (value === undefined || value === null) return '';
-  const first = Array.isArray(value) ? value[0] : value;
-  if (first === undefined || first === null) return '';
-  if (typeof first === 'object')
-    return String(first._ ?? first.$?.url ?? first.$?.href ?? '');
-  return String(first);
-};
+// 这里一直不去首尾空白
+const pickRssText = (value: unknown) => pickRssNodeText(value, { trim: false });
 
 function getAnimeSubscriptionDownloadTool(
   tool: unknown
@@ -423,10 +421,10 @@ export async function searchACG(
     return [];
   }
 
-  const items = parsed.rss.channel[0].item;
+  const items: RssXmlItem[] = parsed.rss.channel[0].item;
 
   // 统一格式。注意：Nyaa RSS 的 link 是 .torrent 下载地址，guid 才是详情页。
-  return items.map((item: any) => {
+  return items.map((item) => {
     const title = pickRssText(item.title);
     const rawLink = pickRssText(item.link);
     const rawGuid = pickRssText(item.guid);
@@ -434,8 +432,8 @@ export async function searchACG(
     const description =
       pickRssText(item.description) || pickRssText(item['content:encoded']);
     const enclosureUrl =
-      pickRssText(item.enclosure?.[0]?.$?.url) ||
-      pickRssText(item.enclosure?.[0]?.$?.href);
+      pickRssText(rssAttr(item.enclosure, 'url')) ||
+      pickRssText(rssAttr(item.enclosure, 'href'));
 
     const isNyaa = source === 'nyaa';
     const link = isNyaa ? rawGuid || rawLink : rawLink;
@@ -554,7 +552,7 @@ async function sendAnimeUpdateNotifications(
     try {
       const userInfo = await db.getUserInfoV2(username);
       // 使用可选的 email 字段
-      const email = (userInfo as any)?.email;
+      const email = userInfo?.email;
       if (email) {
         emailsToSend.push({ username, email });
       }

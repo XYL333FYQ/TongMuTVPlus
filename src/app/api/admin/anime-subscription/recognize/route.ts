@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { recognizeFansubGroups } from '@/lib/anime-fansub-recognize';
@@ -33,10 +32,10 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
     logger.error('追番订阅智能识别失败:', error);
     return NextResponse.json(
-      { error: error.message || '智能识别失败' },
+      { error: (error as Error).message || '智能识别失败' },
       { status: 500 }
     );
   }

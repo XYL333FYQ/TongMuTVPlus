@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -23,7 +21,7 @@ export async function GET(request: Request) {
   }
 
   const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+  const liveSource = config.LiveConfig?.find((s) => s.key === source);
   const ua = liveSource?.ua || 'AptvPlayer/1.4.10';
   // 站长配置的直播源主机（含局域网 IPTV）可以代理，其他内网地址一律拒绝
   const trustedHosts = hostsOf([liveSource?.url, liveSource?.epg]);

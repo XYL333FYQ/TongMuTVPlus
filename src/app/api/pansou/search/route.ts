@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -149,10 +147,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(filteredResults);
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Pansou 搜索失败:', error);
     return NextResponse.json(
-      { error: error.message || '搜索失败' },
+      { error: (error as Error).message || '搜索失败' },
       { status: 500 }
     );
   }

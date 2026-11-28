@@ -7,7 +7,7 @@ import { getDeviceDisplayName } from '@/lib/device-display';
 import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
-interface DeviceItem {
+export interface DeviceItem {
   tokenId: string;
   deviceInfo: string;
   isCurrent: boolean;

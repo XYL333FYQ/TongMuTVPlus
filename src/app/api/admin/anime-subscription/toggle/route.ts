@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
@@ -58,10 +57,10 @@ export async function PUT(req: NextRequest) {
       enabled,
       downloadTool: config.AnimeSubscriptionConfig.DownloadTool,
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('切换追番功能状态失败:', error);
     return NextResponse.json(
-      { error: error.message || '切换状态失败' },
+      { error: (error as Error).message || '切换状态失败' },
       { status: 500 }
     );
   }

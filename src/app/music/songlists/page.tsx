@@ -2,13 +2,14 @@
 
 import { ChevronDown, Disc3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import { musicSources, normalizeSource } from '@/lib/music/shared';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 
+import Popover from '@/components/feedback/Popover';
 import CoverCard from '@/components/music/CoverCard';
 import MusicEmpty, {
   MusicCardGridSkeleton,
@@ -103,6 +104,7 @@ export default function MusicSongListsPage() {
   const page = Number(searchParams.get('page') || '1');
 
   const [showTagMenu, setShowTagMenu] = useState(false);
+  const tagTriggerRef = useRef<HTMLButtonElement>(null);
   const [groups, setGroups] = useState<SongListGroup[]>([]);
   const [hotTags, setHotTags] = useState<SongListTag[]>([]);
   const [songLists, setSongLists] = useState<SongListItem[]>([]);
@@ -150,14 +152,6 @@ export default function MusicSongListsPage() {
 
   // 分类面板是点击开合的（原来是 hover 开）。hover 在触屏上等于没有，
   // 而且鼠标从触发器挪到面板的路上会闪一下关掉。
-  useEffect(() => {
-    if (!showTagMenu) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setShowTagMenu(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [showTagMenu]);
 
   useEffect(() => {
     const cacheKey: SettingKey = `music_songlist_tags_${source}`;
@@ -294,6 +288,7 @@ export default function MusicSongListsPage() {
 
         <div className='relative'>
           <button
+            ref={tagTriggerRef}
             type='button'
             onClick={() => setShowTagMenu((open) => !open)}
             aria-haspopup='dialog'
@@ -308,93 +303,96 @@ export default function MusicSongListsPage() {
           </button>
 
           {showTagMenu ? (
-            <>
-              <button
-                type='button'
-                tabIndex={-1}
-                aria-label='关闭分类'
-                className='fixed inset-0 z-[55] cursor-default'
-                onClick={() => setShowTagMenu(false)}
-              />
-              {/* 右侧贴齐触发器、向左展开；宽度上限留出 3rem 而不是 2rem——
-                  100vw 在有没有竖向滚动条时会差十几 px，窄屏上正好会把面板顶出左边。 */}
-              <div className='absolute right-0 top-[calc(100%+6px)] z-[60] max-h-[min(70vh,520px)] w-[min(760px,calc(100vw-3rem))] overflow-auto rounded-sm border border-line bg-canvas p-4 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.55)] dark:bg-surface'>
-                {tagId ? (
-                  <button
-                    type='button'
-                    onClick={() => selectTag('')}
-                    className={cn(MUSIC_TAG, MUSIC_TAG_IDLE, 'mb-4')}
-                  >
-                    清除分类
-                  </button>
-                ) : null}
+            // 右侧贴齐触发器、向左展开；点外面、Esc 关（手机上是底部面板）
+            <Popover
+              anchor={tagTriggerRef.current}
+              onDismiss={() => setShowTagMenu(false)}
+              role='dialog'
+              label='分类'
+              align='end'
+              width={760}
+              maxWidth={760}
+              gap={6}
+              edge={16}
+              maxHeight={520}
+              maxHeightRatio={0.7}
+              className='overflow-auto rounded-sm border border-line bg-canvas p-4 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.55)] dark:bg-surface'
+            >
+              {tagId ? (
+                <button
+                  type='button'
+                  onClick={() => selectTag('')}
+                  className={cn(MUSIC_TAG, MUSIC_TAG_IDLE, 'mb-4')}
+                >
+                  清除分类
+                </button>
+              ) : null}
 
-                {loadingTags ? (
-                  <p className={cn(MUSIC_LABEL, 'py-6 text-center')}>
-                    正在取分类…
-                  </p>
-                ) : flatTags.length === 0 ? (
-                  <p
-                    className={cn(
-                      MUSIC_MUTED,
-                      'py-6 text-center font-sans text-[13px]'
-                    )}
-                  >
-                    当前音源无法获取此分类
-                  </p>
-                ) : (
-                  <>
-                    {hotTags.length > 0 ? (
-                      <div className={MUSIC_TAG_GROUP}>
-                        <span className={MUSIC_TAG_GROUP_LABEL}>热门分类</span>
-                        <div className={MUSIC_TAG_WRAP}>
-                          {hotTags.map((tag) => (
-                            <button
-                              key={tag.id}
-                              type='button'
-                              onClick={() => selectTag(tag.name)}
-                              className={cn(
-                                MUSIC_TAG,
-                                tagId === tag.name
-                                  ? MUSIC_TAG_ACTIVE
-                                  : MUSIC_TAG_IDLE
-                              )}
-                            >
-                              {tag.name}
-                            </button>
-                          ))}
-                        </div>
+              {loadingTags ? (
+                <p className={cn(MUSIC_LABEL, 'py-6 text-center')}>
+                  正在取分类…
+                </p>
+              ) : flatTags.length === 0 ? (
+                <p
+                  className={cn(
+                    MUSIC_MUTED,
+                    'py-6 text-center font-sans text-[13px]'
+                  )}
+                >
+                  当前音源无法获取此分类
+                </p>
+              ) : (
+                <>
+                  {hotTags.length > 0 ? (
+                    <div className={MUSIC_TAG_GROUP}>
+                      <span className={MUSIC_TAG_GROUP_LABEL}>热门分类</span>
+                      <div className={MUSIC_TAG_WRAP}>
+                        {hotTags.map((tag) => (
+                          <button
+                            key={tag.id}
+                            type='button'
+                            onClick={() => selectTag(tag.name)}
+                            className={cn(
+                              MUSIC_TAG,
+                              tagId === tag.name
+                                ? MUSIC_TAG_ACTIVE
+                                : MUSIC_TAG_IDLE
+                            )}
+                          >
+                            {tag.name}
+                          </button>
+                        ))}
                       </div>
-                    ) : null}
+                    </div>
+                  ) : null}
 
-                    {groups.map((group) => (
-                      <div key={group.name} className={MUSIC_TAG_GROUP}>
-                        <span className={MUSIC_TAG_GROUP_LABEL}>
-                          {group.name}
-                        </span>
-                        <div className={MUSIC_TAG_WRAP}>
-                          {group.list.map((tag) => (
-                            <button
-                              key={tag.id}
-                              type='button'
-                              onClick={() => selectTag(tag.name)}
-                              className={cn(
-                                MUSIC_TAG,
-                                tagId === tag.name
-                                  ? MUSIC_TAG_ACTIVE
-                                  : MUSIC_TAG_IDLE
-                              )}
-                            >
-                              {tag.name}
-                            </button>
-                          ))}
-                        </div>
+                  {groups.map((group) => (
+                    <div key={group.name} className={MUSIC_TAG_GROUP}>
+                      <span className={MUSIC_TAG_GROUP_LABEL}>
+                        {group.name}
+                      </span>
+                      <div className={MUSIC_TAG_WRAP}>
+                        {group.list.map((tag) => (
+                          <button
+                            key={tag.id}
+                            type='button'
+                            onClick={() => selectTag(tag.name)}
+                            className={cn(
+                              MUSIC_TAG,
+                              tagId === tag.name
+                                ? MUSIC_TAG_ACTIVE
+                                : MUSIC_TAG_IDLE
+                            )}
+                          >
+                            {tag.name}
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </>
+                    </div>
+                  ))}
+                </>
+              )}
+            </Popover>
           ) : null}
         </div>
       </div>
